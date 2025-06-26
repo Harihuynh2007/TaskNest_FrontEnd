@@ -2,7 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AuthForm from './components/auth/AuthForm';
-
+import ForgotPassword from './components/auth/ForgotPassword';
 
 export default function App() {
   return (
@@ -18,6 +18,10 @@ export default function App() {
       <Route
         path="/register"
         element={<AuthForm mode="register" baseUrl="http://localhost:8000/api" />}
+      />
+      <Route
+        path="/forgot-password"
+        element={<ForgotPassword baseUrl="http://localhost:8000/api" />}
       />
       </Routes>
     </Router>

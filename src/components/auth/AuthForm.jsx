@@ -154,7 +154,7 @@ export default function AuthForm({ mode = 'login', baseUrl = '' }) {
                       </Link>
                     </div>
                   )}
-
+                  
                   {/* Submit */}
                   <div className="d-grid mb-3">
                     <Button
@@ -169,18 +169,23 @@ export default function AuthForm({ mode = 'login', baseUrl = '' }) {
                         : 'Sign Up'}
                     </Button>
                   </div>
-
+                  <div className="d-flex align-items-center my-3">
+                    <hr className="flex-grow-1" />
+                    <span className="mx-2 text-muted">Or continue with:</span>
+                    <hr className="flex-grow-1" />
+                  </div>
+                  
                   {/* Social login (login only) */}
                   {isLogin && (
                     <div className="d-grid gap-2 mb-3">
                       <Button variant="outline-danger">
-                        Continue with Google
+                        Google
                       </Button>
                       <Button variant="outline-dark">
-                        Continue with GitHub
+                        GitHub
                       </Button>
                       <Button variant="outline-primary">
-                        Continue with Facebook
+                        Facebook
                       </Button>
                     </div>
                   )}

@@ -32,7 +32,49 @@ export default function ForgotPassword({baseUrl = ''}){
 
     return (
         <container fluid className = "min-vh-100 d-flex justify-content-center align-items-center bg-light px-3">
+            <Row className = "w-100 justify-content-center">
+                <Col xs={12} sm={8} md={6} lg={4}>
+                    <Card className="p-4 shadow">
+                        <h4 className="text-center mb-3">Forgot Password </h4>
 
+                        {status === 'success' && (
+                            <Alert variant='success'> 
+                                If this email exists, we'll send you a reset link.
+                            </Alert>
+                        )}
+                        {status === 'error' && (
+                            <Alert variant='danger'>
+                                Something went wrong. Please try again.
+                            </Alert>
+                        )}
+
+                        <Form onSubmit={handleSubmit}>
+                            <Form.Group controlId="forgotEmail" classame="mb-3  ">
+                                <Form.Label>
+                                    We'll send a recovery link to
+                                </Form.Label>
+                                <Form.Control
+                                    type="email"
+                                    placeholder='Enter your email'
+                                    Value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                    className='mb-2'
+                                />
+                            </Form.Group>
+
+                            <Button variant="primary" type="submit" className="w-100" disabled={loading}>
+                                {loading ? 'Sending...' : 'Send Reset Link'}
+                            </Button>
+                        </Form>
+
+                        <div className ="mt-3 text-center">
+                            <Link to ="/login">Return to Log in</Link>
+                        </div>
+                    </Card>
+                </Col>
+
+            </Row>
         </container>
     )
 };
