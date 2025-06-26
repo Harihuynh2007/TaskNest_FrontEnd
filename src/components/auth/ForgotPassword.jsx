@@ -1,80 +1,123 @@
+// src/components/auth/ForgotPasswordPage.jsx
+
 import React, { useState } from 'react';
-import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 
-export default function ForgotPassword({baseUrl = ''}){
+export default function ForgotPasswordPage({ baseUrl = '' }) {
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
+  const [status, setStatus] = useState('idle'); // 'idle' | 'success' | 'error'
+  const [loading, setLoading] = useState(false);
 
-    const [email, setEmail] = useState('');
-    const [status, setStatus] = useState('idle'); // 'idle' | 'success' | 'error'
-    const [loading, setLoading] = useState(false);
+  // Simple email validation
+  const validateEmail = (value) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(value);
+  };
 
-    const handleSubmit = async(e) => {
-        e.preventDefault();
-        setLoading(true);
-        try{
-            // TODO: replace with real API call
-            // await fetch(`${baseUrl}/auth/forgot-password`, {
-            //   method: 'POST',
-            //   headers: { 'Content-Type': 'application/json' },
-            //   body: JSON.stringify({ email }),
-            // });
-            // simulate delay
-            setTimeout(() => {
-                setStatus('success');
-                setLoading(false);
-            },1000);
-        } catch(err){
-            console.error(err);
-            setStatus('error');
-            setLoading(false);
-        }
-    };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setStatus('idle');
 
-    return (
-        <container fluid className = "min-vh-100 d-flex justify-content-center align-items-center bg-light px-3">
-            <Row className = "w-100 justify-content-center">
-                <Col xs={12} sm={8} md={6} lg={4}>
-                    <Card className="p-4 shadow">
-                        <h4 className="text-center mb-3">Forgot Password </h4>
+    // Client-side validation
+    if (!email) {
+      setError('Email is required');
+      return;
+    }
+    if (!validateEmail(email)) {
+      setError('Invalid email format');
+      return;
+    }
 
-                        {status === 'success' && (
-                            <Alert variant='success'> 
-                                If this email exists, we'll send you a reset link.
-                            </Alert>
-                        )}
-                        {status === 'error' && (
-                            <Alert variant='danger'>
-                                Something went wrong. Please try again.
-                            </Alert>
-                        )}
+    setLoading(true);
+    try {
+      // TODO: replace with real API call
+      // await fetch(`${baseUrl}/auth/forgot-password`, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ email }),
+      // });
+      // simulate API delay
+      await new Promise(res => setTimeout(res, 1000));
+      setStatus('success');
+      setEmail('');
+    } catch (err) {
+      console.error(err);
+      setStatus('error');
+    }
+    setLoading(false);
+  };
 
-                        <Form onSubmit={handleSubmit}>
-                            <Form.Group controlId="forgotEmail" classame="mb-3  ">
-                                <Form.Label>
-                                    We'll send a recovery link to
-                                </Form.Label>
-                                <Form.Control
-                                    type="email"
-                                    placeholder='Enter your email'
-                                    Value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    className='mb-2'
-                                />
-                            </Form.Group>
+  return (
+    <Container fluid className="min-vh-100 d-flex justify-content-center align-items-center bg-light px-3">
+      <Row className="w-100 justify-content-center">
+        <Col xs={12} sm={8} md={6} lg={4}>
+          <Card className="p-4 shadow">
+            <h4 className="text-center mb-3">Forgot Password</h4>
 
-                            <Button variant="primary" type="submit" className="w-100" disabled={loading}>
-                                {loading ? 'Sending...' : 'Send Reset Link'}
-                            </Button>
-                        </Form>
+            {status === 'success' && (
+              <Alert variant="success">
+                If this email exists, we'll send you a reset link.
+              </Alert>
+            )}
+            {status === 'error' && (
+              <Alert variant="danger">
+                Something went wrong. Please try again.
+              </Alert>
+            )}
 
-                        <div className ="mt-3 text-center">
-                            <Link to ="/login">Return to Log in</Link>
-                        </div>
-                    </Card>
-                </Col>
+            <Form noValidate onSubmit={handleSubmit}>
+              <Form.Group controlId="forgotEmail" className="mb-3">
+                <Form.Label>We'll send a recovery link to</Form.Label>
+                <Form.Control
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  isInvalid={!!error}
+                  disabled={loading}
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  {error}
+                </Form.Control.Feedback>
+              </Form.Group>
 
-            </Row>
-        </container>
-    )
-};
+              <Button
+                variant="primary"
+                type="submit"
+                className="w-100 mb-3"
+                disabled={loading}
+                aria-label="Send password reset link"
+              >
+                {loading ? (
+                  <>
+                    <Spinner
+                      as="span"
+                      animation="border"
+                      size="sm"
+                      role="status"
+                      aria-hidden="true"
+                      className="me-2"
+                    />
+                    Sending...
+                  </>
+                ) : (
+                  'Send Reset Link'
+                )}
+              </Button>
+            </Form>
+
+            <div className="text-center">
+              <Link to="/login" className="d-block">
+                Return to Log In
+              </Link>
+            </div>
+          </Card>
+        </Col>
+      </Row>
+    </Container>
+  );
+}
