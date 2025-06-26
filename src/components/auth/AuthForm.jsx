@@ -59,6 +59,12 @@ export default function AuthForm({ mode = 'login', baseUrl = '' }) {
                 md={6}
                 className="d-none d-md-flex flex-column justify-content-center align-items-center bg-white p-4"
               >
+                <img
+                    src="/loginregister.png"
+                    alt="Welcome Illustration"
+                    className="img-fluid mb-3"
+                    style={{ maxWidth: '100%' }}
+                />
                 <h2 className="mb-3">Welcome Back!</h2>
                 <p className="text-muted text-center">
                   {isLogin
@@ -76,7 +82,7 @@ export default function AuthForm({ mode = 'login', baseUrl = '' }) {
 
                 <Form onSubmit={handleSubmit}>
                   {/* Email */}
-                  <Form.Group className="mb-3" controlId="authEmail">
+                  <Form.Group className="mb-2" controlId="authEmail">
                     <Form.Label>Email address</Form.Label>
                     <Form.Control
                       type="email"
@@ -88,7 +94,7 @@ export default function AuthForm({ mode = 'login', baseUrl = '' }) {
                   </Form.Group>
 
                   {/* Password */}
-                  <Form.Group className="mb-3" controlId="authPassword">
+                  <Form.Group className="mb-2" controlId="authPassword">
                     <Form.Label>Password</Form.Label>
                     <InputGroup>
                       <Form.Control
@@ -112,7 +118,7 @@ export default function AuthForm({ mode = 'login', baseUrl = '' }) {
                   {/* Confirm Password (register only) */}
                   {!isLogin && (
                     <Form.Group
-                      className="mb-3"
+                      className="mb-2"
                       controlId="authConfirmPassword"
                     >
                       <Form.Label>Confirm Password</Form.Label>
@@ -174,7 +180,7 @@ export default function AuthForm({ mode = 'login', baseUrl = '' }) {
                     <span className="mx-2 text-muted">Or continue with:</span>
                     <hr className="flex-grow-1" />
                   </div>
-                  
+
                   {/* Social login (login only) */}
                   {isLogin && (
                     <div className="d-grid gap-2 mb-3">
