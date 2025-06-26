@@ -10,7 +10,7 @@ import {
   Button,
   InputGroup,
 } from 'react-bootstrap';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaGoogle, FaGithub, FaFacebookF } from 'react-icons/fa';
 
 
 export default function AuthForm({ mode = 'login', baseUrl = '' }) {
@@ -185,13 +185,13 @@ export default function AuthForm({ mode = 'login', baseUrl = '' }) {
                   {isLogin && (
                     <div className="d-grid gap-2 mb-3">
                       <Button variant="outline-danger">
-                        Google
+                        <FaGoogle className="me-2" />Google
                       </Button>
                       <Button variant="outline-dark">
-                        GitHub
+                        <FaGithub className="me-2" />GitHub
                       </Button>
                       <Button variant="outline-primary">
-                        Facebook
+                        <FaFacebookF className="me-2" />Facebook
                       </Button>
                     </div>
                   )}
