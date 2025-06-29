@@ -1,6 +1,6 @@
 // src/components/auth/AuthForm.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Container,
@@ -10,25 +10,29 @@ import {
   Form,
   Button,
   InputGroup,
-  Spinner
+  Spinner,
+  Alert
 } from 'react-bootstrap';
 import { FaEye, FaEyeSlash, FaGoogle, FaGithub, FaFacebookF } from 'react-icons/fa';
+import { AuthContext } from '../../context/AuthContext';
 
-export default function AuthForm({ mode = 'login', baseUrl = '' }) {
+export default function AuthForm({ mode = 'login' }) {
   const navigate = useNavigate();
   const isLogin = mode === 'login';
+  const { login, signup } = useContext(AuthContext);
 
   // form state
-  const [email, setEmail] = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
+  const [confirm, setConfirm]   = useState('');
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading]   = useState(false);
 
   // validation state
-  const [errors, setErrors] = useState({ email: '', password: '', confirm: '' });
-  const [touched, setTouched] = useState({ email: false, password: false, confirm: false });
+  const [errors, setErrors]     = useState({ email: '', password: '', confirm: '' });
+  const [touched, setTouched]   = useState({ email: false, password: false, confirm: false });
+  const [serverError, setServerError] = useState('');
 
   // validation functions
   const validateField = (name, value) => {
@@ -47,45 +51,50 @@ export default function AuthForm({ mode = 'login', baseUrl = '' }) {
       else if (value !== password) error = "Passwords don't match";
     }
     setErrors(prev => ({ ...prev, [name]: error }));
+    return error === '';
   };
 
-  const handleBlur = (e) => {
+  const handleBlur = e => {
     const { name, value } = e.target;
     setTouched(prev => ({ ...prev, [name]: true }));
     validateField(name, value);
   };
 
-  const handleChange = (e) => {
+  const handleChange = e => {
     const { name, value, checked } = e.target;
-    switch (name) {
-      case 'email': setEmail(value); break;
-      case 'password': setPassword(value); break;
-      case 'confirm': setConfirm(value); break;
-      case 'remember': setRemember(checked); break;
-      default: break;
+    if (name === 'email') setEmail(value);
+    if (name === 'password') setPassword(value);
+    if (name === 'confirm') setConfirm(value);
+    if (name === 'remember') setRemember(checked);
+    if (touched[name]) {
+      validateField(name, name === 'remember' ? checked : value);
     }
-    if (touched[name]) validateField(name, value);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
+    setServerError('');
+    // mark all touched so errors show
     setTouched({ email: true, password: true, confirm: true });
-    validateField('email', email);
-    validateField('password', password);
-    if (!isLogin) validateField('confirm', confirm);
-
-    if (Object.values(errors).some(err => err)) return;
+    const validEmail = validateField('email', email);
+    const validPass  = validateField('password', password);
+    const validConf  = isLogin ? true : validateField('confirm', confirm);
+    if (!validEmail || !validPass || !validConf) return;
 
     setLoading(true);
     try {
-      // TODO: call your API
-      await new Promise(res => setTimeout(res, 1000));
-      navigate(isLogin ? '/dashboard' : '/login');
+      if (isLogin) {
+        await login(email, password);
+      } else {
+        await signup(email, password);
+      }
+      navigate('/boards');
     } catch (err) {
-      console.error(err);
-      alert('Something went wrong');
+      const msg = err.response?.data?.message || 'Something went wrong. Please try again.';
+      setServerError(msg);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -102,7 +111,7 @@ export default function AuthForm({ mode = 'login', baseUrl = '' }) {
                   className="img-fluid mb-3"
                   style={{ maxWidth: '80%' }}
                 />
-                <h2 className="mb-3">Welcome Back!</h2>
+                <h2 className="mb-3">Welcome {!isLogin ? 'Aboard!' : 'Back!'}</h2>
                 <p className="text-muted text-center">
                   {isLogin
                     ? 'Log in to continue to your account.'
@@ -116,6 +125,8 @@ export default function AuthForm({ mode = 'login', baseUrl = '' }) {
                   {isLogin ? 'Login' : 'Sign Up'}
                 </h3>
 
+                {serverError && <Alert variant="danger">{serverError}</Alert>}
+
                 <Form noValidate onSubmit={handleSubmit}>
                   <Form.Group className="mb-3" controlId="authEmail">
                     <Form.Label>Email address</Form.Label>
@@ -127,6 +138,7 @@ export default function AuthForm({ mode = 'login', baseUrl = '' }) {
                       onChange={handleChange}
                       onBlur={handleBlur}
                       isInvalid={touched.email && !!errors.email}
+                      autoComplete="username"
                       required
                     />
                     <Form.Control.Feedback type="invalid">
@@ -145,6 +157,7 @@ export default function AuthForm({ mode = 'login', baseUrl = '' }) {
                         onChange={handleChange}
                         onBlur={handleBlur}
                         isInvalid={touched.password && !!errors.password}
+                        autoComplete={isLogin ? 'current-password' : 'new-password'}
                         required
                       />
                       <Button
@@ -172,6 +185,7 @@ export default function AuthForm({ mode = 'login', baseUrl = '' }) {
                           onChange={handleChange}
                           onBlur={handleBlur}
                           isInvalid={touched.confirm && !!errors.confirm}
+                          autoComplete="new-password"
                           required
                         />
                         <Button
@@ -202,11 +216,7 @@ export default function AuthForm({ mode = 'login', baseUrl = '' }) {
                   )}
 
                   <div className="d-grid mb-3">
-                    <Button
-                      variant="primary"
-                      type="submit"
-                      disabled={loading}
-                    >
+                    <Button variant="primary" type="submit" disabled={loading}>
                       {loading ? (
                         <>
                           <Spinner
@@ -225,30 +235,33 @@ export default function AuthForm({ mode = 'login', baseUrl = '' }) {
                     </Button>
                   </div>
 
-                  <div className="d-flex align-items-center my-3">
-                    <hr className="flex-grow-1" />
-                    <span className="mx-2 text-muted">Or continue with:</span>
-                    <hr className="flex-grow-1" />
-                  </div>
-
                   {isLogin && (
-                    <div className="d-grid gap-2 mb-3">
-                      <Button variant="outline-danger">
-                        <FaGoogle className="me-2" />Google
-                      </Button>
-                      <Button variant="outline-dark">
-                        <FaGithub className="me-2" />GitHub
-                      </Button>
-                      <Button variant="outline-primary">
-                        <FaFacebookF className="me-2" />Facebook
-                      </Button>
-                    </div>
+                    <>
+                      <div className="d-flex align-items-center my-3">
+                        <hr className="flex-grow-1" />
+                        <span className="mx-2 text-muted">Or continue with:</span>
+                        <hr className="flex-grow-1" />
+                      </div>
+                      <div className="d-grid gap-2 mb-3">
+                        <Button variant="outline-danger">
+                          <FaGoogle className="me-2" /> Google
+                        </Button>
+                        <Button variant="outline-dark">
+                          <FaGithub className="me-2" /> GitHub
+                        </Button>
+                        <Button variant="outline-primary">
+                          <FaFacebookF className="me-2" /> Facebook
+                        </Button>
+                      </div>
+                    </>
                   )}
 
                   <p className="text-center mb-0">
-                    {isLogin ? "Don't have an account? " : 'Already have an account? '}
+                    {isLogin
+                      ? "Don't have an account? "
+                      : 'Already have an account? '}
                     <Link to={isLogin ? '/register' : '/login'} className="fw-bold">
-                      {isLogin ? 'Create an account' : 'Login'}
+                      {isLogin ? 'Create one' : 'Login'}
                     </Link>
                   </p>
                 </Form>
