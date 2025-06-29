@@ -1,24 +1,18 @@
-// src/context/WorkspaceContext.js
+// src/contexts/WorkspaceContext.jsx
 import React, { createContext, useState, useEffect } from 'react';
-import { fetchWorkspaces } from '../services/workspacesService';
+import * as workspaceApi from '../api/workspaceApi';
 
-export const WorkspaceContext = createContext({
-  workspaces: [],
-  currentWorkspaceId: null,
-  setCurrentWorkspaceId: () => {},
-});
+export const WorkspaceContext = createContext();
 
 export function WorkspaceProvider({ children }) {
-  const [workspaces, setWorkspaces] = useState([]);
+  const [workspaces, setWorkspaces]           = useState([]);
   const [currentWorkspaceId, setCurrentWorkspaceId] = useState(null);
 
   useEffect(() => {
-    fetchWorkspaces()
+    workspaceApi.fetchWorkspaces()
       .then(res => {
         setWorkspaces(res.data);
-        if (res.data.length) {
-          setCurrentWorkspaceId(res.data[0].id);
-        }
+        if (res.data.length) setCurrentWorkspaceId(res.data[0].id);
       })
       .catch(console.error);
   }, []);

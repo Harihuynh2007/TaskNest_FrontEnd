@@ -1,42 +1,39 @@
-// src/context/AuthContext.js
+// src/contexts/AuthContext.jsx
 import React, { createContext, useState, useEffect } from 'react';
-import {
-  login as doLogin,
-  logout as doLogout,
-  register as doRegister
-} from '../services/AuthService';  
+import * as authApi from '../api/authApi';
 
 export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser]     = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      // Nếu backend có endpoint /auth/me, bạn có thể fetch profile ở đây:
-      // API.get('/auth/me').then(res => setUser(res.data.user));
+      // optionally: fetch /auth/me here
     }
     setLoading(false);
   }, []);
 
   const login = (email, password) =>
-    doLogin(email, password).then(res => {
-      localStorage.setItem('token', res.data.token);
-      setUser(res.data.user);
+    authApi.login(email, password).then(res => {
+      const token = res.data.access || res.data.token;
+      localStorage.setItem('token', token);
+      setUser(res.data.user || { email });
       return res;
     });
 
   const signup = (email, password) =>
-    doRegister(email, password).then(res => {
-      localStorage.setItem('token', res.data.token);
-      setUser(res.data.user);
+    authApi.register(email, password).then(res => {
+      const token = res.data.access || res.data.token;
+      localStorage.setItem('token', token);
+      setUser(res.data.user || { email });
       return res;
     });
 
   const logout = () =>
-    doLogout().then(() => {
+    authApi.logout().then(() => {
       localStorage.removeItem('token');
       setUser(null);
     });

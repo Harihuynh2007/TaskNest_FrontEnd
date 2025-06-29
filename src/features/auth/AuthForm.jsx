@@ -14,7 +14,7 @@ import {
   Alert
 } from 'react-bootstrap';
 import { FaEye, FaEyeSlash, FaGoogle, FaGithub, FaFacebookF } from 'react-icons/fa';
-import { AuthContext } from '../../context/AuthContext';
+import { AuthContext } from '../../contexts/AuthContext';
 
 export default function AuthForm({ mode = 'login' }) {
   const navigate = useNavigate();
