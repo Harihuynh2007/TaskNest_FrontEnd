@@ -1,4 +1,3 @@
-// src/features/boards/BoardCard.jsx
 import React from 'react';
 
 export default function BoardCard({ board }) {

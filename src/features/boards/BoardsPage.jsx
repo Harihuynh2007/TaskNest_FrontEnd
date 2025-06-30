@@ -1,14 +1,16 @@
-// src/features/boards/BoardsPage.jsx
 import React, { useContext, useEffect, useState } from 'react';
-import { WorkspaceContext } from '../../contexts';
+import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import * as boardApi from '../../api/boardApi';
-
+import BoardList from './BoardList';
 import CreateBoardModal from './CreateBoardModal';
 
 export default function BoardsPage() {
-  const { workspaces, currentWorkspaceId, setCurrentWorkspaceId } =
-    useContext(WorkspaceContext);
-  const [boards, setBoards]   = useState([]);
+  const {
+    workspaces,
+    currentWorkspaceId,
+    setCurrentWorkspaceId
+  } = useContext(WorkspaceContext);
+  const [boards, setBoards] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
@@ -22,28 +24,30 @@ export default function BoardsPage() {
   }, [currentWorkspaceId]);
 
   return (
-    <div>
+    <div className="boards-page">
       <h1>Boards</h1>
       <select
         value={currentWorkspaceId || ''}
-        onChange={e => setCurrentWorkspaceId(+e.target.value)}
+        onChange={e => setCurrentWorkspaceId(Number(e.target.value))}
       >
+        <option value="" disabled>Select workspace</option>
         {workspaces.map(ws => (
           <option key={ws.id} value={ws.id}>{ws.name}</option>
         ))}
       </select>
       <button onClick={() => setShowModal(true)}>New Board</button>
 
-      {loading
-        ? <p>Loading…</p>
-        : <boardList boards={boards} />
-      }
+      {loading ? (
+        <p>Loading…</p>
+      ) : (
+        <BoardList boards={boards} />
+      )}
 
       {showModal && (
         <CreateBoardModal
           workspaceId={currentWorkspaceId}
-          onCreate={b => {
-            setBoards([b, ...boards]);
+          onCreate={board => {
+            setBoards(prev => [board, ...prev]);
             setShowModal(false);
           }}
           onClose={() => setShowModal(false)}

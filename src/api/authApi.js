@@ -1,11 +1,43 @@
-// src/api/authApi.js
-import API from './apiClient';
+import axios from 'axios';
 
-export const login = (email, password) =>
-  API.post('/auth/login/', { email, password });
+// Instance axios trỏ tới Django
+const authApi = axios.create({
+  baseURL: 'http://localhost:8000/api/auth',
+});
 
-export const register = (email, password) =>
-  API.post('/auth/register/', { email, password });
+// Đảm bảo gửi JSON
+authApi.defaults.headers.post['Content-Type'] = 'application/json';
 
-export const logout = () =>
-  API.post('/auth/logout/');
+/**
+ * Đăng ký tài khoản
+ * @param {string} email
+ * @param {string} password
+ * @returns Promise
+ */
+export function register(email, password) {
+  return authApi.post('/register/', {
+    username: email,
+    password,
+  });
+}
+
+/**
+ * Đăng nhập
+ * @param {string} email
+ * @param {string} password
+ * @returns Promise
+ */
+export function login(email, password) {
+  return authApi.post('/login/', {
+    username: email,
+    password,
+  });
+}
+
+/**
+ * Đăng xuất
+ * @returns Promise
+ */
+export function logout() {
+  return authApi.post('/logout/');
+}

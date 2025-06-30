@@ -1,39 +1,43 @@
-// src/contexts/AuthContext.jsx
 import React, { createContext, useState, useEffect } from 'react';
-import * as authApi from '../api/authApi';
+import { register, login as authLogin, logout as authLogout } from '../api/authApi';
 
 export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser]     = useState(null);
+  const [user,    setUser]    = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Nếu đã có token, có thể fetch thêm /api/auth/me để get user details
     const token = localStorage.getItem('token');
     if (token) {
-      // optionally: fetch /auth/me here
+      setUser({}); // tạm đẩy vào dạng logged-in
     }
     setLoading(false);
   }, []);
 
-  const login = (email, password) =>
-    authApi.login(email, password).then(res => {
-      const token = res.data.access || res.data.token;
-      localStorage.setItem('token', token);
-      setUser(res.data.user || { email });
-      return res;
-    });
-
+  // Hàm signup nhận (email, password)
   const signup = (email, password) =>
-    authApi.register(email, password).then(res => {
-      const token = res.data.access || res.data.token;
+    register(email, password).then(res => {
+      // Lưu token và user
+      const token = res.data.token || res.data.access;
       localStorage.setItem('token', token);
-      setUser(res.data.user || { email });
+      setUser({ email });
       return res;
     });
 
+  // Hàm login nhận (email, password)
+  const login = (email, password) =>
+    authLogin(email, password).then(res => {
+      const token = res.data.token || res.data.access;
+      localStorage.setItem('token', token);
+      setUser({ email });
+      return res;
+    });
+
+  // Hàm logout
   const logout = () =>
-    authApi.logout().then(() => {
+    authLogout().then(() => {
       localStorage.removeItem('token');
       setUser(null);
     });

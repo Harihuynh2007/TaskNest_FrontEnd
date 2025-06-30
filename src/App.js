@@ -6,7 +6,7 @@ import { AuthProvider, WorkspaceProvider } from './contexts/';
 
 import AuthForm from './features/auth/AuthForm';
 import ForgotPassword from './features/auth/ForgotPassword';
-import BoardsPage from './features/boards/boardPage';
+import BoardsPage from './features/boards/BoardsPage'
 import PrivateRoute from './Layout/PrivateRoute';
 
 function App() {

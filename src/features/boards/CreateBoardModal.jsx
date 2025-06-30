@@ -1,11 +1,10 @@
-// src/features/boards/CreateBoardModal.jsx
 import React, { useState } from 'react';
 import * as boardApi from '../../api/boardApi';
 
 export default function CreateBoardModal({ workspaceId, onCreate, onClose }) {
-  const [name, setName]         = useState('');
+  const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [loading, setLoading]   = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -17,6 +16,7 @@ export default function CreateBoardModal({ workspaceId, onCreate, onClose }) {
       console.error(err);
     } finally {
       setLoading(false);
+      onClose();
     }
   };
 
@@ -41,7 +41,7 @@ export default function CreateBoardModal({ workspaceId, onCreate, onClose }) {
             />
           </div>
           <button type="submit" disabled={loading}>
-            {loading ? '...' : 'Create'}
+            {loading ? 'Creating...' : 'Create'}
           </button>
           <button type="button" onClick={onClose}>Cancel</button>
         </form>
