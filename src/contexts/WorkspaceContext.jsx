@@ -7,6 +7,7 @@ export const WorkspaceContext = createContext();
 export function WorkspaceProvider({ children }) {
   const [workspaces, setWorkspaces]           = useState([]);
   const [currentWorkspaceId, setCurrentWorkspaceId] = useState(null);
+  const [searchNav , setSearchNav] = useState('');
 
   useEffect(() => {
     workspaceApi.fetchWorkspaces()

@@ -94,7 +94,7 @@ export default function AuthForm({ mode = 'login' }) {
     } catch (err) {
       const msg = err.response?.data?.detail
         || err.response?.data?.message
-        || 'Something went wrong. Please try again.';
+        || 'Có lỗi rồi đại vương ơi. !!!';
       setErrMsg(msg);
       setShowErrModal(true);
     } finally {
