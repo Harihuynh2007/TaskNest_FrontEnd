@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 
 // Instance axios trỏ tới Django
@@ -40,4 +41,15 @@ export function login(email, password) {
  */
 export function logout() {
   return authApi.post('/logout/');
+}
+
+/**
+ * Chuyển tài khoản
+ * @param {string} email
+ * @returns Promise
+ */
+export function switchAccount({ email }) {
+  return authApi.post('/switch-account/', {
+    username: email,
+  });
 }

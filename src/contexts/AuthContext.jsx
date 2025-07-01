@@ -8,13 +8,14 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Nếu đã có token, có thể fetch thêm /api/auth/me để get user details
     const token = localStorage.getItem('token');
     if (token) {
-      setUser({}); // tạm đẩy vào dạng logged-in
+      fetchUserDetails(); // GỌI HÀM này để lấy user chi tiết
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
+
 
   // Hàm signup nhận (email, password)
   const signup = (email, password) =>
@@ -41,6 +42,28 @@ export function AuthProvider({ children }) {
       localStorage.removeItem('token');
       setUser(null);
     });
+
+  const fetchUserDetails = async () => {
+  try {
+    const res = await fetch('http://localhost:8000/api/auth/me/', {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    const data = await res.json();
+    setUser({
+      email: data.email || data.username, 
+      name: data.name || data.username,
+      role: data.role || 'user',
+    });
+  } catch (err) {
+    console.error('Lỗi khi fetch user:', err);
+    setUser(null);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
