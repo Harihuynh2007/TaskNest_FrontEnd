@@ -1,4 +1,3 @@
-
 import React, { useContext, useState, useEffect } from 'react';
 import {
   Navbar,
@@ -47,12 +46,14 @@ export default function Header({ onCreateBoard }) {
           <Navbar.Collapse id="responsive-navbar-nav">
             <Nav className="align-items-center">
               <AppsDropdown />
-              <Navbar.Brand as={Link} to="/">TaskNest</Navbar.Brand>
+              <Navbar.Brand as={Link} to="/">
+                <span style={{ color: '#28A745', fontSize: '24px', fontWeight: 'bold' }}>TaskNest</span>
+              </Navbar.Brand>
             </Nav>
 
             <div
               className="d-flex align-items-center mx-auto"
-              style={{ flex: '1 1 600px', maxWidth: 600, minWidth: 0 }}
+              style={{ flex: '1 1 700px', maxWidth: 700, minWidth: 0 }}
             >
               <InputGroup
                 className="flex-grow-1"
@@ -61,11 +62,11 @@ export default function Header({ onCreateBoard }) {
                   background: '#f4f5f7',
                   border: '1px solid #dfe1e6',
                   borderRadius: 3,
-                  boxShadow: isFocused ? '0 0 0 3px #0079bf' : 'none',
+                  boxShadow: isFocused ? '0 0 0 2px rgba(40, 167, 69, 0.3)' : 'none', // Màu xanh lá TaskNest
                 }}
               >
-                <InputGroup.Text style={{ background: 'transparent', border: 'none' }}>
-                  <MdSearch size={18} color="#5e6c84" />
+                <InputGroup.Text style={{ background: 'transparent', border: 'none', padding: '0 8px' }}>
+                  <MdSearch size={16} color="#5e6c84" />
                 </InputGroup.Text>
                 <FormControl
                   placeholder="Search"
@@ -74,17 +75,19 @@ export default function Header({ onCreateBoard }) {
                   onChange={handleSearchChange}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
-                  style={{ border: 'none', background: 'transparent', minWidth: 0, outline: 'none' }}
+                  style={{ border: 'none', background: 'transparent', minWidth: 0, outline: 'none', padding: '4px 8px' }}
                 />
               </InputGroup>
 
               <Button
-                variant="primary"
+                variant="success" // Sử dụng màu xanh lá thay vì primary
                 style={{
-                  height: 32,
-                  lineHeight: '32px',
-                  padding: '0 12px',
-                  minWidth: '80px',
+                  backgroundColor: '#28A745',
+                  borderColor: '#28A745',
+                  height: 28,
+                  lineHeight: '28px',
+                  padding: '0 10px',
+                  minWidth: '70px',
                   whiteSpace: 'nowrap',
                   marginLeft: '8px',
                 }}
@@ -95,9 +98,9 @@ export default function Header({ onCreateBoard }) {
             </div>
 
             <Nav className="align-items-center">
-              <AiOutlineGlobal size={20} style={{ marginLeft: '8px' }} aria-label="Global" />
-              <MdNotificationsNone size={20} style={{ marginLeft: '8px' }} aria-label="Notifications" />
-              <FiHelpCircle size={20} style={{ marginLeft: '8px' }} aria-label="Help" />
+              <AiOutlineGlobal size={20} style={{ marginLeft: '4px' }} aria-label="Global" />
+              <MdNotificationsNone size={20} style={{ marginLeft: '4px' }} aria-label="Notifications" />
+              <FiHelpCircle size={20} style={{ marginLeft: '4px' }} aria-label="Help" />
               {user && <UserDropdown user={user} logout={logout} />}
             </Nav>
           </Navbar.Collapse>

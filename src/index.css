@@ -38,3 +38,23 @@ html, body, #root {
 #apps-menu-toggle::after {
   display: none !important; 
 }
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  color: #172b4d;
+  text-decoration: none;
+  font-size: 14px;
+  border-radius: 4px;
+}
+
+.sidebar-link:hover,
+.sidebar-link.active {
+  background-color: #e4f0f6;
+  color: #0079bf;
+}
+
+#workspace-dropdown::after {
+  display: none !important;
+}

@@ -7,6 +7,10 @@ import { AuthProvider, WorkspaceProvider, ModalProvider } from './contexts';
 import AuthForm from './features/auth/AuthForm';
 import ForgotPassword from './features/auth/ForgotPassword';
 import BoardsPage from './features/boards/BoardsPage';
+import TemplatesPage from './features/templates/TemplatesPage';
+import HomePage from './features/home/HomePage';
+
+import ProtectedLayout from './Layout/ProtectedLayout';
 import PrivateRoute from './Layout/PrivateRoute';
 
 function App() {
@@ -28,6 +32,24 @@ function App() {
                   </PrivateRoute>
                 }
               />
+              <Route
+                path="/templates"
+                element={
+                  <PrivateRoute>
+                    <TemplatesPage />   ← KHÔNG bọc thêm ProtectedLayout
+                  </PrivateRoute>
+                }
+              />
+
+              <Route
+                path="/home"
+                element={
+                  <PrivateRoute>
+                    <HomePage />
+                  </PrivateRoute>
+                }
+              />
+             
 
               <Route path="*" element={<Navigate to="/boards" replace />} />
             </Routes>
