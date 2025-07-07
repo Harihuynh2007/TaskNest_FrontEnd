@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import { FaLock, FaUsers, FaGlobe } from 'react-icons/fa';
+
 import styled from 'styled-components';
 import BoardBackgroundPopup from './BoardBackgroundPopup';
 const visibilityOptions = [
