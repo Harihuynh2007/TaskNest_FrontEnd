@@ -60,6 +60,7 @@ export default function SiderBar() {
             <FaCaretDown className="caret-icon" />
           </div>
         </Dropdown.Toggle>
+        
         <Dropdown.Menu as={CustomMenu} className="w-100">
           <Dropdown.Item onClick={() => navigate('/boards')}>
             <FaTrello className="mr-2" /> Boards

@@ -1,9 +1,8 @@
 import React from 'react';
-import { Row } from 'react-bootstrap';
-import Header from '../../components/Header';
-import SiderBar from '../../components/SiderBar';
-import MainContent from './MainContent';
+
+import BoardsMainContent from './BoardsMainContent';
 import CreateBoardModal from './CreateBoardModal';
+import WithHeaderAndSidebarLayout from '../../Layout/WithHeaderAndSidebarLayout';
 
 export default function BoardsPage() {
   const [showModal, setShowModal] = React.useState(false);
@@ -15,20 +14,14 @@ export default function BoardsPage() {
   };
 
   return (
-    <>
-      <Header onCreateBoard={handleOpenModal} />
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 16px' }}>
-        <Row noGutters style={{ height: 'calc(100vh - 56px)' }}>
-          <SiderBar />
-          <MainContent onCreateBoard={handleOpenModal} />
-        </Row>
-      </div>
+    <WithHeaderAndSidebarLayout>
+      <BoardsMainContent onCreateBoard={handleOpenModal} />
       {showModal && (
         <CreateBoardModal
           onCreate={() => handleCloseModal(true)}
           onClose={() => handleCloseModal(false)}
         />
       )}
-    </>
+    </WithHeaderAndSidebarLayout>
   );
 }

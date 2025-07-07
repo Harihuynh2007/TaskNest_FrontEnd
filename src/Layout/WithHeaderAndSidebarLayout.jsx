@@ -7,7 +7,7 @@ export default function WithHeaderAndSidebarLayout({ children }) {
   return (
     <>
       <Header />
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 16px' }}>
+      <div style={{ width:'100%', maxWidth: '1200px', margin: '0 auto', padding: '0 16px' }}>
         <Row noGutters style={{ height: 'calc(100vh - 56px)' }}>
           <SiderBar />
           <Col xs={9} className="bg-light p-4 overflow-auto">
