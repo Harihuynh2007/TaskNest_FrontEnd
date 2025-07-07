@@ -50,7 +50,7 @@ export default function BoardBackgroundPopup({ onClose, onSelectBackground }) {
             <ColorBox
               key={idx}
               style={{ background: color }}
-              onClick={() => onSelectBackground(color)}
+              onClick={() => onSelectBackground(color)} // Cập nhật background trực tiếp
             />
           ))}
         </Grid>

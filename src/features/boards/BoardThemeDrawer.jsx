@@ -1,31 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import { FaLock, FaUsers, FaGlobe } from 'react-icons/fa';
-
 import styled from 'styled-components';
 import BoardBackgroundPopup from './BoardBackgroundPopup';
+
 const visibilityOptions = [
-  {
-    key: 'private',
-    label: 'Private',
-    icon: <FaLock className="me-2" />,
-    description: 'Only board members can see this board.'
-  },
-  {
-    key: 'workspace',
-    label: 'Workspace',
-    icon: <FaUsers className="me-2" />,
-    description: 'All members of the workspace can see and edit this board.'
-  },
-  {
-    key: 'public',
-    label: 'Public',
-    icon: <FaGlobe className="me-2" />,
-    description: 'Anyone on the internet can see this board.'
-  }
+  { key: 'private', label: 'Private', icon: <FaLock className="me-2" />, description: 'Only board members can see this board.' },
+  { key: 'workspace', label: 'Workspace', icon: <FaUsers className="me-2" />, description: 'All members of the workspace can see and edit this board.' },
+  { key: 'public', label: 'Public', icon: <FaGlobe className="me-2" />, description: 'Anyone on the internet can see this board.' }
 ];
 
-const colorOptions = ['rgb(168, 105, 193)',' rgb(34, 140, 213)','#00b8ff', '#f06292', '#0277bd'];
+const colorOptions = ['rgb(168, 105, 193)', 'rgb(34, 140, 213)', '#00b8ff', '#f06292', '#0277bd'];
 
 export default function BoardThemeDrawer({ show, onClose, onCreate }) {
   const [title, setTitle] = useState('');
@@ -68,7 +53,7 @@ export default function BoardThemeDrawer({ show, onClose, onCreate }) {
         <CloseBtn onClick={onClose}>×</CloseBtn>
       </Header>
 
-      <PreviewBox style={{ backgroundColor: background }}>Board Preview</PreviewBox>
+      <PreviewBox style={{ background }}>Board Preview</PreviewBox>
 
       <Form.Group className="mb-3">
         <Form.Label><strong>Background</strong></Form.Label>
@@ -84,14 +69,11 @@ export default function BoardThemeDrawer({ show, onClose, onCreate }) {
           <ColorDotMore onClick={() => setShowBgPopup(true)}>…</ColorDotMore>
         </ColorRow>
         {showBgPopup && (
-            <BoardBackgroundPopup
-              onClose={() => setShowBgPopup(false)}
-              onSelectBackground={(bg) => {
-                setBackground(bg);
-                setShowBgPopup(false);
-              }}
-            />
-          )}
+          <BoardBackgroundPopup
+            onClose={() => setShowBgPopup(false)}
+            onSelectBackground={setBackground} // Truyền setBackground trực tiếp
+          />
+        )}
       </Form.Group>
 
       <Form.Group className="mb-2">

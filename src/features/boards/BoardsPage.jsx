@@ -1,7 +1,7 @@
 import React, { useCallback ,Suspense} from 'react';
 import { Spinner } from 'react-bootstrap';
 import BoardsMainContent from './BoardsMainContent';
-import CreateBoardModal from './CreateBoardModal';
+
 import WithHeaderAndSidebarLayout from '../../Layout/WithHeaderAndSidebarLayout';
 
 export default function BoardsPage() {
