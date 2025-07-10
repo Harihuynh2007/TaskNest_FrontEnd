@@ -37,11 +37,18 @@ export function AuthProvider({ children }) {
     });
 
   // Hàm logout
-  const logout = () =>
-    authLogout().then(() => {
-      localStorage.removeItem('token');
-      setUser(null);
-    });
+  const logout = () => {
+    return authLogout()
+      .then(() => {
+        localStorage.removeItem('token');
+        setUser(null);
+      })
+      .catch(error => {
+        console.error('Logout API error:', error);
+        localStorage.removeItem('token'); // Xóa token thủ công
+        setUser(null); // Đặt user về null dù API thất bại
+      });
+  };
 
   const fetchUserDetails = async () => {
   try {

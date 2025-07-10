@@ -4,6 +4,9 @@ import axios from 'axios';
 // Instance axios trỏ tới Django
 const authApi = axios.create({
   baseURL: 'http://localhost:8000/api/auth',
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem('token')}`,
+  },
 });
 
 // Đảm bảo gửi JSON

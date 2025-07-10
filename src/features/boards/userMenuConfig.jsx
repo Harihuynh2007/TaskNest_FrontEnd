@@ -1,3 +1,5 @@
+
+
 export const getUserMenuConfig = ({ user, logout, openModal }) => [
   { section: 'ACCOUNT' },
   {

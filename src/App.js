@@ -1,7 +1,6 @@
-
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-
+import React, { useContext } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AuthContext } from './contexts/AuthContext';
 import { AuthProvider, WorkspaceProvider, ModalProvider } from './contexts';
 
 import AuthForm from './features/auth/AuthForm';
@@ -10,8 +9,18 @@ import BoardsPage from './features/boards/BoardsPage';
 import TemplatesPage from './features/templates/TemplatesPage';
 import HomePage from './features/home/HomePage';
 
-import ProtectedLayout from './Layout/ProtectedLayout';
 import PrivateRoute from './Layout/PrivateRoute';
+
+// Component để redirect khi logout
+const LogoutRedirect = () => {
+  const { user } = useContext(AuthContext);
+  const location = useLocation();
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  return null;
+};
 
 function App() {
   return (
@@ -36,11 +45,10 @@ function App() {
                 path="/templates"
                 element={
                   <PrivateRoute>
-                    <TemplatesPage />   ← KHÔNG bọc thêm ProtectedLayout
+                    <TemplatesPage />
                   </PrivateRoute>
                 }
               />
-
               <Route
                 path="/home"
                 element={
@@ -49,8 +57,9 @@ function App() {
                   </PrivateRoute>
                 }
               />
-             
 
+              {/* Redirect khi logout hoặc không đăng nhập */}
+              <Route path="/" element={<LogoutRedirect />} />
               <Route path="*" element={<Navigate to="/boards" replace />} />
             </Routes>
           </Router>

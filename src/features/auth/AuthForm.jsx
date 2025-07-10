@@ -86,7 +86,19 @@ export default function AuthForm({ mode = 'login' }) {
     setLoading(true);
     try {
       if (isLogin) {
+
         await login(email, password);
+
+        const accounts = JSON.parse(localStorage.getItem('savedAccounts')) || [];
+        const exists = accounts.find(acc => acc.email ===email);
+        if(!exists){
+          const newAcc = {
+            email,
+            name : email.split('@')[0],
+            avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${email}`
+          };
+          localStorage.setItem('savedAccounts', JSON.stringify([newAcc, ...accounts]));
+        }
       } else {
         await signup(email, password);
       }
