@@ -7,7 +7,7 @@ import {
   FormControl,
   Button,
 } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext, WorkspaceContext, ModalContext } from '../contexts';
 import { MdSearch, MdNotificationsNone } from 'react-icons/md';
 import { FiHelpCircle } from 'react-icons/fi';
@@ -17,15 +17,19 @@ import UserDropdown from './UserDropdown';
 import CreateDropdown from './CreateDropdown';
 import CreateWorkspaceModal from '../features/workspaces/CreateWorkspaceModal';
 import SwitchAccountsModal from '../features/auth/SwitchAccountsModal';
+import BoardThemeDrawer from '../features/boards/BoardThemeDrawer';
 
-export default function Header({ onCreateBoard }) {
+export default function Header() {
   const { user, logout } = useContext(AuthContext);
   const { workspaces, currentWorkspaceId, searchNav, setSearchNav } = useContext(WorkspaceContext);
   const { modals, closeModal } = useContext(ModalContext);
-  const [isFocused, setIsFocused] = useState(false);
   const currentWs = workspaces.find(w => w.id === currentWorkspaceId) || {};
+  const navigate = useNavigate();
 
+  const [isFocused, setIsFocused] = useState(false);
   const [showCreateDropdown, setShowCreateDropdown] = useState(false);
+  const [showBoardTheme, setShowBoardTheme] = useState(false);
+
   const dropdownRef = useRef(null);
 
   const handleSearchChange = (e) => {
@@ -55,18 +59,14 @@ export default function Header({ onCreateBoard }) {
               </Navbar.Brand>
             </Nav>
 
-            <div
-              className="d-flex align-items-center mx-auto"
-              style={{ flex: '1 1 700px', maxWidth: 700, minWidth: 0 }}
-            >
+            <div className="d-flex align-items-center mx-auto" style={{ flex: '1 1 700px', maxWidth: 700, minWidth: 0 }}>
               <InputGroup
                 className="flex-grow-1"
                 style={{
-                  minWidth: 0,
                   background: '#f4f5f7',
                   border: '1px solid #dfe1e6',
                   borderRadius: 3,
-                  boxShadow: isFocused ? '0 0 0 2px rgba(40, 167, 69, 0.3)' : 'none', // Màu xanh lá TaskNest
+                  boxShadow: isFocused ? '0 0 0 2px rgba(40, 167, 69, 0.3)' : 'none',
                 }}
               >
                 <InputGroup.Text style={{ background: 'transparent', border: 'none', padding: '0 8px' }}>
@@ -74,19 +74,17 @@ export default function Header({ onCreateBoard }) {
                 </InputGroup.Text>
                 <FormControl
                   placeholder="Search"
-                  aria-label="Search"
                   value={searchNav}
                   onChange={handleSearchChange}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
-                  style={{ border: 'none', background: 'transparent', minWidth: 0, outline: 'none', padding: '4px 8px' }}
+                  style={{ border: 'none', background: 'transparent', padding: '4px 8px' }}
                 />
               </InputGroup>
 
-              <div className="d-flex align-items-center position-relative" ref={dropdownRef} style={{ position: 'relative' }}>
+              <div className="d-flex align-items-center position-relative ms-2" ref={dropdownRef}>
                 <Button
                   variant="success"
-                  onClick={() => setShowCreateDropdown(!showCreateDropdown)}
                   style={{
                     backgroundColor: '#28A745',
                     borderColor: '#28A745',
@@ -95,6 +93,7 @@ export default function Header({ onCreateBoard }) {
                     minWidth: '70px',
                     whiteSpace: 'nowrap',
                   }}
+                  onClick={() => setShowCreateDropdown(!showCreateDropdown)}
                 >
                   Create
                 </Button>
@@ -103,11 +102,23 @@ export default function Header({ onCreateBoard }) {
                   <CreateDropdown
                     onCreateBoard={() => {
                       setShowCreateDropdown(false);
-                      onCreateBoard?.();
+                      setShowBoardTheme(true);
                     }}
                     onStartTemplate={() => {
                       setShowCreateDropdown(false);
-                      window.location.href = '/templates';
+                      navigate('/templates');
+                    }}
+                  />
+                )}
+
+                {showBoardTheme && (
+                  <BoardThemeDrawer
+                    show={showBoardTheme}
+                    onClose={() => setShowBoardTheme(false)}
+                    onCreate={(data) => {
+                      console.log('Create board:', data);
+                      setShowBoardTheme(false);
+                      // Optionally: Call API to create board
                     }}
                   />
                 )}
@@ -115,9 +126,9 @@ export default function Header({ onCreateBoard }) {
             </div>
 
             <Nav className="align-items-center">
-              <AiOutlineGlobal size={20} style={{ marginLeft: '4px' }} aria-label="Global" />
-              <MdNotificationsNone size={20} style={{ marginLeft: '4px' }} aria-label="Notifications" />
-              <FiHelpCircle size={20} style={{ marginLeft: '4px' }} aria-label="Help" />
+              <AiOutlineGlobal size={20} style={{ marginLeft: '4px' }} />
+              <MdNotificationsNone size={20} style={{ marginLeft: '4px' }} />
+              <FiHelpCircle size={20} style={{ marginLeft: '4px' }} />
               {user && <UserDropdown user={user} logout={logout} />}
             </Nav>
           </Navbar.Collapse>
