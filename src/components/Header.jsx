@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import {
   Navbar,
   Nav,
@@ -14,6 +14,7 @@ import { FiHelpCircle } from 'react-icons/fi';
 import { AiOutlineGlobal } from 'react-icons/ai';
 import AppsDropdown from './AppsDropdown';
 import UserDropdown from './UserDropdown';
+import CreateDropdown from './CreateDropdown';
 import CreateWorkspaceModal from '../features/workspaces/CreateWorkspaceModal';
 import SwitchAccountsModal from '../features/auth/SwitchAccountsModal';
 
@@ -24,14 +25,17 @@ export default function Header({ onCreateBoard }) {
   const [isFocused, setIsFocused] = useState(false);
   const currentWs = workspaces.find(w => w.id === currentWorkspaceId) || {};
 
+  const [showCreateDropdown, setShowCreateDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
   const handleSearchChange = (e) => {
     setSearchNav(e.target.value);
   };
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (!e.target.closest('.input-group')) {
-        setIsFocused(false);
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowCreateDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -79,22 +83,35 @@ export default function Header({ onCreateBoard }) {
                 />
               </InputGroup>
 
-              <Button
-                variant="success" // Sử dụng màu xanh lá thay vì primary
-                style={{
-                  backgroundColor: '#28A745',
-                  borderColor: '#28A745',
-                  height: 28,
-                  lineHeight: '28px',
-                  padding: '0 10px',
-                  minWidth: '70px',
-                  whiteSpace: 'nowrap',
-                  marginLeft: '8px',
-                }}
-                onClick={onCreateBoard}
-              >
-                Create
-              </Button>
+              <div className="d-flex align-items-center position-relative" ref={dropdownRef} style={{ position: 'relative' }}>
+                <Button
+                  variant="success"
+                  onClick={() => setShowCreateDropdown(!showCreateDropdown)}
+                  style={{
+                    backgroundColor: '#28A745',
+                    borderColor: '#28A745',
+                    height: 28,
+                    padding: '0 10px',
+                    minWidth: '70px',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Create
+                </Button>
+
+                {showCreateDropdown && (
+                  <CreateDropdown
+                    onCreateBoard={() => {
+                      setShowCreateDropdown(false);
+                      onCreateBoard?.();
+                    }}
+                    onStartTemplate={() => {
+                      setShowCreateDropdown(false);
+                      window.location.href = '/templates';
+                    }}
+                  />
+                )}
+              </div>
             </div>
 
             <Nav className="align-items-center">
