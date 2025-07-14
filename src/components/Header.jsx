@@ -28,9 +28,10 @@ export default function Header() {
 
   const [isFocused, setIsFocused] = useState(false);
   const [showCreateDropdown, setShowCreateDropdown] = useState(false);
+  const dropdownRef = useRef(null);
   const [showBoardTheme, setShowBoardTheme] = useState(false);
 
-  const dropdownRef = useRef(null);
+  
 
   const handleSearchChange = (e) => {
     setSearchNav(e.target.value);

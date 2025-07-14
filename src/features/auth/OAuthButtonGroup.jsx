@@ -2,7 +2,8 @@
 import React from 'react';
 import { Button } from 'react-bootstrap';
 import { GoogleLogin } from '@react-oauth/google';
-import jwt_decode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
+
 import { FaGoogle, FaGithub, FaFacebookF } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
@@ -19,14 +20,14 @@ export default function OAuthButtonGroup() {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     const token = credentialResponse.credential;
-    const decoded = jwt_decode(token); // Lấy email, name, picture
+    const decoded = jwtDecode(token);
 
     try {
       const res = await fetch('http://localhost:8000/api/auth/google-login/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // session cookie
-        body: JSON.stringify({ access_token: token })
+        credentials: 'include',
+        body: JSON.stringify({ token }) // ✅ sửa ở đây
       });
 
       const data = await res.json();
@@ -38,6 +39,7 @@ export default function OAuthButtonGroup() {
       alert(err.message);
     }
   };
+
 
   const handleGitHubLogin = () => {
     alert('GitHub OAuth chưa tích hợp – bạn cần đăng ký app GitHub và thêm backend handler.');
