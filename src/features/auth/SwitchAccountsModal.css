@@ -10,6 +10,10 @@
 }
 
 .switch-account-box {
+  transform: translateY(-20px);
+  opacity: 0;
+  animation: fadeInUp 0.25s ease forwards;
+
   width: 360px;
   background: #fff;
   border-radius: 3px;
@@ -120,4 +124,11 @@
 .atlassian-footer a {
   color: #0052cc;
   text-decoration: none;
+}
+
+@keyframes fadeInUp {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }

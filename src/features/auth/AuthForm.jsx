@@ -16,6 +16,8 @@ import {
 import { FaEye, FaEyeSlash, FaGoogle, FaGithub, FaFacebookF } from 'react-icons/fa';
 import { AuthContext } from '../../contexts/AuthContext';
 
+import OAuthButtonGroup from './OAuthButtonGroup';
+
 export default function AuthForm({ mode = 'login' }) {
   const navigate = useNavigate();
   const isLogin = mode === 'login';
@@ -256,17 +258,7 @@ export default function AuthForm({ mode = 'login' }) {
                           <span className="mx-2 text-muted">Or continue with:</span>
                           <hr className="flex-grow-1" />
                         </div>
-                        <div className="d-grid gap-2 mb-3">
-                          <Button variant="outline-danger">
-                            <FaGoogle className="me-2" /> Google
-                          </Button>
-                          <Button variant="outline-dark">
-                            <FaGithub className="me-2" /> GitHub
-                          </Button>
-                          <Button variant="outline-primary">
-                            <FaFacebookF className="me-2" /> Facebook
-                          </Button>
-                        </div>
+                        <OAuthButtonGroup />
                       </>
                     )}
 
