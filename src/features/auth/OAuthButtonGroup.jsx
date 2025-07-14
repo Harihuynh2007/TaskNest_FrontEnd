@@ -3,8 +3,9 @@ import React from 'react';
 import { Button } from 'react-bootstrap';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
+import { AuthContext } from '../../contexts/AuthContext';
 
-import { FaGoogle, FaGithub, FaFacebookF } from 'react-icons/fa';
+import { FaGithub, FaFacebookF } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 export default function OAuthButtonGroup() {
@@ -32,6 +33,7 @@ export default function OAuthButtonGroup() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Google login failed');
+      localStorage.setItem("token", data.token);
 
       saveToLocal(data.email, data.name || decoded.name, data.avatar || decoded.picture);
       navigate('/boards');

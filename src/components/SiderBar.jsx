@@ -16,7 +16,7 @@ export default function SiderBar() {
       {/* Top navigation */}
       <ListGroup variant="flush" className="mb-4">
         <StyledItem
-          isActive={location.pathname === '/boards'}
+          $isActive={location.pathname === '/boards'}
           onClick={() => navigate('/boards')}
         >
           <FaTrello className="mr-2" /> Boards
@@ -40,7 +40,6 @@ export default function SiderBar() {
       <Dropdown className="mb-4">
         <Dropdown.Toggle
           as={CustomToggle}
-          variant="light"
           className="w-100 text-left"
           id="workspace-dropdown"
         >

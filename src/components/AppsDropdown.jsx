@@ -6,7 +6,7 @@ import { MdApps } from 'react-icons/md';
 
 export default function AppsDropdown() {
   return (
-    <Dropdown alignRight>
+    <Dropdown align="end">
         <Dropdown.Toggle
             as={Button}
             variant="link"
