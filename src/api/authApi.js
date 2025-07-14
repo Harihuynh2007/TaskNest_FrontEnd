@@ -28,7 +28,7 @@ authApi.interceptors.request.use((config) => {
  */
 export function register(email, password) {
   return authApi.post('/register/', {
-    username: email,
+    email,
     password,
   });
 }
@@ -40,7 +40,7 @@ export function register(email, password) {
  */
 export function login(email, password) {
   return authApi.post('/login/', {
-    username: email,
+    email,
     password,
   });
 }
