@@ -22,13 +22,13 @@ export default function SiderBar() {
           <FaTrello className="mr-2" /> Boards
         </StyledItem>
         <StyledItem
-          isActive={location.pathname === '/templates'}
+          $isActive={location.pathname === '/templates'}
           onClick={() => navigate('/templates')}
         >
           <FaFileAlt className="mr-2" /> Templates
         </StyledItem>
         <StyledItem
-          isActive={location.pathname === '/home'}
+          $isActive={location.pathname === '/home'}
           onClick={() => navigate('/home')}
         >
           <FaHome className="mr-2" /> Home

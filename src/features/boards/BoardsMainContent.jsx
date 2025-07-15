@@ -2,10 +2,12 @@ import React, { useContext, useState, useEffect } from 'react';
 import { Button, Spinner } from 'react-bootstrap';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { fetchBoards } from '../../api/boardApi'; 
+import { useNavigate } from 'react-router-dom';
 
 import * as boardApi from '../../api/boardApi'; 
 import styled from 'styled-components';
 import BoardThemeDrawer from './BoardThemeDrawer';
+import { createWorkspace } from '../../api/workspaceApi';
 
 export default function BoardsMainContent({ onCreateBoard }) {
   const { workspaces, currentWorkspaceId } = useContext(WorkspaceContext);
@@ -13,7 +15,7 @@ export default function BoardsMainContent({ onCreateBoard }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showDrawer, setShowDrawer] = useState(false);
-
+  const navigate = useNavigate();
   const currentWs = workspaces.find(w => w.id === currentWorkspaceId) || {};
 
   useEffect(() => {
@@ -34,23 +36,40 @@ export default function BoardsMainContent({ onCreateBoard }) {
   }, [currentWorkspaceId]);
 
   const handleCreateBoard = async (data) => {
-    if (!currentWorkspaceId) return;
-    try {
-      const res = await boardApi.createBoard(currentWorkspaceId, {
-        name: data.title,
-        visibility: data.visibility,
-        background: data.background,
-      });
-      console.log('Board created:', res.data);
-      setShowDrawer(false);
-      const resBoards = await fetchBoards(currentWorkspaceId);
-      setBoards(resBoards.data || []);
-    } catch (err) {
-      console.error('Error creating board:', err);
-      setError('Cannot create board.');
-    }
-  };
+    console.log('📍 currentWorkspaceId =', currentWorkspaceId);
+    console.log('📤 Bắt đầu tạo board:', data);
 
+  if (!currentWorkspaceId) {
+  console.warn("⚠️ currentWorkspaceId null – không thể tạo board.");
+  return;
+  }
+
+ // đường dẫn tùy bạn gọi từ đâu
+
+  try {
+    const res = await boardApi.createBoard(currentWorkspaceId, {
+      name: data.title,
+      visibility: data.visibility,
+      background: data.background,
+    });
+    console.log('✅ Board created:', res.data); // ← dòng này chưa từng in ra
+    setShowDrawer(false);
+    navigate(`/workspaces/${currentWorkspaceId}/boards/${res.data.id}/inbox`);
+  } catch (err) {
+    console.error('❌ Lỗi tạo board:', err);
+
+    if (err.response) {
+      console.error('📥 Lỗi từ API:', err.response.data);      // ← BẮT BUỘC THÊM
+      console.error('📥 Status code:', err.response.status);
+    } else if (err.request) {
+      console.error('📡 Không có phản hồi từ server:', err.request);
+    } else {
+      console.error('⚠️ Lỗi không xác định:', err.message);
+    }
+  }
+};
+
+  
   return (
     <div className="p-4" style={{ width: '100%' }}>
       <div className="d-flex justify-content-between align-items-start">

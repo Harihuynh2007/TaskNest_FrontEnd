@@ -8,8 +8,8 @@ import ForgotPassword from './features/auth/ForgotPassword';
 import BoardsPage from './features/boards/BoardsPage';
 import TemplatesPage from './features/templates/TemplatesPage';
 import HomePage from './features/home/HomePage';
-
-import PrivateRoute from './Layout/PrivateRoute';
+import BoardDetailPage from './features/boards/BoardDetailPage';
+import PrivateRoute from './Layouts/PrivateRoute';
 
 const LogoutRedirect = () => {
   const { user } = useContext(AuthContext);
@@ -27,6 +27,14 @@ function App() {
       <Route path="/login" element={<AuthForm mode="login" />} />
       <Route path="/register" element={<AuthForm mode="register" />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route
+        path="/workspaces/:workspaceId/boards/:boardId/inbox"
+        element={
+          <PrivateRoute>
+            <BoardDetailPage />
+          </PrivateRoute>
+        }
+      />
 
       <Route
         path="/boards/*"

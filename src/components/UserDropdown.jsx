@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { ModalContext } from '../contexts/ModalContext';
 import { AuthContext } from '../contexts/AuthContext';
 import { getUserMenuConfig } from '../features/boards/userMenuConfig';
-import '../App.css';
+import '../styles/App.css';
 
 export default function UserDropdown({ user, logout }) {
   const { user: authUser } = useContext(AuthContext);

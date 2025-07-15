@@ -108,3 +108,28 @@ html, body, #root {
   color: #5e6c84;
   margin-top: 2px;
 }
+
+.apps-dropdown .dropdown-menu {
+  min-width: 240px;
+  margin-top: 6px;
+  left: 0 !important;
+  right: auto !important;
+  transform: none !important;
+  z-index: 1001;
+  overflow-y: auto;
+  max-height: 60vh;
+  border-radius: 4px;
+}
+
+/* Giảm size icon và chữ trên mobile */
+@media (max-width: 576px) {
+  .apps-icon {
+    font-size: 20px;
+  }
+
+  .apps-dropdown .dropdown-menu {
+    font-size: 14px;
+    width: 90vw;
+    left: 5vw !important;
+  }
+}

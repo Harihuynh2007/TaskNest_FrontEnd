@@ -37,6 +37,8 @@ export default function BoardThemeDrawer({ show, onClose, onCreate }) {
       setError('Board title is required');
       return;
     }
+    console.log('🧪 Gọi onCreate với dữ liệu:', { title, visibility, background }); // THÊM DÒNG NÀY
+
     onCreate({ title, visibility, background });
     setTitle('');
     setVisibility('workspace');
@@ -62,7 +64,7 @@ export default function BoardThemeDrawer({ show, onClose, onCreate }) {
             <ColorDot
               key={idx}
               color={color}
-              active={background === color}
+              $active={background === color}
               onClick={() => setBackground(color)}
             />
           ))}

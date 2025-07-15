@@ -6,3 +6,6 @@ export const fetchBoards = workspaceId =>
 
 export const createBoard = (workspaceId, data) =>
   API.post(`/workspaces/${workspaceId}/boards/`, data);
+
+export const getBoard = (workspaceId, boardId) =>
+  API.get(`/workspaces/${workspaceId}/boards/${boardId}/`);

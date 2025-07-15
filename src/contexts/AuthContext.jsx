@@ -1,43 +1,66 @@
-import React, { createContext, useState, useEffect } from 'react';
+// src/contexts/AuthContext.jsx
+import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { register, login as authLogin, logout as authLogout } from '../api/authApi';
 
 export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user,    setUser]    = useState(null);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      fetchUserDetails(); // GỌI HÀM này để lấy user chi tiết
-    } else {
+  const fetchUserDetails = useCallback(async () => {
+    try {
+      const res = await fetch('http://localhost:8000/api/auth/me/', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!res.ok) {
+        throw new Error('Failed to fetch user details');
+      }
+      const data = await res.json();
+      setUser({
+        email: data.email || data.username,
+        name: data.name || data.username,
+        role: data.role || 'user', // Thêm role từ API
+      });
+    } catch (err) {
+      console.error('Lỗi khi fetch user:', err);
+      localStorage.removeItem('token');
+      setUser(null);
+    } finally {
       setLoading(false);
     }
   }, []);
 
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetchUserDetails();
+    } else {
+      setLoading(false);
+    }
+  }, [fetchUserDetails]); // Thêm fetchUserDetails vào dependency để fix lỗi
 
-  // Hàm signup nhận (email, password)
-  const signup = (email, password) =>
-    register(email, password).then(res => {
-      // Lưu token và user
-      const token = res.data.token || res.data.access;
-      localStorage.setItem('token', token);
-      setUser({ email });
-      return res;
-    });
+  const signup = useCallback(async (email, password) => {
+    const res = await authLogin(email, password);
+    const token = res.data.token || res.data.access;
+    localStorage.setItem('token', token);
+    await fetchUserDetails(); // LẤY CHI TIẾT
+    return res;
+  }, [fetchUserDetails]);
 
-  // Hàm login nhận (email, password)
-  const login = (email, password) =>
-    authLogin(email, password).then(res => {
-      const token = res.data.token || res.data.access;
-      localStorage.setItem('token', token);
-      setUser({ email });
-      return res;
-    });
 
-  // Hàm logout
-  const logout = () => {
+  const login = useCallback(async (email, password) => {
+    const res = await authLogin(email, password);
+    const token = res.data.token || res.data.access;
+    localStorage.setItem('token', token);
+    await fetchUserDetails(); // LẤY CHI TIẾT
+    return res;
+  }, [fetchUserDetails]);
+
+
+  const logout = useCallback(() => {
     return authLogout()
       .then(() => {
         localStorage.removeItem('token');
@@ -45,35 +68,24 @@ export function AuthProvider({ children }) {
       })
       .catch(error => {
         console.error('Logout API error:', error);
-        localStorage.removeItem('token'); // Xóa token thủ công
-        setUser(null); // Đặt user về null dù API thất bại
+        localStorage.removeItem('token');
+        setUser(null);
       });
-  };
+  }, []);
 
-  const fetchUserDetails = async () => {
-  try {
-    const res = await fetch('http://localhost:8000/api/auth/me/', {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    const data = await res.json();
-    setUser({
-      email: data.email || data.username, 
-      name: data.name || data.username,
-      role: data.role || 'user',
-    });
-  } catch (err) {
-    console.error('Lỗi khi fetch user:', err);
-    setUser(null);
-  } finally {
-    setLoading(false);
-  }
-};
-
+  // Thêm hàm checkPermission để hỗ trợ phân quyền (dùng trong Member & Role Management)
+  const checkPermission = useCallback((permission) => {
+    if (!user || !user.role) return false;
+    const permissions = {
+      owner: ['edit', 'delete', 'invite', 'manage'],
+      member: ['edit'],
+      viewer: []
+    };
+    return permissions[user.role]?.includes(permission) || false;
+  }, [user]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, checkPermission,fetchUserDetails }}>
       {children}
     </AuthContext.Provider>
   );
