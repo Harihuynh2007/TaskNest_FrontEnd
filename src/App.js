@@ -10,6 +10,7 @@ import TemplatesPage from './features/templates/TemplatesPage';
 import HomePage from './features/home/HomePage';
 import BoardDetailPage from './features/boards/BoardDetailPage';
 import PrivateRoute from './Layouts/PrivateRoute';
+import WithHeaderOnlyLayout from './Layouts/WithHeaderOnlyLayout.jsx'; // thêm dòng này
 
 const LogoutRedirect = () => {
   const { user } = useContext(AuthContext);
@@ -31,7 +32,9 @@ function App() {
         path="/workspaces/:workspaceId/boards/:boardId/inbox"
         element={
           <PrivateRoute>
-            <BoardDetailPage />
+            <WithHeaderOnlyLayout>
+              <BoardDetailPage />
+            </WithHeaderOnlyLayout>
           </PrivateRoute>
         }
       />

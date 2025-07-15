@@ -8,6 +8,7 @@ import * as boardApi from '../../api/boardApi';
 import styled from 'styled-components';
 import BoardThemeDrawer from './BoardThemeDrawer';
 import { createWorkspace } from '../../api/workspaceApi';
+import { Link } from 'react-router-dom';
 
 export default function BoardsMainContent({ onCreateBoard }) {
   const { workspaces, currentWorkspaceId } = useContext(WorkspaceContext);
@@ -128,7 +129,13 @@ export default function BoardsMainContent({ onCreateBoard }) {
         ) : (
           <BoardGrid>
             {boards.map(board => (
-              <BoardCard key={board.id}>{board.name}</BoardCard>
+              <Link
+                key={board.id}
+                to={`/workspaces/${currentWorkspaceId}/boards/${board.id}/inbox`}
+                style={{ textDecoration: 'none' }}
+              >
+                <BoardCard>{board.name}</BoardCard>
+              </Link>
             ))}
           </BoardGrid>
         )}
