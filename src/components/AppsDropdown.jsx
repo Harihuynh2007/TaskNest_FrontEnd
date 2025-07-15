@@ -1,24 +1,29 @@
 // AppsDropdown.jsx
-import React from 'react';
 import { Dropdown, Button } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { MdApps } from 'react-icons/md';
 
 export default function AppsDropdown() {
   return (
-    <Dropdown align="end">
+    <Dropdown drop="down" className="apps-dropdown position-relative" align="start">
         <Dropdown.Toggle
             as={Button}
             variant="link"
             id="apps-menu-toggle"
-            style={{ padding: 0, lineHeight: 0, color: '#000' }}
+            style={{
+                padding: 0,
+                lineHeight: 0,
+                color: '#000',
+                position: 'relative',
+                zIndex: 2
+                }}
             className="p-0 app-menu-toggle"
         >
-            <MdApps size={24} />
+            <MdApps size={24} className='apps-icon' />
         </Dropdown.Toggle>
 
         <Dropdown.Menu
-            style={{ minWidth: 240, padding: 0 }}
+            style={{ minWidth: 240, padding: 0,maxHeight: '60vh', overflowY: 'auto'}}
             className="shadow"
         >
             {/* Header of menu */}
