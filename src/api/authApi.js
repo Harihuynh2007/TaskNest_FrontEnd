@@ -1,8 +1,8 @@
 // src/api/authApi.js
-import axios from 'axios';
+import api from './axiosClient';
 
 // Tạo instance riêng cho auth
-const authApi = axios.create({
+const authApi = api.create({
   baseURL: 'http://localhost:8000/api/auth',
   headers: {
     'Content-Type': 'application/json',
@@ -38,12 +38,21 @@ export function register(email, password) {
  * @param {string} email
  * @param {string} password
  */
-export function login(email, password) {
-  return authApi.post('/login/', {
+export async function login(email, password) {
+  const res = await api.post('http://localhost:8000/api/auth/login/', {
     email,
     password,
   });
+
+  const access = res.data.token || res.data.access;
+  const refresh = res.data.refresh;
+
+  localStorage.setItem('token', access);
+  localStorage.setItem('refresh_token', refresh); // ✅ lưu thêm refresh
+
+  return res;
 }
+
 
 /**
  * Đăng xuất

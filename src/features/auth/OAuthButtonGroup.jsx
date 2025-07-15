@@ -33,10 +33,12 @@ export default function OAuthButtonGroup() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Google login failed');
-      localStorage.setItem("token", data.token);
 
+      localStorage.setItem("token", data.token);
       saveToLocal(data.email, data.name || decoded.name, data.avatar || decoded.picture);
-      navigate('/boards');
+      window.location.reload(); // ✅ reload toàn bộ app như Trello
+
+
     } catch (err) {
       alert(err.message);
     }

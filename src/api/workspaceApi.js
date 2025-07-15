@@ -1,7 +1,8 @@
 
-import API from './apiClient';
+import api from './axiosClient';
 
-export const fetchWorkspaces = () => API.get('/workspaces/');
+
+export const fetchWorkspaces = () => api.get('/workspaces/');
 
 /**
  * Tạo workspace mới
@@ -9,4 +10,4 @@ export const fetchWorkspaces = () => API.get('/workspaces/');
  * @param {string} data.name - Tên workspace
  * @returns Promise
  */
-export const createWorkspace = (data) => API.post('/workspaces/', data);
+export const createWorkspace = (data) => api.post('/workspaces/', data);
