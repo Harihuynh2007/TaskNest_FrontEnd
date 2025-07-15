@@ -36,9 +36,9 @@ export default function OAuthButtonGroup() {
 
       localStorage.setItem("token", data.token);
       saveToLocal(data.email, data.name || decoded.name, data.avatar || decoded.picture);
-      window.location.reload(); // ✅ reload toàn bộ app như Trello
-
-
+      navigate('/boards');
+      window.location.reload();
+      
     } catch (err) {
       alert(err.message);
     }
