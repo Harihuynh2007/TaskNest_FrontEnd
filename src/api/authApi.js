@@ -1,5 +1,7 @@
 // src/api/authApi.js
 import api from './axiosClient';
+import * as workspaceApi from './workspaceApi'; // ✅ Thêm để gọi tạo workspace
+import { toast } from 'react-toastify'; // ✅ nếu bạn đang dùng react-toastify
 
 // Tạo instance riêng cho auth
 const authApi = api.create({
@@ -22,19 +24,7 @@ authApi.interceptors.request.use((config) => {
 });
 
 /**
- * Đăng ký tài khoản
- * @param {string} email
- * @param {string} password
- */
-export function register(email, password) {
-  return authApi.post('/register/', {
-    email,
-    password,
-  });
-}
-
-/**
- * Đăng nhập
+ * Đăng nhập & tạo workspace đầu tiên nếu cần
  * @param {string} email
  * @param {string} password
  */
@@ -48,11 +38,32 @@ export async function login(email, password) {
   const refresh = res.data.refresh;
 
   localStorage.setItem('token', access);
-  localStorage.setItem('refresh_token', refresh); // ✅ lưu thêm refresh
+  localStorage.setItem('refresh_token', refresh);
+
+  // ✅ Sau khi login → Kiểm tra và tạo workspace đầu tiên nếu cần
+  try {
+    const wsRes = await workspaceApi.fetchWorkspaces();
+    if (!wsRes.data || wsRes.data.length === 0) {
+      const created = await workspaceApi.createWorkspace({ name: 'My First Workspace' });
+      console.log('🎉 Auto-created workspace:', created.data);
+      toast.success('Created your first workspace!');
+    }
+  } catch (err) {
+    console.error('❌ Error while auto-creating workspace:', err);
+  }
 
   return res;
 }
 
+/**
+ * Đăng ký tài khoản
+ */
+export function register(email, password) {
+  return authApi.post('/register/', {
+    email,
+    password,
+  });
+}
 
 /**
  * Đăng xuất

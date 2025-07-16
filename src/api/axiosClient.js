@@ -7,6 +7,19 @@ const api = axios.create({
   },
 });
 
+// ✅ Thêm interceptor để gắn token vào header
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// ✅ Interceptor xử lý refresh token khi hết hạn
 api.interceptors.response.use(
   (res) => res,
   async (err) => {
