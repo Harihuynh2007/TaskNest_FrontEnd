@@ -55,9 +55,14 @@ export default function Header() {
           <Navbar.Collapse id="responsive-navbar-nav">
             <Nav className="align-items-center">
               <AppsDropdown />
-              <Navbar.Brand as={Link} to="/">
+              <Navbar.Brand
+                role="button"
+                onClick={() => navigate('/boards')}
+                style={{ textDecoration: 'none' }}
+              >
                 <span style={{ color: '#28A745', fontSize: '24px', fontWeight: 'bold' }}>TaskNest</span>
               </Navbar.Brand>
+
             </Nav>
 
             <div className="d-flex align-items-center mx-auto" style={{ flex: '1 1 700px', maxWidth: 700, minWidth: 0 }}>
