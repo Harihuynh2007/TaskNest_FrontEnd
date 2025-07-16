@@ -2,16 +2,15 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
+import InboxSubHeader from './InboxSubHeader';
 
 export default function BoardDetailPage() {
-  const [cards, setCards] = useState([
-    { text: 'Add a card', completed: false },
-    { text: 'Hello', completed: false },
-    { text: 'test thử card', completed: false }
-  ])
+  const [cards, setCards] = useState([])
+
   const [archived, setArchived] = useState([])
   const [inputValue, setInputValue] = useState('')
-  const [showInput, setShowInput] = useState(true)
+  const [showInput, setShowInput] = useState(false)
+
 
   const handleAddCard = () => {
     if (inputValue.trim() === '') return
@@ -44,20 +43,29 @@ export default function BoardDetailPage() {
   return (
     <BoardWrapper>
       <CenterColumn>
-        {showInput && (
+        <InboxSubHeader />
+        {showInput ? (
           <CardInputWrapper>
             <Input
               placeholder="Enter a title"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
+              autoFocus
             />
+            
             <ButtonRow>
               <AddButton onClick={handleAddCard}>Add card</AddButton>
-              <CancelButton onClick={() => setShowInput(false)}>Cancel</CancelButton>
+              <CancelButton onClick={() => {
+                setShowInput(false)
+                setInputValue('')
+              }}>Cancel</CancelButton>
             </ButtonRow>
           </CardInputWrapper>
+        ) : (
+          <AddCardTrigger onClick={() => setShowInput(true)}>
+            Add a card
+          </AddCardTrigger>
         )}
-
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="cardList">
             {(provided) => (
@@ -107,43 +115,50 @@ const BoardWrapper = styled.div`
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  padding: 40px 16px;
+  
 `
 
 const CenterColumn = styled.div`
   width: 100%;
-  max-width: 500px;
+  max-width: 784px
 `
 
 const CardInputWrapper = styled.div`
   background: white;
-  padding: 12px;
-  border-radius: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 `
 
-const Input = styled.input`
+const Input = styled.textarea`
   width: 100%;
-  padding: 8px;
-  font-size: 16px;
-  border: 1px solid #ccc;
+  min-height: 36px;
+  resize: none;
+  font-size: 14px;
+  padding: 6px 8px;
   border-radius: 4px;
+  border: 1px solid #dfe1e6;
+  box-shadow: inset 0 0 0 2px #388bff;
+  outline: none;
 `
+
 
 const ButtonRow = styled.div`
-  margin-top: 8px;
+  margin-top: 6px;
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  align-items: center;
 `
 
 const AddButton = styled.button`
-  background: #0c66e4;
+  background: #28A745;
   color: white;
   padding: 6px 12px;
   border: none;
-  border-radius: 4px;
-  font-weight: 500;
+  border-radius: 3px;
+  font-size: 14px;
+  font-weight: 600;
 `
 
 const CancelButton = styled.button`
@@ -207,6 +222,20 @@ const CheckCircle = styled.div`
 
   &:hover {
     background: #f0f0f0;
+  }
+`
+const AddCardTrigger = styled.div`
+  background-color: white;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #172b4d;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(9, 30, 66, 0.14);
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: #dfe1e6;
   }
 `
 
