@@ -2,11 +2,10 @@
 import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 
-export default function CardEditPopup({ anchorRect, cardText, onClose, onChange, onSave }) {
+export default function CardEditPopup({ anchorRect, cardText, onClose, onChange, onSave, onOpenFullCard }) {
   const popupRef = useRef();
   const textareaRef = useRef();
 
-  // Đóng khi click ngoài popup
   useEffect(() => {
     function handleClickOutside(e) {
       if (popupRef.current && !popupRef.current.contains(e.target)) {
@@ -17,7 +16,6 @@ export default function CardEditPopup({ anchorRect, cardText, onClose, onChange,
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onClose]);
 
-  // Auto focus textarea khi mở
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.focus();
@@ -53,7 +51,10 @@ export default function CardEditPopup({ anchorRect, cardText, onClose, onChange,
       </Form>
 
       <MenuList>
-        <MenuItem onClick={() => alert('Open card')}>📄 Open card</MenuItem>
+        <MenuItem onClick={() => {
+          onClose();
+          onOpenFullCard(); // Gọi modal chi tiết
+        }}>📄 Open card</MenuItem>
         <MenuItem onClick={() => alert('Change cover')}>🖼 Change cover</MenuItem>
         <MenuItem onClick={() => alert('Edit dates')}>🕓 Edit dates</MenuItem>
         <MenuItem onClick={() => alert('Move')}>➡️ Move</MenuItem>
@@ -74,7 +75,7 @@ const Dialog = styled.div`
   z-index: 2000;
 
   @media (max-width: 768px) {
-    left: 16px !important; /* Fix left cho mobile */
+    left: 16px !important;
     right: 16px;
     width: auto;
   }
@@ -128,3 +129,4 @@ const MenuItem = styled.li`
     background: #f4f5f7;
   }
 `;
+

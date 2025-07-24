@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import InboxSubHeader from './InboxSubHeader';
 import CardEditPopup from './CardEditPopup';
+import FullCardModal from '../../components/FullCardModal';
 
 export default function BoardDetailPage() {
   const [cards, setCards] = useState([]);
@@ -11,6 +12,7 @@ export default function BoardDetailPage() {
   const [inputValue, setInputValue] = useState('');
   const [showInput, setShowInput] = useState(false);
   const [editPopup, setEditPopup] = useState(null); // { index, text, anchorRect }
+  const [selectedCard, setSelectedCard] = useState(null);
 
   const handleAddCard = () => {
     if (inputValue.trim() === '') return;
@@ -52,6 +54,12 @@ export default function BoardDetailPage() {
   return (
     <>
       {editPopup && <DarkOverlay />} {/* overlay làm tối nền */}
+      {selectedCard && (
+        <FullCardModal
+          card={selectedCard}
+          onClose={() => setSelectedCard(null)}
+        />
+      )}
       <BoardWrapper>
         <CenterColumn>
           <InboxSubHeader />
@@ -97,9 +105,16 @@ export default function BoardDetailPage() {
                           {...provided.draggableProps}
                           {...provided.dragHandleProps}
                           isDragging={snapshot.isDragging}
+                          onClick={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setEditPopup({ index, text: card.text, anchorRect: rect });
+                          }}
                         >
                           <CheckCircle
-                            onClick={() => toggleComplete(index)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleComplete(index);
+                            }}
                             title={card.completed ? 'Mark incomplete' : 'Mark complete'}
                           >
                             {card.completed ? '✅' : '○'}
@@ -109,12 +124,9 @@ export default function BoardDetailPage() {
 
                           <EditIcon
                             onClick={(e) => {
+                              e.stopPropagation();
                               const rect = e.currentTarget.parentElement.getBoundingClientRect();
-                              setEditPopup({
-                                index,
-                                text: card.text,
-                                anchorRect: rect,
-                              });
+                              setEditPopup({ index, text: card.text, anchorRect: rect });
                             }}
                           >
                             ✏️
@@ -136,6 +148,10 @@ export default function BoardDetailPage() {
               onChange={(val) => setEditPopup({ ...editPopup, text: val })}
               onSave={handleSaveCard}
               onClose={() => setEditPopup(null)}
+              onOpenFullCard={() => {
+                setEditPopup(null);
+                setSelectedCard(cards[editPopup.index]);
+              }}
             />
           )}
         </CenterColumn>
