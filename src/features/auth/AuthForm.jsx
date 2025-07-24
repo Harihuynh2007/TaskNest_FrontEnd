@@ -16,6 +16,8 @@ import {
 import { FaEye, FaEyeSlash, FaGoogle, FaGithub, FaFacebookF } from 'react-icons/fa';
 import { AuthContext } from '../../contexts/AuthContext';
 
+import OAuthButtonGroup from './OAuthButtonGroup';
+
 export default function AuthForm({ mode = 'login' }) {
   const navigate = useNavigate();
   const isLogin = mode === 'login';
@@ -86,7 +88,19 @@ export default function AuthForm({ mode = 'login' }) {
     setLoading(true);
     try {
       if (isLogin) {
+
         await login(email, password);
+
+        const accounts = JSON.parse(localStorage.getItem('savedAccounts')) || [];
+        const exists = accounts.find(acc => acc.email ===email);
+        if(!exists){
+          const newAcc = {
+            email,
+            name : email.split('@')[0],
+            avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${email}`
+          };
+          localStorage.setItem('savedAccounts', JSON.stringify([newAcc, ...accounts]));
+        }
       } else {
         await signup(email, password);
       }
@@ -94,7 +108,7 @@ export default function AuthForm({ mode = 'login' }) {
     } catch (err) {
       const msg = err.response?.data?.detail
         || err.response?.data?.message
-        || 'Something went wrong. Please try again.';
+        || 'Có lỗi rồi đại vương ơi. !!!';
       setErrMsg(msg);
       setShowErrModal(true);
     } finally {
@@ -244,17 +258,7 @@ export default function AuthForm({ mode = 'login' }) {
                           <span className="mx-2 text-muted">Or continue with:</span>
                           <hr className="flex-grow-1" />
                         </div>
-                        <div className="d-grid gap-2 mb-3">
-                          <Button variant="outline-danger">
-                            <FaGoogle className="me-2" /> Google
-                          </Button>
-                          <Button variant="outline-dark">
-                            <FaGithub className="me-2" /> GitHub
-                          </Button>
-                          <Button variant="outline-primary">
-                            <FaFacebookF className="me-2" /> Facebook
-                          </Button>
-                        </div>
+                        <OAuthButtonGroup />
                       </>
                     )}
 

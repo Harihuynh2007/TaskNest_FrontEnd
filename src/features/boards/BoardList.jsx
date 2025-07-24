@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { FixedSizeList } from 'react-window';
 
 // Grid container for all boards and create-tile
 const Grid = styled.div`

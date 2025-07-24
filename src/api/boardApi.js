@@ -1,8 +1,11 @@
 // src/api/boardApi.js
-import API from './apiClient';
+import api from './axiosClient';
 
 export const fetchBoards = workspaceId =>
-  API.get(`/workspaces/${workspaceId}/boards/`);
+  api.get(`/workspaces/${workspaceId}/boards/`);
 
 export const createBoard = (workspaceId, data) =>
-  API.post(`/workspaces/${workspaceId}/boards/`, data);
+  api.post(`/workspaces/${workspaceId}/boards/`, data);
+
+export const getBoard = (workspaceId, boardId) =>
+  api.get(`/workspaces/${workspaceId}/boards/${boardId}/`);
