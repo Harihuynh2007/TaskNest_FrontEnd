@@ -56,7 +56,10 @@ export default function BoardsMainContent({ onCreateBoard }) {
       background: data.background,
     });
     console.log('✅ Board created:', res.data); // ← dòng này chưa từng in ra
+        // Cập nhật state boards trực tiếp mà không gọi lại API
+    setBoards(prevBoards => [...prevBoards, res.data]);
     setShowDrawer(false);
+    // navigate(`/workspaces/${currentWorkspaceId}/boards/${res.data.id}/inbox`); // Điều hướng đến board mới
   } catch (err) {
     console.error('❌ Lỗi tạo board:', err);
 
