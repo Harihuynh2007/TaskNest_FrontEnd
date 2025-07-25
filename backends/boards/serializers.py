@@ -2,7 +2,8 @@
 from rest_framework import serializers
 from .models import Board
 from .models import Workspace
-
+from .models import List
+from .models import Card
 class BoardSerializer(serializers.ModelSerializer):
     class Meta:
         model = Board
@@ -13,3 +14,13 @@ class WorkspaceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Workspace
         fields = ['id', 'name']
+
+class ListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = List
+        fields = ['id', 'name', 'background', 'board_id', 'visibility']
+
+class CardSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Card
+        fields = ['id', 'name', 'status', 'background', 'list_id']
