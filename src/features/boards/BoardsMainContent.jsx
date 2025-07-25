@@ -33,7 +33,9 @@ export default function BoardsMainContent({ onCreateBoard }) {
         setLoading(false);
       }
     }
-    loadBoards();
+    if (currentWorkspaceId) {
+    loadBoards();  // Đảm bảo gọi API khi currentWorkspaceId hợp lệ
+    }
   }, [currentWorkspaceId]);
 
   const handleCreateBoard = async (data) => {
@@ -55,7 +57,6 @@ export default function BoardsMainContent({ onCreateBoard }) {
     });
     console.log('✅ Board created:', res.data); // ← dòng này chưa từng in ra
     setShowDrawer(false);
-    navigate(`/workspaces/${currentWorkspaceId}/boards/${res.data.id}/inbox`);
   } catch (err) {
     console.error('❌ Lỗi tạo board:', err);
 
