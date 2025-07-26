@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { Droppable, Draggable } from '@hello-pangea/dnd';
 import InboxSubHeader from '../InboxSubHeader';
 import CardEditPopup from '../CardEditPopup';
 import FullCardModal from '../../../components/FullCardModal';
@@ -17,10 +17,9 @@ export default function InboxPane({
   selectedCard,
   setSelectedCard,
   handleAddCard,
-  onDragEnd,
   toggleComplete,
   handleSaveCard,
-  background,  // Thêm prop
+  background,
 }) {
   return (
     <PaneWrapper background={background}>
@@ -56,55 +55,48 @@ export default function InboxPane({
           <AddCardTrigger onClick={() => setShowInput(true)}>Add a card</AddCardTrigger>
         )}
 
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="cardList">
-            {(provided) => (
-              <CardList ref={provided.innerRef} {...provided.droppableProps}>
-                {cards.map((card, index) => (
-                  <Draggable
-                    key={card.text + index}
-                    draggableId={card.text + index}
-                    index={index}
-                  >
-                    {(provided, snapshot) => (
-                      <Card
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        isDragging={snapshot.isDragging}
+        <Droppable droppableId="inbox" type="CARD">
+          {(provided) => (
+            <CardList ref={provided.innerRef} {...provided.droppableProps}>
+              {cards.map((card, index) => (
+                <Draggable key={card.id} draggableId={card.id} index={index}>
+                  {(provided, snapshot) => (
+                    <Card
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      isDragging={snapshot.isDragging}
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setEditPopup({ index, text: card.title, anchorRect: rect });
+                      }}
+                    >
+                      <CheckCircle
                         onClick={(e) => {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          setEditPopup({ index, text: card.text, anchorRect: rect });
+                          e.stopPropagation();
+                          toggleComplete(index);
                         }}
                       >
-                        <CheckCircle
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleComplete(index);
-                          }}
-                        >
-                          {card.completed ? '✅' : '○'}
-                        </CheckCircle>
-                        <CardText completed={card.completed}>{card.text}</CardText>
-                        <EditIcon
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const rect =
-                              e.currentTarget.parentElement.getBoundingClientRect();
-                            setEditPopup({ index, text: card.text, anchorRect: rect });
-                          }}
-                        >
-                          ✏️
-                        </EditIcon>
-                      </Card>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </CardList>
-            )}
-          </Droppable>
-        </DragDropContext>
+                        {card.completed ? '✅' : '○'}
+                      </CheckCircle>
+                      <CardText completed={card.completed}>{card.title}</CardText>
+                      <EditIcon
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const rect = e.currentTarget.parentElement.getBoundingClientRect();
+                          setEditPopup({ index, text: card.title, anchorRect: rect });
+                        }}
+                      >
+                        ✏️
+                      </EditIcon>
+                    </Card>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </CardList>
+          )}
+        </Droppable>
 
         {editPopup && (
           <CardEditPopup
@@ -123,6 +115,7 @@ export default function InboxPane({
     </PaneWrapper>
   );
 }
+
 
 const PaneWrapper = styled.div`
   background: ${({ background }) => background || '#e4f0f6'};

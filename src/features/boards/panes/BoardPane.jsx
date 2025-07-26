@@ -1,10 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import InboxSubHeader from '../InboxSubHeader';
 import { FaPlus, FaTimes } from 'react-icons/fa';
+import ListColumn from '../../../components/ListColumn';
 import { DragDropContext } from '@hello-pangea/dnd';
 import { v4 as uuidv4 } from 'uuid';
-import ReactMemoListColumn from '../../../components/ListColumn';
 
 function getTextColor(bg) {
   const hex = bg?.startsWith('#') ? bg.slice(1) : 'ffffff';
@@ -38,7 +38,7 @@ export default function BoardPane({ background }) {
     setShowAddList(false);
   };
 
-  const handleAddCard = useCallback((listId) => {
+  const handleAddCard = (listId) => {
     const text = cardInputs[listId]?.trim();
     if (!text) return;
     const newCard = {
@@ -54,7 +54,7 @@ export default function BoardPane({ background }) {
     );
     setCardInputs({ ...cardInputs, [listId]: '' });
     setActiveCardInput(null);
-  }, [cardInputs]);
+  };
 
   const onDragEnd = (result) => {
     const { source, destination } = result;
@@ -94,6 +94,7 @@ export default function BoardPane({ background }) {
 
       return newLists;
     });
+
   };
 
   const textColor = getTextColor(background);
@@ -104,7 +105,7 @@ export default function BoardPane({ background }) {
       <DragDropContext onDragEnd={onDragEnd}>
         <BoardContent>
           {lists.map((list) => (
-            <ReactMemoListColumn
+            <ListColumn
               key={list.id}
               list={list}
               background={background}
@@ -156,6 +157,7 @@ const Wrapper = styled.div`
 const BoardContent = styled.div`
   display: flex;
   flex-direction: row;
+  gap: 12px;
   padding: 16px;
   overflow-x: auto;
   flex: 1;

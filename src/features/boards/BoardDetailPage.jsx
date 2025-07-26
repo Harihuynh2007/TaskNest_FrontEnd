@@ -8,6 +8,8 @@ import BottomFloatingNav from './BottomFloatingNav';
 import FullCardModal from '../../components/FullCardModal';
 import CardEditPopup from './CardEditPopup';
 import { getBoard } from '../../api/boardApi.js';
+import { DragDropContext } from '@hello-pangea/dnd';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function BoardDetailPage() {
   const { workspaceId, boardId } = useParams();
@@ -15,6 +17,11 @@ export default function BoardDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeTabs, setActiveTabs] = useState(['inbox']);
   const [cards, setCards] = useState([]);
+  const [lists, setLists] = useState([
+    { id: 1, title: 'To Do', cards: [] },
+    { id: 2, title: 'Doing', cards: [] },
+    { id: 3, title: 'Done', cards: [] },
+  ]);
   const [archived, setArchived] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [showInput, setShowInput] = useState(false);
@@ -37,7 +44,6 @@ export default function BoardDetailPage() {
     loadBoard();
   }, [workspaceId, boardId]);
 
-  // Load từ localStorage nếu có
   useEffect(() => {
     const saved = localStorage.getItem(`board-${boardId}-cards`);
     if (saved) {
@@ -45,12 +51,10 @@ export default function BoardDetailPage() {
     }
   }, [boardId]);
 
-  // Lưu vào localStorage mỗi khi cards thay đổi
   useEffect(() => {
     localStorage.setItem(`board-${boardId}-cards`, JSON.stringify(cards));
   }, [cards, boardId]);
 
-  // WebSocket để cập nhật realtime
   useEffect(() => {
     const socket = new WebSocket('ws://127.0.0.1:8000/ws/boards/' + boardId + '/');
     socket.onmessage = (event) => {
@@ -62,6 +66,69 @@ export default function BoardDetailPage() {
     return () => socket.close();
   }, [boardId]);
 
+  const handleAddCard = () => {
+    if (inputValue.trim() === '') return;
+    const newCard = {
+      id: uuidv4(),
+      title: inputValue,
+      description: '',
+      dueDate: null,
+      completed: false,
+    };
+    setCards([...cards, newCard]);
+    setInputValue('');
+  };
+
+  const onDragEnd = (result) => {
+    const { source, destination } = result;
+    if (!destination) return;
+
+    if (source.droppableId === destination.droppableId) {
+      if (source.droppableId === 'inbox') {
+        const newCards = Array.from(cards);
+        const [moved] = newCards.splice(source.index, 1);
+        newCards.splice(destination.index, 0, moved);
+        setCards(newCards);
+      } else {
+        const listId = parseInt(source.droppableId.replace('list-', ''));
+        setLists((prev) => {
+          const listIndex = prev.findIndex((l) => l.id === listId);
+          if (listIndex === -1) return prev;
+          const newLists = [...prev];
+          const newCards = Array.from(newLists[listIndex].cards);
+          const [moved] = newCards.splice(source.index, 1);
+          newCards.splice(destination.index, 0, moved);
+          newLists[listIndex] = { ...newLists[listIndex], cards: newCards };
+          return newLists;
+        });
+      }
+    } else {
+      let movedCard;
+      if (source.droppableId === 'inbox') {
+        const newCards = Array.from(cards);
+        [movedCard] = newCards.splice(source.index, 1);
+        setCards(newCards);
+
+        const destListId = parseInt(destination.droppableId.replace('list-', ''));
+        setLists((prev) => prev.map((list) =>
+          list.id === destListId ? { ...list, cards: [...list.cards.slice(0, destination.index), movedCard, ...list.cards.slice(destination.index)] } : list
+        ));
+      } else {
+        const sourceListId = parseInt(source.droppableId.replace('list-', ''));
+        setLists((prev) => {
+          const sourceListIndex = prev.findIndex((l) => l.id === sourceListId);
+          if (sourceListIndex === -1) return prev;
+          const newLists = [...prev];
+          const sourceCards = Array.from(newLists[sourceListIndex].cards);
+          [movedCard] = sourceCards.splice(source.index, 1);
+          newLists[sourceListIndex] = { ...newLists[sourceListIndex], cards: sourceCards };
+          return newLists;
+        });
+        setCards((prev) => [...prev.slice(0, destination.index), movedCard, ...prev.slice(destination.index)]);
+      }
+    }
+  };
+
   const toggleTab = (tabName) => {
     setActiveTabs((prev) =>
       prev.includes(tabName)
@@ -70,21 +137,6 @@ export default function BoardDetailPage() {
           : prev
         : [...prev, tabName]
     );
-  };
-
-  const handleAddCard = () => {
-    if (inputValue.trim() === '') return;
-    setCards([...cards, { text: inputValue, completed: false }]);
-    setInputValue('');
-  };
-
-  const onDragEnd = (result) => {
-    if (!result.destination) return;
-    const newCards = Array.from(cards);
-    const [moved] = newCards.splice(result.source.index, 1);
-    newCards.splice(result.destination.index, 0, moved);
-    setCards(newCards);
-    if (editPopup) setEditPopup(null);
   };
 
   const toggleComplete = (index) => {
@@ -102,19 +154,16 @@ export default function BoardDetailPage() {
   const handleSaveCard = () => {
     if (editPopup) {
       const updated = [...cards];
-      updated[editPopup.index].text = editPopup.text;
+      updated[editPopup.index].title = editPopup.text;
       setCards(updated);
       setEditPopup(null);
     }
   };
 
-  const renderPanes = () => {
-    const panes = [];
-
-    if (activeTabs.includes('inbox'))
-      panes.push(
+  const renderPanes = () => (
+    <SplitContainer>
+      {activeTabs.includes('inbox') && (
         <InboxPane
-          key="inbox"
           background={background}
           cards={cards}
           setCards={setCards}
@@ -127,17 +176,14 @@ export default function BoardDetailPage() {
           selectedCard={selectedCard}
           setSelectedCard={setSelectedCard}
           handleAddCard={handleAddCard}
-          onDragEnd={onDragEnd}
           toggleComplete={toggleComplete}
           handleSaveCard={handleSaveCard}
         />
-      );
-
-    if (activeTabs.includes('planner')) panes.push(<PlannerPane key="planner" background={background} />);
-    if (activeTabs.includes('board')) panes.push(<BoardPane key="board" background={background} />);
-
-    return panes;
-  };
+      )}
+      {activeTabs.includes('planner') && <PlannerPane background={background} />}
+      {activeTabs.includes('board') && <BoardPane background={background} lists={lists} setLists={setLists} />}
+    </SplitContainer>
+  );
 
   if (loading) return <div>Loading board...</div>;
 
@@ -149,12 +195,10 @@ export default function BoardDetailPage() {
       )}
 
       <BoardWrapper background={background}>
-        <SplitContainer>{renderPanes()}</SplitContainer>
-        <BottomFloatingNav
-          activeTabs={activeTabs}
-          toggleTab={toggleTab}
-          activeCount={activeTabs.length}
-        />
+        <DragDropContext onDragEnd={onDragEnd}>
+          {renderPanes()}
+        </DragDropContext>
+        <BottomFloatingNav activeTabs={activeTabs} toggleTab={toggleTab} activeCount={activeTabs.length} />
       </BoardWrapper>
     </>
   );
