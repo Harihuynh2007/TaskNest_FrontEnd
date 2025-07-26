@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import styled from 'styled-components';
 import InboxSubHeader from '../InboxSubHeader';
 import { FaPlus, FaTimes } from 'react-icons/fa';
-import ListColumn from '../../../components/ListColumn';
 import { DragDropContext } from '@hello-pangea/dnd';
 import { v4 as uuidv4 } from 'uuid';
+import { FixedSizeList as VirtualList } from 'react-window';
+import ReactMemoListColumn from '../../../components/ListColumn';
 
 function getTextColor(bg) {
   const hex = bg?.startsWith('#') ? bg.slice(1) : 'ffffff';
@@ -38,7 +39,7 @@ export default function BoardPane({ background }) {
     setShowAddList(false);
   };
 
-  const handleAddCard = (listId) => {
+  const handleAddCard = useCallback((listId) => {
     const text = cardInputs[listId]?.trim();
     if (!text) return;
     const newCard = {
@@ -54,7 +55,7 @@ export default function BoardPane({ background }) {
     );
     setCardInputs({ ...cardInputs, [listId]: '' });
     setActiveCardInput(null);
-  };
+  }, [cardInputs]);
 
   const onDragEnd = (result) => {
     const { source, destination } = result;
@@ -65,20 +66,34 @@ export default function BoardPane({ background }) {
     const destListId = parseInt(destination.droppableId.replace('list-', ''));
 
     setLists((prevLists) => {
-      const sourceList = prevLists.find((l) => l.id === sourceListId);
-      const destList = prevLists.find((l) => l.id === destListId);
-      const movedCard = sourceList.cards[source.index];
+      const sourceListIndex = prevLists.findIndex((l) => l.id === sourceListId);
+      const destListIndex = prevLists.findIndex((l) => l.id === destListId);
+      if (sourceListIndex === -1 || destListIndex === -1) return prevLists;
 
-      const newSourceCards = [...sourceList.cards];
-      newSourceCards.splice(source.index, 1);
-      const newDestCards = [...destList.cards];
-      newDestCards.splice(destination.index, 0, movedCard);
+      const newLists = [...prevLists];
+      const sourceCards = Array.from(newLists[sourceListIndex].cards);
+      const [movedCard] = sourceCards.splice(source.index, 1);
 
-      return prevLists.map((l) => {
-        if (l.id === sourceListId) return { ...l, cards: newSourceCards };
-        if (l.id === destListId) return { ...l, cards: newDestCards };
-        return l;
-      });
+      if (sourceListId === destListId) {
+        sourceCards.splice(destination.index, 0, movedCard);
+        newLists[sourceListIndex] = {
+          ...newLists[sourceListIndex],
+          cards: sourceCards,
+        };
+      } else {
+        const destCards = Array.from(newLists[destListIndex].cards);
+        destCards.splice(destination.index, 0, movedCard);
+        newLists[sourceListIndex] = {
+          ...newLists[sourceListIndex],
+          cards: sourceCards,
+        };
+        newLists[destListIndex] = {
+          ...newLists[destListIndex],
+          cards: destCards,
+        };
+      }
+
+      return newLists;
     });
   };
 
@@ -89,19 +104,29 @@ export default function BoardPane({ background }) {
       <InboxSubHeader />
       <DragDropContext onDragEnd={onDragEnd}>
         <BoardContent>
-          {lists.map((list) => (
-            <ListColumn
-              key={list.id}
-              list={list}
-              background={background}
-              textColor={textColor}
-              cardInput={cardInputs[list.id] || ''}
-              setCardInputs={setCardInputs}
-              activeCardInput={activeCardInput}
-              setActiveCardInput={setActiveCardInput}
-              onAddCard={handleAddCard}
-            />
-          ))}
+          <VirtualList
+            height={400}
+            width={lists.length * 280}
+            itemSize={280}
+            layout="horizontal"
+            itemCount={lists.length}
+            itemKey={(index) => lists[index].id}
+          >
+            {({ index, style }) => (
+              <div style={style}>
+                <ReactMemoListColumn
+                  list={lists[index]}
+                  background={background}
+                  textColor={textColor}
+                  cardInput={cardInputs[lists[index].id] || ''}
+                  setCardInputs={setCardInputs}
+                  activeCardInput={activeCardInput}
+                  setActiveCardInput={setActiveCardInput}
+                  onAddCard={handleAddCard}
+                />
+              </div>
+            )}
+          </VirtualList>
 
           {showAddList ? (
             <AddListForm background={background}>
@@ -142,7 +167,6 @@ const Wrapper = styled.div`
 const BoardContent = styled.div`
   display: flex;
   flex-direction: row;
-  gap: 12px;
   padding: 16px;
   overflow-x: auto;
   flex: 1;
