@@ -20,110 +20,113 @@ export default function InboxPane({
   onDragEnd,
   toggleComplete,
   handleSaveCard,
+  background,  // Thêm prop
 }) {
   return (
-    <PaneWrapper>
+    <PaneWrapper background={background}>
       <InnerContent>
         {editPopup && <DarkOverlay />}
-      {selectedCard && (
-        <FullCardModal card={selectedCard} onClose={() => setSelectedCard(null)} />
-      )}
+        {selectedCard && (
+          <FullCardModal card={selectedCard} onClose={() => setSelectedCard(null)} />
+        )}
 
-      <InboxSubHeader />
-      {showInput ? (
-        <CardInputWrapper>
-          <Input
-            placeholder="Enter a title"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            autoFocus
-          />
-          <ButtonRow>
-            <AddButton onClick={handleAddCard}>Add card</AddButton>
-            <CancelButton
-              onClick={() => {
-                setShowInput(false);
-                setInputValue('');
-              }}
-            >
-              Cancel
-            </CancelButton>
-          </ButtonRow>
-        </CardInputWrapper>
-      ) : (
-        <AddCardTrigger onClick={() => setShowInput(true)}>Add a card</AddCardTrigger>
-      )}
+        <InboxSubHeader />
 
-      <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable droppableId="cardList">
-          {(provided) => (
-            <CardList ref={provided.innerRef} {...provided.droppableProps}>
-              {cards.map((card, index) => (
-                <Draggable
-                  key={card.text + index}
-                  draggableId={card.text + index}
-                  index={index}
-                >
-                  {(provided, snapshot) => (
-                    <Card
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                      isDragging={snapshot.isDragging}
-                      onClick={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        setEditPopup({ index, text: card.text, anchorRect: rect });
-                      }}
-                    >
-                      <CheckCircle
+        {showInput ? (
+          <CardInputWrapper>
+            <Input
+              placeholder="Enter a title"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              autoFocus
+            />
+            <ButtonRow>
+              <AddButton onClick={handleAddCard}>Add card</AddButton>
+              <CancelButton
+                onClick={() => {
+                  setShowInput(false);
+                  setInputValue('');
+                }}
+              >
+                Cancel
+              </CancelButton>
+            </ButtonRow>
+          </CardInputWrapper>
+        ) : (
+          <AddCardTrigger onClick={() => setShowInput(true)}>Add a card</AddCardTrigger>
+        )}
+
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="cardList">
+            {(provided) => (
+              <CardList ref={provided.innerRef} {...provided.droppableProps}>
+                {cards.map((card, index) => (
+                  <Draggable
+                    key={card.text + index}
+                    draggableId={card.text + index}
+                    index={index}
+                  >
+                    {(provided, snapshot) => (
+                      <Card
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        isDragging={snapshot.isDragging}
                         onClick={(e) => {
-                          e.stopPropagation();
-                          toggleComplete(index);
-                        }}
-                      >
-                        {card.completed ? '✅' : '○'}
-                      </CheckCircle>
-                      <CardText completed={card.completed}>{card.text}</CardText>
-                      <EditIcon
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const rect =
-                            e.currentTarget.parentElement.getBoundingClientRect();
+                          const rect = e.currentTarget.getBoundingClientRect();
                           setEditPopup({ index, text: card.text, anchorRect: rect });
                         }}
                       >
-                        ✏️
-                      </EditIcon>
-                    </Card>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-            </CardList>
-          )}
-        </Droppable>
-      </DragDropContext>
+                        <CheckCircle
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleComplete(index);
+                          }}
+                        >
+                          {card.completed ? '✅' : '○'}
+                        </CheckCircle>
+                        <CardText completed={card.completed}>{card.text}</CardText>
+                        <EditIcon
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const rect =
+                              e.currentTarget.parentElement.getBoundingClientRect();
+                            setEditPopup({ index, text: card.text, anchorRect: rect });
+                          }}
+                        >
+                          ✏️
+                        </EditIcon>
+                      </Card>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </CardList>
+            )}
+          </Droppable>
+        </DragDropContext>
 
-      {editPopup && (
-        <CardEditPopup
-          anchorRect={editPopup.anchorRect}
-          cardText={editPopup.text}
-          onChange={(val) => setEditPopup({ ...editPopup, text: val })}
-          onSave={handleSaveCard}
-          onClose={() => setEditPopup(null)}
-          onOpenFullCard={() => {
-            setEditPopup(null);
-            setSelectedCard(cards[editPopup.index]);
-          }}
-        />
-      )}
+        {editPopup && (
+          <CardEditPopup
+            anchorRect={editPopup.anchorRect}
+            cardText={editPopup.text}
+            onChange={(val) => setEditPopup({ ...editPopup, text: val })}
+            onSave={handleSaveCard}
+            onClose={() => setEditPopup(null)}
+            onOpenFullCard={() => {
+              setEditPopup(null);
+              setSelectedCard(cards[editPopup.index]);
+            }}
+          />
+        )}
       </InnerContent>
     </PaneWrapper>
   );
 }
 
 const PaneWrapper = styled.div`
-  background: #e7effa;
+  background: ${({ background }) => background || '#e4f0f6'};
+  flex: 1;
   display: flex;
   justify-content: center;
   overflow-y: auto;
@@ -133,7 +136,6 @@ const InnerContent = styled.div`
   width: 100%;
   max-width: 784px;
 `;
-
 
 const DarkOverlay = styled.div`
   position: fixed;

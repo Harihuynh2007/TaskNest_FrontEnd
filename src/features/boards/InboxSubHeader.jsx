@@ -29,7 +29,7 @@ export default function InboxSubHeader() {
 
 const HeaderWrapper = styled.h2`
   width: 100vw;
-  height: 52px;
+  height: 56px;
   margin: 0;
   background: #f4f5f7;
   border-bottom: 1px solid #dcdfe4;

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import InboxPane from './panes/InboxPane';
 import PlannerPane from './panes/PlannerPane';
@@ -6,8 +7,12 @@ import BoardPane from './panes/BoardPane';
 import BottomFloatingNav from './BottomFloatingNav';
 import FullCardModal from '../../components/FullCardModal';
 import CardEditPopup from './CardEditPopup';
+import { getBoard } from '../../api/boardApi.js';  // Import API
 
 export default function BoardDetailPage() {
+  const { workspaceId, boardId } = useParams();
+  const [background, setBackground] = useState('#e4f0f6');  // Fallback
+  const [loading, setLoading] = useState(true);
   const [activeTabs, setActiveTabs] = useState(['inbox']);
   const [cards, setCards] = useState([]);
   const [archived, setArchived] = useState([]);
@@ -15,6 +20,22 @@ export default function BoardDetailPage() {
   const [showInput, setShowInput] = useState(false);
   const [editPopup, setEditPopup] = useState(null);
   const [selectedCard, setSelectedCard] = useState(null);
+
+  useEffect(() => {
+    async function loadBoard() {
+      if (!workspaceId || !boardId) return;
+      setLoading(true);
+      try {
+        const res = await getBoard(workspaceId, boardId);
+        setBackground(res.data.background || '#e4f0f6');
+      } catch (err) {
+        console.error('Lỗi fetch board:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadBoard();
+  }, [workspaceId, boardId]);
 
   const toggleTab = (tabName) => {
     setActiveTabs((prev) =>
@@ -69,6 +90,7 @@ export default function BoardDetailPage() {
       panes.push(
         <InboxPane
           key="inbox"
+          background={background}  // Truyền prop
           cards={cards}
           setCards={setCards}
           inputValue={inputValue}
@@ -86,11 +108,13 @@ export default function BoardDetailPage() {
         />
       );
 
-    if (activeTabs.includes('planner')) panes.push(<PlannerPane key="planner" />);
-    if (activeTabs.includes('board')) panes.push(<BoardPane key="board" />);
+    if (activeTabs.includes('planner')) panes.push(<PlannerPane key="planner" background={background} />);
+    if (activeTabs.includes('board')) panes.push(<BoardPane key="board" background={background} />);
 
     return panes;
   };
+
+  if (loading) return <div>Loading board...</div>;
 
   return (
     <>
@@ -99,7 +123,7 @@ export default function BoardDetailPage() {
         <FullCardModal card={selectedCard} onClose={() => setSelectedCard(null)} />
       )}
 
-      <BoardWrapper>
+      <BoardWrapper background={background}>
         <SplitContainer>{renderPanes()}</SplitContainer>
         <BottomFloatingNav
           activeTabs={activeTabs}
@@ -112,8 +136,8 @@ export default function BoardDetailPage() {
 }
 
 const BoardWrapper = styled.div`
-  background: #e7effa;
-  min-height: 100vh;
+  background: ${({ background }) => background};
+  height: 100vh;
   display: flex;
   flex-direction: column;
 `;
