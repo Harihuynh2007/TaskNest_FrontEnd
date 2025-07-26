@@ -4,7 +4,6 @@ import InboxSubHeader from '../InboxSubHeader';
 import { FaPlus, FaTimes } from 'react-icons/fa';
 import { DragDropContext } from '@hello-pangea/dnd';
 import { v4 as uuidv4 } from 'uuid';
-import { FixedSizeList as VirtualList } from 'react-window';
 import ReactMemoListColumn from '../../../components/ListColumn';
 
 function getTextColor(bg) {
@@ -104,29 +103,19 @@ export default function BoardPane({ background }) {
       <InboxSubHeader />
       <DragDropContext onDragEnd={onDragEnd}>
         <BoardContent>
-          <VirtualList
-            height={400}
-            width={lists.length * 280}
-            itemSize={280}
-            layout="horizontal"
-            itemCount={lists.length}
-            itemKey={(index) => lists[index].id}
-          >
-            {({ index, style }) => (
-              <div style={style}>
-                <ReactMemoListColumn
-                  list={lists[index]}
-                  background={background}
-                  textColor={textColor}
-                  cardInput={cardInputs[lists[index].id] || ''}
-                  setCardInputs={setCardInputs}
-                  activeCardInput={activeCardInput}
-                  setActiveCardInput={setActiveCardInput}
-                  onAddCard={handleAddCard}
-                />
-              </div>
-            )}
-          </VirtualList>
+          {lists.map((list) => (
+            <ReactMemoListColumn
+              key={list.id}
+              list={list}
+              background={background}
+              textColor={textColor}
+              cardInput={cardInputs[list.id] || ''}
+              setCardInputs={setCardInputs}
+              activeCardInput={activeCardInput}
+              setActiveCardInput={setActiveCardInput}
+              onAddCard={handleAddCard}
+            />
+          ))}
 
           {showAddList ? (
             <AddListForm background={background}>
