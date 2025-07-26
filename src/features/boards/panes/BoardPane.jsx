@@ -4,7 +4,7 @@ import InboxSubHeader from '../InboxSubHeader';
 import { FaPlus, FaTimes } from 'react-icons/fa';
 import ListColumn from '../../../components/ListColumn';
 import { DragDropContext } from '@hello-pangea/dnd';
-
+import { v4 as uuidv4 } from 'uuid';
 function getTextColor(bg) {
   const hex = bg?.startsWith('#') ? bg.slice(1) : 'ffffff';
   const r = parseInt(hex.substring(0, 2), 16);
@@ -40,9 +40,15 @@ export default function BoardPane({ background }) {
   const handleAddCard = (listId) => {
     const text = cardInputs[listId]?.trim();
     if (!text) return;
+    const newCard = {
+      id: uuidv4(),
+      title: text,
+      description: '',
+      dueDate: null,
+    };
     setLists((prev) =>
       prev.map((list) =>
-        list.id === listId ? { ...list, cards: [...list.cards, text] } : list
+        list.id === listId ? { ...list, cards: [...list.cards, newCard] } : list
       )
     );
     setCardInputs({ ...cardInputs, [listId]: '' });
