@@ -5,6 +5,7 @@ import { FaPlus, FaTimes } from 'react-icons/fa';
 import ListColumn from '../../../components/ListColumn';
 import { DragDropContext } from '@hello-pangea/dnd';
 import { v4 as uuidv4 } from 'uuid';
+
 function getTextColor(bg) {
   const hex = bg?.startsWith('#') ? bg.slice(1) : 'ffffff';
   const r = parseInt(hex.substring(0, 2), 16);
@@ -113,12 +114,14 @@ export default function BoardPane({ background }) {
               <ActionRow>
                 <AddBtn onClick={handleAddList}>Add list</AddBtn>
                 <PlaceholderBtn>Add from ▾</PlaceholderBtn>
-                <CloseBtn onClick={() => setShowAddList(false)}><FaTimes /></CloseBtn>
+                <CloseBtn onClick={() => setShowAddList(false)}>
+                  <FaTimes aria-label="Close form" />
+                </CloseBtn>
               </ActionRow>
             </AddListForm>
           ) : (
             <AddListTrigger background={background} style={{ color: textColor }} onClick={() => setShowAddList(true)}>
-              <FaPlus size={12} style={{ marginRight: 6 }} /> Add another list
+              <FaPlus aria-label="Add another list" size={12} style={{ marginRight: 6 }} /> Add another list
             </AddListTrigger>
           )}
         </BoardContent>
