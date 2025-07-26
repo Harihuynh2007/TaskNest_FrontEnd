@@ -7,11 +7,11 @@ import BoardPane from './panes/BoardPane';
 import BottomFloatingNav from './BottomFloatingNav';
 import FullCardModal from '../../components/FullCardModal';
 import CardEditPopup from './CardEditPopup';
-import { getBoard } from '../../api/boardApi.js';  // Import API
+import { getBoard } from '../../api/boardApi.js';
 
 export default function BoardDetailPage() {
   const { workspaceId, boardId } = useParams();
-  const [background, setBackground] = useState('#e4f0f6');  // Fallback
+  const [background, setBackground] = useState('#e4f0f6');
   const [loading, setLoading] = useState(true);
   const [activeTabs, setActiveTabs] = useState(['inbox']);
   const [cards, setCards] = useState([]);
@@ -36,6 +36,31 @@ export default function BoardDetailPage() {
     }
     loadBoard();
   }, [workspaceId, boardId]);
+
+  // Load từ localStorage nếu có
+  useEffect(() => {
+    const saved = localStorage.getItem(`board-${boardId}-cards`);
+    if (saved) {
+      setCards(JSON.parse(saved));
+    }
+  }, [boardId]);
+
+  // Lưu vào localStorage mỗi khi cards thay đổi
+  useEffect(() => {
+    localStorage.setItem(`board-${boardId}-cards`, JSON.stringify(cards));
+  }, [cards, boardId]);
+
+  // WebSocket để cập nhật realtime
+  useEffect(() => {
+    const socket = new WebSocket('ws://127.0.0.1:8000/ws/boards/' + boardId + '/');
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'card_update') {
+        setCards(data.cards);
+      }
+    };
+    return () => socket.close();
+  }, [boardId]);
 
   const toggleTab = (tabName) => {
     setActiveTabs((prev) =>
@@ -90,7 +115,7 @@ export default function BoardDetailPage() {
       panes.push(
         <InboxPane
           key="inbox"
-          background={background}  // Truyền prop
+          background={background}
           cards={cards}
           setCards={setCards}
           inputValue={inputValue}
