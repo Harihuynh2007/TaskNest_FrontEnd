@@ -53,14 +53,16 @@ export default function BoardsMainContent({ onCreateBoard }) {
       visibility: data.visibility,
       background: data.background,
     });
-    console.log('✅ Board created:', res.data); // ← dòng này chưa từng in ra
+    console.log('✅ Board created:', res.data); 
+    // Cập nhật state boards trực tiếp mà không gọi lại API
+    setBoards(prevBoards => [...prevBoards, res.data]);
     setShowDrawer(false);
-    navigate(`/workspaces/${currentWorkspaceId}/boards/${res.data.id}/inbox`);
+    //navigate(`/workspaces/${currentWorkspaceId}/boards/${res.data.id}/inbox`);
   } catch (err) {
     console.error('❌ Lỗi tạo board:', err);
 
     if (err.response) {
-      console.error('📥 Lỗi từ API:', err.response.data);      // ← BẮT BUỘC THÊM
+      console.error('📥 Lỗi từ API:', err.response.data);    
       console.error('📥 Status code:', err.response.status);
     } else if (err.request) {
       console.error('📡 Không có phản hồi từ server:', err.request);
