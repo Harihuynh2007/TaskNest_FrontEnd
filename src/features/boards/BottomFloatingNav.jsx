@@ -62,7 +62,7 @@ const NavItem = styled.button`
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  color: ${({ isActive }) => (isActive ? '#0c66e4' : '#5e6c84')};
+  color: ${({ isActive }) => (isActive ? '#28a745' : '#5e6c84')};
   background: ${({ isActive }) => (isActive ? '#e6f0ff' : 'transparent')};
   box-shadow: ${({ isActive }) => (isActive ? 'inset 0 -2px 0 #0c66e4' : 'none')};
   transition: 0.2s;

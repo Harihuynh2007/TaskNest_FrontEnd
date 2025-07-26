@@ -33,7 +33,10 @@ export default function BoardsMainContent({ onCreateBoard }) {
         setLoading(false);
       }
     }
-    loadBoards();
+    if (currentWorkspaceId){
+      loadBoards();
+    }
+
   }, [currentWorkspaceId]);
 
   const handleCreateBoard = async (data) => {
