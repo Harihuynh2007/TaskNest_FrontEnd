@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
+import CardItem from './CardItem';
 
 function ListColumn({
   list,
@@ -11,6 +12,9 @@ function ListColumn({
   activeCardInput,
   setActiveCardInput,
   onAddCard,
+  onEditClick,
+  onCheckClick,
+  onCardClick,
 }) {
   const handleInputChange = (e) => {
     setCardInputs((prev) => ({ ...prev, [list.id]: e.target.value }));
@@ -27,27 +31,31 @@ function ListColumn({
       <Header style={{ color: textColor }}>{list.title}</Header>
 
       <Droppable droppableId={`list-${list.id}`} type="CARD">
-  {(provided) => (
-    <CardList ref={provided.innerRef} {...provided.droppableProps}>
-      {list.cards.map((card, index) => (
-        <Draggable key={card.id} draggableId={card.id} index={index}>
-          {(provided, snapshot) => (
-            <Card
-              ref={provided.innerRef}
-              {...provided.draggableProps}
-              {...provided.dragHandleProps}
-              isDragging={snapshot.isDragging}
-            >
-              {card.title}
-            </Card>
-          )}
-        </Draggable>
-      ))}
-      {provided.placeholder}
-    </CardList>
-  )}
-</Droppable>
-
+        {(provided) => (
+          <CardList ref={provided.innerRef} {...provided.droppableProps}>
+            {list.cards.map((card, index) => (
+              <Draggable key={card.id} draggableId={card.id} index={index}>
+                {(provided, snapshot) => (
+                  <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                    <CardItem
+                      card={card}
+                      index={index}
+                      isDragging={snapshot.isDragging}
+                      onEditClick={(e, card, index) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        onEditClick(e, card, index, rect);
+                      }}
+                      onCheckClick={() => onCheckClick(index)}
+                      onCardClick={() => onCardClick(card)}
+                    />
+                  </div>
+                )}
+              </Draggable>
+            ))}
+            {provided.placeholder}
+          </CardList>
+        )}
+      </Droppable>
 
       {isInputActive ? (
         <CardInputWrapper>
@@ -68,6 +76,7 @@ function ListColumn({
 
 export default React.memo(ListColumn);
 
+// ⚠️ Styled-components giữ nguyên như cũ
 const Wrapper = styled.div`
   min-width: 260px;
   background: rgba(255, 255, 255, 0.3);
@@ -88,17 +97,6 @@ const CardList = styled.div`
   flex-direction: column;
   gap: 8px;
   min-height: 20px;
-`;
-
-const Card = styled.div`
-  background: white;
-  padding: 10px;
-  border-radius: 6px;
-  box-shadow: ${({ isDragging }) =>
-    isDragging ? '0 4px 12px rgba(0, 0, 0, 0.2)' : '0 1px 3px rgba(0,0,0,0.1)'};
-  border: ${({ isDragging }) => (isDragging ? '2px solid #0c66e4' : 'none')};
-  transition: all 0.2s ease;
-  font-size: 14px;
 `;
 
 const CardInputWrapper = styled.div`
