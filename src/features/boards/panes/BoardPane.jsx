@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect  } from 'react';
 import styled from 'styled-components';
 import InboxSubHeader from '../InboxSubHeader';
 import { FaPlus, FaTimes } from 'react-icons/fa';
@@ -7,6 +7,13 @@ import FullCardModal from '../../../components/FullCardModal';
 import CardEditPopup from '../CardEditPopup';
 import { DragDropContext } from '@hello-pangea/dnd';
 import { v4 as uuidv4 } from 'uuid';
+
+
+import { createList } from '../../../api/listApi';
+import { fetchLists } from '../../../api/listApi';
+
+import { createCard } from '../../../api/cardApi';
+
 
 function getTextColor(bg) {
   const hex = bg?.startsWith('#') ? bg.slice(1) : 'ffffff';
@@ -17,12 +24,8 @@ function getTextColor(bg) {
   return brightness > 150 ? '#172b4d' : 'white';
 }
 
-export default function BoardPane({ background }) {
-  const [lists, setLists] = useState([
-    { id: 1, title: 'To Do', cards: [] },
-    { id: 2, title: 'Doing', cards: [] },
-    { id: 3, title: 'Done', cards: [] },
-  ]);
+export default function BoardPane({ background, boardId }) {
+  const [lists, setLists] = useState([]);
   const [showAddList, setShowAddList] = useState(false);
   const [newListTitle, setNewListTitle] = useState('');
   const [activeCardInput, setActiveCardInput] = useState(null);
@@ -30,37 +33,77 @@ export default function BoardPane({ background }) {
   const [editPopup, setEditPopup] = useState(null);
   const [selectedCard, setSelectedCard] = useState(null);
 
-  const handleAddList = () => {
-    if (!newListTitle.trim()) return;
-    const newList = {
-      id: Date.now(),
-      title: newListTitle,
-      cards: [],
+  useEffect(() => {
+    const loadLists = async () => {
+      try {
+        const res = await fetchLists(boardId);
+        const loadedLists = res.data.map((list) => ({
+          ...list,
+          cards: [],
+        }));
+        setLists(loadedLists);
+      } catch (err) {
+        console.error('❌ Failed to fetch lists:', err);
+      }
     };
-    setLists([...lists, newList]);
-    setNewListTitle('');
-    setShowAddList(false);
+    if (boardId) loadLists();
+  }, [boardId]);
+  
+  const handleAddList = async () => {
+    if (!newListTitle.trim()) return;
+
+    try {
+      const res = await createList(boardId, {
+        name: newListTitle,
+        background: '', // optional
+        visibility: 'private',
+        board: boardId,
+      });
+
+      const newList = { ...res.data, cards: [] };
+      setLists((prev) => [...prev, newList]);
+      setNewListTitle('');
+      setShowAddList(false);
+    } catch (err) {
+      console.error('❌ Failed to create list:', err);
+      console.log("📤 Sending createList:", {
+  name: newListTitle,
+  board: boardId,
+});
+
+    }
   };
 
-  const handleAddCard = (listId) => {
+
+  const handleAddCard = async (listId) => {
     const text = cardInputs[listId]?.trim();
     if (!text) return;
-    const newCard = {
-      id: uuidv4(),
-      title: text,
-      description: '',
-      dueDate: null,
-      completed: false,
-    };
-    setLists((prev) =>
-      prev.map((list) =>
-        list.id === listId ? { ...list, cards: [...list.cards, newCard] } : list
-      )
-    );
-    setCardInputs({ ...cardInputs, [listId]: '' });
-    setActiveCardInput(null);
+
+    try {
+      const res = await createCard(listId, {
+        name: text,
+        status: 'doing',
+        background: '',
+        visibility: 'private',
+      });
+
+      const newCard = res.data;
+      setLists((prev) =>
+        prev.map((list) =>
+          list.id === listId
+            ? { ...list, cards: [...list.cards, newCard] }
+            : list
+        )
+      );
+
+      setCardInputs((prev) => ({ ...prev, [listId]: '' }));
+      setActiveCardInput(null);
+    } catch (err) {
+      console.error('❌ Failed to create card:', err);
+    }
   };
 
+  
   const onDragEnd = (result) => {
     const { source, destination } = result;
     if (!destination) return;
@@ -100,7 +143,7 @@ export default function BoardPane({ background }) {
       return newLists;
     });
   };
-
+  
   const textColor = getTextColor(background);
 
   return (

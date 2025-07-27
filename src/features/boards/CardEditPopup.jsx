@@ -29,9 +29,11 @@ export default function CardEditPopup({ anchorRect, cardText, onClose, onChange,
       aria-label="Edit card options"
       style={{
         top: anchorRect.bottom + window.scrollY + 8,
-        left: anchorRect.left,
-        width: Math.min(anchorRect.width, 784)
+        left: Math.min(anchorRect.left + 6, window.innerWidth - 320),
+        maxWidth: 320,
+        width: '100%'
       }}
+
       ref={popupRef}
     >
       <Form

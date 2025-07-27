@@ -29,6 +29,16 @@ function App() {
       <Route path="/register" element={<AuthForm mode="register" />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route
+        path="/workspaces/:workspaceId/boards/:boardId"
+        element={
+          <PrivateRoute>
+            <WithHeaderOnlyLayout>
+              <BoardDetailPage />
+            </WithHeaderOnlyLayout>
+          </PrivateRoute>
+        }
+      />
+      <Route
         path="/workspaces/:workspaceId/boards/:boardId/inbox"
         element={
           <PrivateRoute>

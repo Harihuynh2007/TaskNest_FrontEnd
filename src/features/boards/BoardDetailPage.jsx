@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export default function BoardDetailPage() {
   const { workspaceId, boardId } = useParams();
+  const numericBoardId = parseInt(boardId);
   const [background, setBackground] = useState('#e4f0f6');
   const [loading, setLoading] = useState(true);
   const [activeTabs, setActiveTabs] = useState(['inbox']);
@@ -85,17 +86,23 @@ export default function BoardDetailPage() {
 
     const ensureCardStructure = (card) => ({
       id: card.id,
-      title: card.title,
+      title: card.title || '',
       description: card.description || '',
       dueDate: card.dueDate || null,
+      assignee: card.assignee || null,
+      label: Array.isArray(card.label) ? card.label : [],
+      checklist: Array.isArray(card.checklist) ? card.checklist : [],
+      comment: Array.isArray(card.comment) ? card.comment : [],
       completed: card.completed ?? false,
     });
 
+    let movedCard;
     if (source.droppableId === destination.droppableId) {
+      // Reorder trong cùng pane/list
       if (source.droppableId === 'inbox') {
         const newCards = Array.from(cards);
-        const [moved] = newCards.splice(source.index, 1);
-        newCards.splice(destination.index, 0, ensureCardStructure(moved));
+        [movedCard] = newCards.splice(source.index, 1);
+        newCards.splice(destination.index, 0, ensureCardStructure(movedCard));
         setCards(newCards);
       } else {
         const listId = parseInt(source.droppableId.replace('list-', ''));
@@ -104,31 +111,36 @@ export default function BoardDetailPage() {
           if (listIndex === -1) return prev;
           const newLists = [...prev];
           const newCards = Array.from(newLists[listIndex].cards);
-          const [moved] = newCards.splice(source.index, 1);
-          newCards.splice(destination.index, 0, ensureCardStructure(moved));
+          [movedCard] = newCards.splice(source.index, 1);
+          newCards.splice(destination.index, 0, ensureCardStructure(movedCard));
           newLists[listIndex] = { ...newLists[listIndex], cards: newCards };
           return newLists;
         });
       }
     } else {
-      let movedCard;
+      
       if (source.droppableId === 'inbox') {
         const newCards = Array.from(cards);
         [movedCard] = newCards.splice(source.index, 1);
         setCards(newCards);
 
         const destListId = parseInt(destination.droppableId.replace('list-', ''));
+        const destList = lists.find((l) => l.id === destListId);
+        if (destList?.title === 'Done') movedCard.completed = true;
+
         setLists((prev) => prev.map((list) =>
-          list.id === destListId ? {
-            ...list,
-            cards: [
-              ...list.cards.slice(0, destination.index),
-              ensureCardStructure(movedCard),
-              ...list.cards.slice(destination.index),
-            ],
-          } : list
+          list.id === destListId
+            ? {
+                ...list,
+                cards: [
+                  ...list.cards.slice(0, destination.index),
+                  ensureCardStructure(movedCard),
+                  ...list.cards.slice(destination.index),
+                ],
+              }
+            : list
         ));
-      } else {
+      }else {
         const sourceListId = parseInt(source.droppableId.replace('list-', ''));
         setLists((prev) => {
           const sourceListIndex = prev.findIndex((l) => l.id === sourceListId);
@@ -136,10 +148,19 @@ export default function BoardDetailPage() {
           const newLists = [...prev];
           const sourceCards = Array.from(newLists[sourceListIndex].cards);
           [movedCard] = sourceCards.splice(source.index, 1);
-          newLists[sourceListIndex] = { ...newLists[sourceListIndex], cards: sourceCards };
+          if (newLists[sourceListIndex].title === 'Done') movedCard.completed = false;
+          newLists[sourceListIndex] = {
+            ...newLists[sourceListIndex],
+            cards: sourceCards,
+          };
           return newLists;
         });
-        setCards((prev) => [...prev.slice(0, destination.index), movedCard, ...prev.slice(destination.index)]);
+
+        setCards((prev) => [
+          ...prev.slice(0, destination.index),
+          ensureCardStructure(movedCard),
+          ...prev.slice(destination.index),
+        ]);
       }
     }
   };
@@ -156,14 +177,8 @@ export default function BoardDetailPage() {
 
   const toggleComplete = (index) => {
     const updated = [...cards];
-    updated[index].completed = true;
+    updated[index].completed = !updated[index].completed;
     setCards([...updated]);
-    setTimeout(() => {
-      const fresh = [...updated];
-      const [completedCard] = fresh.splice(index, 1);
-      setCards(fresh);
-      setArchived((prev) => [...prev, completedCard]);
-    }, 1000);
   };
 
   const handleSaveCard = () => {
@@ -196,7 +211,7 @@ export default function BoardDetailPage() {
         />
       )}
       {activeTabs.includes('planner') && <PlannerPane background={background} />}
-      {activeTabs.includes('board') && <BoardPane background={background} lists={lists} setLists={setLists} />}
+      {activeTabs.includes('board') && <BoardPane background={background} boardId={numericBoardId} lists={lists} setLists={setLists} />}
     </SplitContainer>
   );
 
