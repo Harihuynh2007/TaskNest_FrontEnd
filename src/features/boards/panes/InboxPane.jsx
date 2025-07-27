@@ -4,6 +4,7 @@ import { Droppable, Draggable } from '@hello-pangea/dnd';
 import InboxSubHeader from '../InboxSubHeader';
 import CardEditPopup from '../CardEditPopup';
 import FullCardModal from '../../../components/FullCardModal';
+import CardItem from '../../../components/CardItem';
 
 export default function InboxPane({
   cards,
@@ -61,41 +62,26 @@ export default function InboxPane({
               {cards.map((card, index) => (
                 <Draggable key={card.id} draggableId={card.id} index={index}>
                   {(provided, snapshot) => (
-                    <Card
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                      isDragging={snapshot.isDragging}
-                      onClick={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        setEditPopup({ index, text: card.title, anchorRect: rect });
-                      }}
-                    >
-                      <CheckCircle
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleComplete(index);
-                        }}
-                      >
-                        {card.completed ? '✅' : '○'}
-                      </CheckCircle>
-                      <CardText completed={card.completed}>{card.title}</CardText>
-                      <EditIcon
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const rect = e.currentTarget.parentElement.getBoundingClientRect();
+                    <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                      <CardItem
+                        card={card}
+                        index={index}
+                        isDragging={snapshot.isDragging}
+                        onEditClick={(e, card, index, rect) => {
                           setEditPopup({ index, text: card.title, anchorRect: rect });
                         }}
-                      >
-                        ✏️
-                      </EditIcon>
-                    </Card>
+                        onCheckClick={toggleComplete}
+                        onCardClick={(card) => setSelectedCard(card)} 
+                      />      
+                    </div>
                   )}
                 </Draggable>
               ))}
               {provided.placeholder}
             </CardList>
+            
           )}
+          
         </Droppable>
 
         {editPopup && (
@@ -115,6 +101,8 @@ export default function InboxPane({
     </PaneWrapper>
   );
 }
+
+
 
 
 const PaneWrapper = styled.div`
