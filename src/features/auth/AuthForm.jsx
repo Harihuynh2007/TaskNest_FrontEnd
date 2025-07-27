@@ -86,35 +86,38 @@ export default function AuthForm({ mode = 'login' }) {
     if (!validEmail || !validPass || !validConf) return;
 
     setLoading(true);
+
     try {
       if (isLogin) {
-
         await login(email, password);
+        navigate('/boards'); // ✅ giữ nguyên
 
         const accounts = JSON.parse(localStorage.getItem('savedAccounts')) || [];
-        const exists = accounts.find(acc => acc.email ===email);
-        if(!exists){
+        const exists = accounts.find(acc => acc.email === email);
+        if (!exists) {
           const newAcc = {
             email,
-            name : email.split('@')[0],
+            name: email.split('@')[0],
             avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${email}`
           };
           localStorage.setItem('savedAccounts', JSON.stringify([newAcc, ...accounts]));
         }
       } else {
         await signup(email, password);
+        navigate('/login'); // ✅ chỉ điều hướng sau đăng ký
       }
-      navigate('/boards');
     } catch (err) {
       const msg = err.response?.data?.detail
         || err.response?.data?.message
+        || err.response?.data?.error
         || 'Có lỗi rồi đại vương ơi. !!!';
       setErrMsg(msg);
       setShowErrModal(true);
-    } finally {
-      setLoading(false);
     }
-  };
+    finally {
+          setLoading(false);
+        }
+    };
 
   return (
     <>
