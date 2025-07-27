@@ -1,9 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
-import { FaPlus, FaTimes, FaEllipsisH } from 'react-icons/fa';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 
-export default function ListColumn({
+function ListColumn({
   list,
   background,
   textColor,
@@ -13,144 +12,126 @@ export default function ListColumn({
   setActiveCardInput,
   onAddCard,
 }) {
+  const handleInputChange = (e) => {
+    setCardInputs((prev) => ({ ...prev, [list.id]: e.target.value }));
+  };
+
+  const handleAddCard = () => {
+    onAddCard(list.id);
+  };
+
+  const isInputActive = activeCardInput === list.id;
+
   return (
-    <Droppable droppableId={`list-${list.id}`} type="CARD" direction="vertical">
-      {(provided) => (
-        <List
-          ref={provided.innerRef}
-          {...provided.droppableProps}
-        >
-          <ListHeader>
-            <ListTitle style={{ color: textColor }}>{list.title}</ListTitle>
-            <FaEllipsisH style={{ cursor: 'pointer', color: textColor }} />
-          </ListHeader>
+    <Wrapper>
+      <Header style={{ color: textColor }}>{list.title}</Header>
 
-          {list.cards.map((card, index) => (
-            <Draggable key={card + index} draggableId={card + list.id} index={index}>
-              {(provided, snapshot) => (
-                <Card
-                  ref={provided.innerRef}
-                  {...provided.draggableProps}
-                  {...provided.dragHandleProps}
-                  isDragging={snapshot.isDragging}
-                  style={provided.draggableProps.style} // ✅ fix positioning
-                >
-                  {card}
-                </Card>
-              )}
-            </Draggable>
-          ))}
-          {provided.placeholder}
-
-          {activeCardInput === list.id ? (
-            <CardInputWrapper>
-              <CardInput
-                placeholder="Enter a title or paste a link"
-                value={cardInput}
-                onChange={(e) =>
-                  setCardInputs((prev) => ({ ...prev, [list.id]: e.target.value }))
-                }
-                autoFocus
-              />
-              <ActionRow>
-                <AddBtn onClick={() => onAddCard(list.id)}>Add card</AddBtn>
-                <CloseBtn onClick={() => setActiveCardInput(null)}>
-                  <FaTimes />
-                </CloseBtn>
-              </ActionRow>
-            </CardInputWrapper>
-          ) : (
-            <AddCardTrigger onClick={() => setActiveCardInput(list.id)}>
-              <FaPlus size={12} style={{ marginRight: 6 }} /> Add a card
-            </AddCardTrigger>
+      <Droppable droppableId={`list-${list.id}`} type="CARD">
+  {(provided) => (
+    <CardList ref={provided.innerRef} {...provided.droppableProps}>
+      {list.cards.map((card, index) => (
+        <Draggable key={card.id} draggableId={card.id} index={index}>
+          {(provided, snapshot) => (
+            <Card
+              ref={provided.innerRef}
+              {...provided.draggableProps}
+              {...provided.dragHandleProps}
+              isDragging={snapshot.isDragging}
+            >
+              {card.title}
+            </Card>
           )}
-        </List>
+        </Draggable>
+      ))}
+      {provided.placeholder}
+    </CardList>
+  )}
+</Droppable>
+
+
+      {isInputActive ? (
+        <CardInputWrapper>
+          <Input
+            value={cardInput}
+            onChange={handleInputChange}
+            placeholder="Enter a card title..."
+            autoFocus
+          />
+          <AddButton onClick={handleAddCard}>Add</AddButton>
+        </CardInputWrapper>
+      ) : (
+        <AddCardBtn onClick={() => setActiveCardInput(list.id)}>+ Add a card</AddCardBtn>
       )}
-    </Droppable>
+    </Wrapper>
   );
 }
 
-const List = styled.div`
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+export default React.memo(ListColumn);
+
+const Wrapper = styled.div`
+  min-width: 260px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
   padding: 12px;
-  width: 272px;
-  min-width: 272px;
+  display: flex;
+  flex-direction: column;
+`;
+
+const Header = styled.h3`
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 12px;
+`;
+
+const CardList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
-  // backdrop-filter: blur(2px);  // Comment out or remove this to fix drag positioning
-  border: 1px solid rgba(255, 255, 255, 0.1);
-`;
-
-const ListHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const ListTitle = styled.h3`
-  font-size: 16px;
-  font-weight: bold;
+  min-height: 20px;
 `;
 
 const Card = styled.div`
   background: white;
-  padding: 8px;
-  border-radius: 4px;
+  padding: 10px;
+  border-radius: 6px;
   box-shadow: ${({ isDragging }) =>
-    isDragging ? '0 4px 12px rgba(0,0,0,0.2)' : '0 1px 2px rgba(0, 0, 0, 0.1)'};
-  user-select: none;
-  transition: box-shadow 0.2s;
-  position: relative;
+    isDragging ? '0 4px 12px rgba(0, 0, 0, 0.2)' : '0 1px 3px rgba(0,0,0,0.1)'};
+  border: ${({ isDragging }) => (isDragging ? '2px solid #0c66e4' : 'none')};
+  transition: all 0.2s ease;
+  font-size: 14px;
 `;
 
 const CardInputWrapper = styled.div`
+  margin-top: 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
 `;
 
-const CardInput = styled.input`
+const Input = styled.textarea`
   padding: 8px;
-  border-radius: 4px;
-  border: 2px solid #0c66e4;
-  outline: none;
   font-size: 14px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  resize: none;
 `;
 
-const AddCardTrigger = styled.button`
-  background: #dfe1e6;
-  color: #172b4d;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-`;
-
-const ActionRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const AddBtn = styled.button`
+const AddButton = styled.button`
   background: #0c66e4;
   color: white;
-  border: none;
   padding: 6px 12px;
+  border: none;
   border-radius: 4px;
-  font-size: 14px;
-  font-weight: 600;
+  font-weight: bold;
   cursor: pointer;
 `;
 
-const CloseBtn = styled.button`
+const AddCardBtn = styled.button`
+  margin-top: 8px;
   background: transparent;
   border: none;
-  font-size: 16px;
+  color: #172b4d;
+  font-weight: 500;
   cursor: pointer;
+  text-align: left;
 `;

@@ -83,11 +83,19 @@ export default function BoardDetailPage() {
     const { source, destination } = result;
     if (!destination) return;
 
+    const ensureCardStructure = (card) => ({
+      id: card.id,
+      title: card.title,
+      description: card.description || '',
+      dueDate: card.dueDate || null,
+      completed: card.completed ?? false,
+    });
+
     if (source.droppableId === destination.droppableId) {
       if (source.droppableId === 'inbox') {
         const newCards = Array.from(cards);
         const [moved] = newCards.splice(source.index, 1);
-        newCards.splice(destination.index, 0, moved);
+        newCards.splice(destination.index, 0, ensureCardStructure(moved));
         setCards(newCards);
       } else {
         const listId = parseInt(source.droppableId.replace('list-', ''));
@@ -97,7 +105,7 @@ export default function BoardDetailPage() {
           const newLists = [...prev];
           const newCards = Array.from(newLists[listIndex].cards);
           const [moved] = newCards.splice(source.index, 1);
-          newCards.splice(destination.index, 0, moved);
+          newCards.splice(destination.index, 0, ensureCardStructure(moved));
           newLists[listIndex] = { ...newLists[listIndex], cards: newCards };
           return newLists;
         });
@@ -111,7 +119,14 @@ export default function BoardDetailPage() {
 
         const destListId = parseInt(destination.droppableId.replace('list-', ''));
         setLists((prev) => prev.map((list) =>
-          list.id === destListId ? { ...list, cards: [...list.cards.slice(0, destination.index), movedCard, ...list.cards.slice(destination.index)] } : list
+          list.id === destListId ? {
+            ...list,
+            cards: [
+              ...list.cards.slice(0, destination.index),
+              ensureCardStructure(movedCard),
+              ...list.cards.slice(destination.index),
+            ],
+          } : list
         ));
       } else {
         const sourceListId = parseInt(source.droppableId.replace('list-', ''));
