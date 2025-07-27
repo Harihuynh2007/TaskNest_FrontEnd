@@ -3,6 +3,8 @@ import styled from 'styled-components';
 import InboxSubHeader from '../InboxSubHeader';
 import { FaPlus, FaTimes } from 'react-icons/fa';
 import ListColumn from '../../../components/ListColumn';
+import FullCardModal from '../../../components/FullCardModal';
+import CardEditPopup from '../CardEditPopup';
 import { DragDropContext } from '@hello-pangea/dnd';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -25,6 +27,8 @@ export default function BoardPane({ background }) {
   const [newListTitle, setNewListTitle] = useState('');
   const [activeCardInput, setActiveCardInput] = useState(null);
   const [cardInputs, setCardInputs] = useState({});
+  const [editPopup, setEditPopup] = useState(null);
+  const [selectedCard, setSelectedCard] = useState(null);
 
   const handleAddList = () => {
     if (!newListTitle.trim()) return;
@@ -46,6 +50,7 @@ export default function BoardPane({ background }) {
       title: text,
       description: '',
       dueDate: null,
+      completed: false,
     };
     setLists((prev) =>
       prev.map((list) =>
@@ -94,13 +99,45 @@ export default function BoardPane({ background }) {
 
       return newLists;
     });
-
   };
 
   const textColor = getTextColor(background);
 
   return (
     <Wrapper background={background}>
+      {editPopup && <DarkOverlay />}
+      {selectedCard && (
+        <FullCardModal card={selectedCard} onClose={() => setSelectedCard(null)} />
+      )}
+
+      {editPopup && (
+        <CardEditPopup
+          anchorRect={editPopup.anchorRect}
+          cardText={editPopup.text}
+          onChange={(val) => setEditPopup({ ...editPopup, text: val })}
+          onSave={() => {
+            setLists((prev) =>
+              prev.map((list) =>
+                list.id === editPopup.listId
+                  ? {
+                      ...list,
+                      cards: list.cards.map((c, i) =>
+                        i === editPopup.index ? { ...c, title: editPopup.text } : c
+                      ),
+                    }
+                  : list
+              )
+            );
+            setEditPopup(null);
+          }}
+          onClose={() => setEditPopup(null)}
+          onOpenFullCard={() => {
+            setEditPopup(null);
+            setSelectedCard(editPopup.card);
+          }}
+        />
+      )}
+
       <InboxSubHeader />
       <DragDropContext onDragEnd={onDragEnd}>
         <BoardContent>
@@ -115,6 +152,18 @@ export default function BoardPane({ background }) {
               activeCardInput={activeCardInput}
               setActiveCardInput={setActiveCardInput}
               onAddCard={handleAddCard}
+              onEditClick={(e, card, index) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setEditPopup({
+                  anchorRect: rect,
+                  index,
+                  text: card.title,
+                  card,
+                  listId: list.id,
+                });
+              }}
+              onCheckClick={() => {}}
+              onCardClick={(card) => setSelectedCard(card)}
             />
           ))}
 
@@ -144,6 +193,9 @@ export default function BoardPane({ background }) {
     </Wrapper>
   );
 }
+
+
+
 
 const Wrapper = styled.div`
   background: ${(props) => props.background || '#f4f5f7'};
@@ -225,4 +277,10 @@ const AddListTrigger = styled.button`
   display: flex;
   align-items: center;
   height: fit-content;
+`;
+const DarkOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 998;
 `;
