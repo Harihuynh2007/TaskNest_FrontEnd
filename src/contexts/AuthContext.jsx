@@ -1,6 +1,6 @@
 
 import React, { createContext, useState, useEffect, useCallback } from 'react';
-import { login as authLogin, logout as authLogout } from '../api/authApi';
+import { login as authLogin, logout as authLogout, register as authRegister } from '../api/authApi';
 import { fetchWorkspaces } from '../api/workspaceApi';
 
 export const AuthContext = createContext();
@@ -60,6 +60,15 @@ export function AuthProvider({ children }) {
     return res;
   }, [fetchUserDetails, preloadWorkspaces]);
 
+  const signup = useCallback(async (email, password) => {
+  const res = await authRegister(email, password);
+  const token = res.data.token || res.data.access;
+  localStorage.setItem('token', token);
+  await fetchUserDetails();
+  await preloadWorkspaces();
+  return res;
+}, [fetchUserDetails, preloadWorkspaces]);
+
   const logout = useCallback(() => {
     return authLogout()
       .then(() => {
@@ -76,7 +85,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{
-      user, loading, login, logout, workspaces
+      user, loading, login, logout,signup, workspaces
     }}>
       {children}
     </AuthContext.Provider>

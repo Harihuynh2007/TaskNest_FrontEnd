@@ -1,6 +1,9 @@
 // src/api/cardApi.js
+import { data } from 'react-router-dom';
 import api from './axiosClient';
 
+//hiển thị các card đang có trong list
+export const fetchCards = (listId) => api.get(`/lists/${listId}/cards/`)
 /**
  * Tạo card trong một list
  */
