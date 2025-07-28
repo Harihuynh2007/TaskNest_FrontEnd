@@ -12,9 +12,9 @@ function ListColumn({
   activeCardInput,
   setActiveCardInput,
   onAddCard,
-  onEditClick,    
-  onCheckClick,    
-  onCardClick, 
+  onEditClick,
+  onCheckClick,
+  onCardClick,
   hideEmptyCards = false,
 }) {
   const handleInputChange = (e) => {
@@ -32,32 +32,37 @@ function ListColumn({
     <Wrapper>
       <Header style={{ color: textColor }}>{list.name}</Header>
 
-      {!hideEmptyCards || hasCards ? (
-        <Droppable droppableId={`list-${list.id}`} type="CARD">
-          {(provided) => (
-            <CardList ref={provided.innerRef} {...provided.droppableProps}>
-              {hasCards && list.cards.map((card, index) => (
+      {/* ✅ Vùng thả cho các card */}
+      <Droppable droppableId={String(list.id)} type="card">
+        {(provided) => (
+          <CardList ref={provided.innerRef} {...provided.droppableProps}>
+            {hasCards &&
+              list.cards.map((card, index) => (
                 <Draggable key={card.id} draggableId={String(card.id)} index={index}>
                   {(provided, snapshot) => (
-                    <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                    >
                       <CardItem
                         card={card}
                         index={index}
                         isDragging={snapshot.isDragging}
-                        onEditClick={(e) => onEditClick(e, card, index)}       
-                        onCheckClick={() => onCheckClick(index)}                
-                        onCardClick={onCardClick}    
+                        onEditClick={(e) => onEditClick(e, card, index)}
+                        onCheckClick={() => onCheckClick(index)}
+                        onCardClick={onCardClick}
                       />
                     </div>
                   )}
                 </Draggable>
               ))}
-              {provided.placeholder}
-            </CardList>
-          )}
-        </Droppable>
-      ) : null}
+            {provided.placeholder}
+          </CardList>
+        )}
+      </Droppable>
 
+      {/* ✅ Thêm card mới */}
       {isInputActive ? (
         <CardInputWrapper>
           <Input
@@ -77,9 +82,7 @@ function ListColumn({
 
 export default React.memo(ListColumn);
 
-
-
-
+// 💅 Styled components
 const Wrapper = styled.div`
   min-width: 260px;
   background: rgba(255, 255, 255, 0.3);
@@ -100,17 +103,6 @@ const CardList = styled.div`
   flex-direction: column;
   gap: 8px;
   min-height: 20px;
-`;
-
-const Card = styled.div`
-  background: white;
-  padding: 10px;
-  border-radius: 6px;
-  box-shadow: ${({ isDragging }) =>
-    isDragging ? '0 4px 12px rgba(0, 0, 0, 0.2)' : '0 1px 3px rgba(0,0,0,0.1)'};
-  border: ${({ isDragging }) => (isDragging ? '2px solid #0c66e4' : 'none')};
-  transition: all 0.2s ease;
-  font-size: 14px;
 `;
 
 const CardInputWrapper = styled.div`
