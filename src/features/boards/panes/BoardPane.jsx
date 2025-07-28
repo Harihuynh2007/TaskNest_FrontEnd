@@ -8,7 +8,7 @@ import ListColumn from '../../../components/ListColumn';
 import FullCardModal from '../../../components/FullCardModal';
 import CardEditPopup from '../CardEditPopup';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { createList, fetchLists } from '../../../api/listApi';
+import { createList, fetchLists, updateList } from '../../../api/listApi';
 import { createCard, fetchCards, updateCard } from '../../../api/cardApi';
 
 function getTextColor(bg) {
@@ -97,6 +97,10 @@ export default function BoardPane({ background, boardId }) {
         const newLists = [...prev];
         const [moved] = newLists.splice(source.index, 1);
         newLists.splice(destination.index, 0, moved);
+
+        newLists.forEach((list, index) => {
+          updateList(list.id, { position: index });  
+        });
         return newLists;
       });
       return;
