@@ -9,10 +9,10 @@ import { DragDropContext } from '@hello-pangea/dnd';
 import { v4 as uuidv4 } from 'uuid';
 
 
-import { createList } from '../../../api/listApi';
+import { createList, updateList } from '../../../api/listApi';
 import { fetchLists } from '../../../api/listApi';
 
-import { createCard } from '../../../api/cardApi';
+import { createCard, fetchCards } from '../../../api/cardApi';
 
 
 function getTextColor(bg) {
@@ -34,20 +34,25 @@ export default function BoardPane({ background, boardId }) {
   const [selectedCard, setSelectedCard] = useState(null);
 
   useEffect(() => {
-    const loadLists = async () => {
-      try {
-        const res = await fetchLists(boardId);
-        const loadedLists = res.data.map((list) => ({
-          ...list,
-          cards: [],
-        }));
-        setLists(loadedLists);
-      } catch (err) {
-        console.error('❌ Failed to fetch lists:', err);
-      }
-    };
-    if (boardId) loadLists();
-  }, [boardId]);
+  const loadListsAndCards = async () => {
+    try {
+      const resLists = await fetchLists(boardId);            // [{ id, name, … }]
+      const listsWithCards = await Promise.all(
+        resLists.data.map(async list => {
+          const resCards = await fetchCards(list.id);        // trả về axios response
+          return {
+            ...list,
+            cards: Array.isArray(resCards.data) ? resCards.data : []
+          };
+        })
+      );
+      setLists(listsWithCards);
+    } catch (err) {
+      console.error('❌ Failed to fetch lists or cards:', err);
+    }
+  };
+  if (boardId) loadListsAndCards();
+}, [boardId]);
   
   const handleAddList = async () => {
     if (!newListTitle.trim()) return;
@@ -60,19 +65,24 @@ export default function BoardPane({ background, boardId }) {
         board: boardId,
       });
 
-      const newList = { ...res.data, cards: [] };
-      setLists((prev) => [...prev, newList]);
+      // const newList = { ...res.data, cards: [] };
+      // setLists((prev) => [...prev, newList]);
+    // res.data là list mới (chưa có cards)
+    const newList = {
+      ...res.data,
+      cards: [],  // init mảng rỗng để có thể thêm card sau này
+    };
+    setLists(prev => [...prev, newList]);  // ← chỉ thêm list mới, giữ nguyên lists cũ
       setNewListTitle('');
       setShowAddList(false);
     } catch (err) {
       console.error('❌ Failed to create list:', err);
       console.log("📤 Sending createList:", {
-  name: newListTitle,
-  board: boardId,
-});
-
+        name: newListTitle,
+        board: boardId,
+      });
     }
-  };
+};
 
 
   const handleAddCard = async (listId) => {
@@ -91,11 +101,20 @@ export default function BoardPane({ background, boardId }) {
       setLists((prev) =>
         prev.map((list) =>
           list.id === listId
-            ? { ...list, cards: [...list.cards, newCard] }
+            ? { ...list, cards: [...(list.cards||[]), newCard] }
             : list
         )
       );
 
+      const resCards = await fetchCards(listId);
+      const updatedCards = resCards.data;
+      setLists((prevLists) =>
+      prevLists.map((list) =>
+        list.id === listId
+          ? { ...list, cards: Array.isArray(updatedCards) ? updatedCards : [] }  // Cập nhật lại danh sách cards cho list này
+          : list
+      )
+      );
       setCardInputs((prev) => ({ ...prev, [listId]: '' }));
       setActiveCardInput(null);
     } catch (err) {
@@ -195,6 +214,7 @@ export default function BoardPane({ background, boardId }) {
               activeCardInput={activeCardInput}
               setActiveCardInput={setActiveCardInput}
               onAddCard={handleAddCard}
+              hideEmptyCards={true}
               onEditClick={(e, card, index) => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 setEditPopup({

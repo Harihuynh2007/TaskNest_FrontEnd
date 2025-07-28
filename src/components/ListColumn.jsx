@@ -12,6 +12,10 @@ function ListColumn({
   activeCardInput,
   setActiveCardInput,
   onAddCard,
+  onEditClick,    
+  onCheckClick,    
+  onCardClick, 
+  hideEmptyCards = false,
 }) {
   const handleInputChange = (e) => {
     setCardInputs((prev) => ({ ...prev, [list.id]: e.target.value }));
@@ -22,33 +26,37 @@ function ListColumn({
   };
 
   const isInputActive = activeCardInput === list.id;
+  const hasCards = Array.isArray(list.cards) && list.cards.length > 0;
 
   return (
     <Wrapper>
       <Header style={{ color: textColor }}>{list.name}</Header>
 
-      <Droppable droppableId={`list-${list.id}`} type="CARD">
-        {(provided) => (
-          <CardList ref={provided.innerRef} {...provided.droppableProps}>
-            {list.cards.map((card, index) => (
-              <Draggable key={card.id} draggableId={String(card.id)} index={index}>
-                {(provided, snapshot) => (
-                  <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                    <CardItem
-                      card={card}
-                      index={index}
-                      isDragging={snapshot.isDragging}
-                      onEditClick={() => {}}
-                      onCheckClick={() => {}}
-                    />
-                  </div>
-                )}
-              </Draggable>
-            ))}
-            {provided.placeholder}
-          </CardList>
-        )}
-      </Droppable>
+      {!hideEmptyCards || hasCards ? (
+        <Droppable droppableId={`list-${list.id}`} type="CARD">
+          {(provided) => (
+            <CardList ref={provided.innerRef} {...provided.droppableProps}>
+              {hasCards && list.cards.map((card, index) => (
+                <Draggable key={card.id} draggableId={String(card.id)} index={index}>
+                  {(provided, snapshot) => (
+                    <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                      <CardItem
+                        card={card}
+                        index={index}
+                        isDragging={snapshot.isDragging}
+                        onEditClick={(e) => onEditClick(e, card, index)}       
+                        onCheckClick={() => onCheckClick(index)}                
+                        onCardClick={onCardClick}    
+                      />
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </CardList>
+          )}
+        </Droppable>
+      ) : null}
 
       {isInputActive ? (
         <CardInputWrapper>
