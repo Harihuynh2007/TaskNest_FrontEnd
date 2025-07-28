@@ -36,7 +36,7 @@ export default function BoardPane({ background, boardId }) {
   useEffect(() => {
   const loadListsAndCards = async () => {
     try {
-      const resLists = await fetchLists(boardId);            // [{ id, name, … }]
+      const resLists = await fetchLists(boardId);          
       const listsWithCards = await Promise.all(
         resLists.data.map(async list => {
           const resCards = await fetchCards(list.id);        // trả về axios response
@@ -184,8 +184,11 @@ export default function BoardPane({ background, boardId }) {
                   ? {
                       ...list,
                       cards: list.cards.map((c, i) =>
-                        i === editPopup.index ? { ...c, title: editPopup.text } : c
-                      ),
+                        i === editPopup.index
+                          ? { ...c, name: editPopup.text, title: editPopup.text }
+                          : c
+                      )
+
                     }
                   : list
               )
@@ -205,29 +208,42 @@ export default function BoardPane({ background, boardId }) {
         <BoardContent>
           {lists.map((list) => (
             <ListColumn
-              key={list.id}
-              list={list}
-              background={background}
-              textColor={textColor}
-              cardInput={cardInputs[list.id] || ''}
-              setCardInputs={setCardInputs}
-              activeCardInput={activeCardInput}
-              setActiveCardInput={setActiveCardInput}
-              onAddCard={handleAddCard}
-              hideEmptyCards={true}
-              onEditClick={(e, card, index) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                setEditPopup({
-                  anchorRect: rect,
-                  index,
-                  text: card.title,
-                  card,
-                  listId: list.id,
-                });
-              }}
-              onCheckClick={() => {}}
-              onCardClick={(card) => setSelectedCard(card)}
-            />
+  key={list.id}
+  list={list}
+  background={background}
+  textColor={textColor}
+  cardInput={cardInputs[list.id] || ''}
+  setCardInputs={setCardInputs}
+  activeCardInput={activeCardInput}
+  setActiveCardInput={setActiveCardInput}
+  onAddCard={handleAddCard}
+  onEditClick={(e, card, index) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setEditPopup({
+      anchorRect: rect,
+      index,
+      text: card.name || card.title,
+      card,
+      listId: list.id,
+    });
+  }}
+  onCheckClick={(index) => {
+    setLists((prev) =>
+      prev.map((l) =>
+        l.id === list.id
+          ? {
+              ...l,
+              cards: l.cards.map((c, i) =>
+                i === index ? { ...c, completed: !c.completed } : c
+              ),
+            }
+          : l
+      )
+    );
+  }}
+  onCardClick={(card) => setSelectedCard(card)}
+/>
+
           ))}
 
           {showAddList ? (
