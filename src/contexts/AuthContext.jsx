@@ -1,6 +1,5 @@
-
 import React, { createContext, useState, useEffect, useCallback } from 'react';
-import { login as authLogin, logout as authLogout } from '../api/authApi';
+import { login as authLogin, logout as authLogout, register } from '../api/authApi';
 import { fetchWorkspaces } from '../api/workspaceApi';
 
 export const AuthContext = createContext();
@@ -55,8 +54,19 @@ export function AuthProvider({ children }) {
     const res = await authLogin(email, password);
     const token = res.data.token || res.data.access;
     localStorage.setItem('token', token);
-    await fetchUserDetails();      // 1. Fetch user
-    await preloadWorkspaces();     // 2. Preload workspaces
+    await fetchUserDetails();
+    await preloadWorkspaces();
+    return res;
+  }, [fetchUserDetails, preloadWorkspaces]);
+
+  // ✅ Thêm hàm đăng ký mới
+  const signup = useCallback(async (email, password) => {
+    const res = await register(email, password);
+    const token = res.data.token || res.data.access;
+    localStorage.setItem('token', token);
+    localStorage.setItem('refresh_token', res.data.refresh);
+    await fetchUserDetails();
+    await preloadWorkspaces();
     return res;
   }, [fetchUserDetails, preloadWorkspaces]);
 
@@ -76,7 +86,12 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{
-      user, loading, login, logout, workspaces
+      user,
+      loading,
+      login,
+      signup, // ✅ Đừng quên export ra context
+      logout,
+      workspaces
     }}>
       {children}
     </AuthContext.Provider>

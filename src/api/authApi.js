@@ -29,8 +29,8 @@ authApi.interceptors.request.use((config) => {
  * @param {string} password
  */
 export async function login(email, password) {
-  const res = await api.post('http://localhost:8000/api/auth/login/', {
-    email,
+  const res = await authApi.post('/login/', {
+    username: email, 
     password,
   });
 

@@ -28,8 +28,14 @@ export function WorkspaceProvider({ children }) {
   };
 
   useEffect(() => {
-    refreshWorkspaces(); // load lần đầu
+    const token = localStorage.getItem('token');
+    if (token) {
+      refreshWorkspaces(); // chỉ gọi nếu đã login
+    } else {
+      setLoadingWorkspaces(false);
+    }
   }, []);
+
 
   return (
     <WorkspaceContext.Provider
