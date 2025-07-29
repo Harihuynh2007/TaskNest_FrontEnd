@@ -267,7 +267,7 @@ export default function BoardDetailPage() {
     <SplitContainer>
       {activeTabs.includes('inbox') && (
         <InboxPane
-          background={background}
+          background="#e4f0f6"
           cards={cards}
           setCards={setCards}
           inputValue={inputValue}
@@ -283,7 +283,7 @@ export default function BoardDetailPage() {
           handleSaveCard={handleSaveCard}
         />
       )}
-      {activeTabs.includes('planner') && <PlannerPane background={background} />}
+      {activeTabs.includes('planner') && <PlannerPane background="#e4f0f6" />}
       {activeTabs.includes('board') && <BoardPane background={background} boardId={numericBoardId} lists={lists} setLists={setLists} />}
     </SplitContainer>
   );
@@ -323,7 +323,6 @@ const SplitContainer = styled.div`
     flex: 1;
     min-width: 240px;
     overflow-y: auto;
-    background: #ffffff;
     border-left: 1px solid #ddd;
     &:first-child {
       border-left: none;
