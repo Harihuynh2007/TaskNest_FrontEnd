@@ -15,8 +15,6 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { fetchInboxCards, updateCard, createCard } from '../../api/cardApi';
 
-import BoardSubHeader from '../../components/BoardSubHeader.jsx';
-import InboxSubHeader from './InboxSubHeader.jsx';
 
 export default function BoardDetailPage() {
   const { workspaceId, boardId } = useParams();
@@ -88,6 +86,7 @@ export default function BoardDetailPage() {
         description: '',
         due_date: null,
         completed: false,
+        position: cards.length,  // ✅ GÁN POSITION CHUẨN!
       });
 
       setCards((prev) => [...prev, res.data]);
@@ -98,31 +97,45 @@ export default function BoardDetailPage() {
   };
 
 
-  const onDragEnd = (result) => {
+
+  const onDragEnd = async (result) => {
     const { source, destination } = result;
     if (!destination) return;
 
     const ensureCardStructure = (card) => ({
       id: card.id,
-      title: card.title || '',
+      name: card.name || '',
       description: card.description || '',
-      dueDate: card.dueDate || null,
-      assignee: card.assignee || null,
-      label: Array.isArray(card.label) ? card.label : [],
-      checklist: Array.isArray(card.checklist) ? card.checklist : [],
-      comment: Array.isArray(card.comment) ? card.comment : [],
+      due_date: card.due_date || null,
       completed: card.completed ?? false,
+      list: card.list || null,
+      visibility: card.visibility || 'private',
+      status: card.status || 'doing',
+      position: card.position ?? 0,
     });
 
     let movedCard;
+
+    // Reorder trong cùng 1 danh sách
     if (source.droppableId === destination.droppableId) {
-      // Reorder trong cùng pane/list
       if (source.droppableId === 'inbox') {
         const newCards = Array.from(cards);
         [movedCard] = newCards.splice(source.index, 1);
         newCards.splice(destination.index, 0, ensureCardStructure(movedCard));
         setCards(newCards);
+
+        // ✅ Gửi PATCH cập nhật position
+        for (let i = 0; i < newCards.length; i++) {
+          if (newCards[i].position !== i) {
+            try {
+              await updateCard(newCards[i].id, { position: i });
+            } catch (err) {
+              console.error(`❌ Lỗi update position card ${newCards[i].id}`, err);
+            }
+          }
+        }
       } else {
+        // xử lý re-order trong cùng 1 list (To Do / Doing / Done)
         const listId = parseInt(source.droppableId.replace('list-', ''));
         setLists((prev) => {
           const listIndex = prev.findIndex((l) => l.id === listId);
@@ -136,7 +149,7 @@ export default function BoardDetailPage() {
         });
       }
     } else {
-      
+      // kéo từ Inbox → sang list
       if (source.droppableId === 'inbox') {
         const newCards = Array.from(cards);
         [movedCard] = newCards.splice(source.index, 1);
@@ -146,19 +159,32 @@ export default function BoardDetailPage() {
         const destList = lists.find((l) => l.id === destListId);
         if (destList?.title === 'Done') movedCard.completed = true;
 
-        setLists((prev) => prev.map((list) =>
-          list.id === destListId
-            ? {
-                ...list,
-                cards: [
-                  ...list.cards.slice(0, destination.index),
-                  ensureCardStructure(movedCard),
-                  ...list.cards.slice(destination.index),
-                ],
-              }
-            : list
-        ));
-      }else {
+        setLists((prev) =>
+          prev.map((list) =>
+            list.id === destListId
+              ? {
+                  ...list,
+                  cards: [
+                    ...list.cards.slice(0, destination.index),
+                    ensureCardStructure(movedCard),
+                    ...list.cards.slice(destination.index),
+                  ],
+                }
+              : list
+          )
+        );
+
+        // ✅ Gửi update list và position
+        try {
+          await updateCard(movedCard.id, {
+            list: destListId,
+            position: destination.index,
+          });
+        } catch (err) {
+          console.error('❌ Lỗi update card khi chuyển list:', err);
+        }
+      } else {
+        // kéo từ list → sang Inbox
         const sourceListId = parseInt(source.droppableId.replace('list-', ''));
         setLists((prev) => {
           const sourceListIndex = prev.findIndex((l) => l.id === sourceListId);
@@ -174,14 +200,23 @@ export default function BoardDetailPage() {
           return newLists;
         });
 
-        setCards((prev) => [
-          ...prev.slice(0, destination.index),
-          ensureCardStructure(movedCard),
-          ...prev.slice(destination.index),
-        ]);
+        const newCards = Array.from(cards);
+        newCards.splice(destination.index, 0, ensureCardStructure(movedCard));
+        setCards(newCards);
+
+        // ✅ Gửi update list=null và position
+        try {
+          await updateCard(movedCard.id, {
+            list: null,
+            position: destination.index,
+          });
+        } catch (err) {
+          console.error('❌ Lỗi update card khi kéo về inbox:', err);
+        }
       }
     }
   };
+
 
   const toggleTab = (tabName) => {
     setActiveTabs((prev) =>

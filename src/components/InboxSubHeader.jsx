@@ -1,9 +1,9 @@
-// src/features/boards/InboxSubHeader.jsx
+// src/components/InboxSubHeader.jsx
 import React from 'react';
 import styled from 'styled-components';
-import { MdOutlineFeedback, MdFilterList, MdMoreHoriz, MdInbox  } from 'react-icons/md';
+import { MdOutlineFeedback, MdFilterList, MdMoreHoriz, MdInbox } from 'react-icons/md';
 
-export default function InboxSubHeader() {
+export default function InboxSubHeader({ setShowFeedback, setShowFilter }) {
   return (
     <HeaderWrapper>
       <Wrapper>
@@ -12,10 +12,10 @@ export default function InboxSubHeader() {
           <Title>Inbox</Title>
         </Left>
         <Right>
-          <IconButton title="Feedback">
+          <IconButton title="Feedback" onClick={() => setShowFeedback(true)}>
             <MdOutlineFeedback size={20} />
           </IconButton>
-          <IconButton title="Filter">
+          <IconButton title="Filter" onClick={() => setShowFilter(true)}>
             <MdFilterList size={20} />
           </IconButton>
           <IconButton title="More options">
@@ -27,17 +27,15 @@ export default function InboxSubHeader() {
   );
 }
 
-const HeaderWrapper = styled.h2`
-  width: 100vw;
+const HeaderWrapper = styled.div`
+  width: 100%;
   height: 56px;
-  margin: 0;
-  background: #f4f5f7;
+  background: var(--board-header-background-color, #ffffff3d);
   border-bottom: 1px solid #dcdfe4;
   display: flex;
   align-items: center;
-  position: relative;
-  left: 50%;
-  transform: translateX(-50%);
+  font-family: var(--ds-font-body, sans-serif);
+  color: var(--ds-text, #172b4d);
 `;
 
 const Right = styled.div`
@@ -46,14 +44,18 @@ const Right = styled.div`
   gap: 8px;
   opacity: 0;
   transition: opacity 0.2s ease;
-`
+
+  @media (max-width: 400px) {
+    display: none;
+  }
+`;
 
 const Wrapper = styled.div`
   width: 100%;
   display: flex;
-  margin : 12px 8px 12px 16px;
   justify-content: space-between;
   align-items: center;
+  margin: 12px 8px 12px 16px;
   font-size: 14px;
   font-weight: 500;
 
@@ -65,7 +67,7 @@ const Wrapper = styled.div`
 const Left = styled.div`
   display: flex;
   align-items: center;
-  color: #172b4d;
+  color: var(--ds-text, #172b4d);
 `;
 
 const Title = styled.span`
@@ -73,16 +75,17 @@ const Title = styled.span`
   font-weight: 600;
 `;
 
-
 const IconButton = styled.button`
   background: none;
   border: none;
-  color: #5e6c84;
+  color: var(--ds-icon, #5e6c84);
   cursor: pointer;
   padding: 4px;
   font-size: 16px;
 
   &:hover {
-    color: #172b4d;
+    color: var(--ds-text, #172b4d);
+    background: var(--dynamic-button-hovered, rgba(0, 0, 0, 0.16));
+    border-radius: 4px;
   }
-`
+`;
