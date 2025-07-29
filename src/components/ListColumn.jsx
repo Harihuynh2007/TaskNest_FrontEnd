@@ -40,47 +40,52 @@ function ListColumn({
           <CardList ref={provided.innerRef} {...provided.droppableProps}>
             {hasCards &&
               list.cards.map((card, index) => (
-                <Draggable key={card.id} draggableId={String(card.id)} index={index}>
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                    >
-                      <CardItem
-                        card={card}
-                        index={index}
-                        isDragging={snapshot.isDragging}
-                        onEditClick={(e) => onEditClick(e, card, index)}
-                        onCheckClick={() => onCheckClick(index)}
-                        onCardClick={onCardClick}
-                      />
-                    </div>
-                  )}
-                </Draggable>
+                <li key={card.id}>
+                  <Draggable key={card.id} draggableId={String(card.id)} index={index}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                      >
+                        <CardItem
+                          card={card}
+                          index={index}
+                          isDragging={snapshot.isDragging}
+                          onEditClick={(e) => onEditClick(e, card, index)}
+                          onCheckClick={() => onCheckClick(index)}
+                          onCardClick={onCardClick}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                </li>
+                  
               ))}
+              {/* ✅ Thêm card mới */}
+              {isInputActive ? (
+                <li>
+                  <CardComposerForm onSubmit={handleAddCard}>
+                    <StyledTextarea
+                      value={cardInput}
+                      onChange={handleInputChange}
+                      placeholder="Enter a title or paste a link"
+                      autoFocus
+                    />
+                    <CardComposerActions>
+                      <AddCardButton type="submit">Add card</AddCardButton>
+                      <CancelButton type="button" onClick={() => setActiveCardInput(null)}>✕</CancelButton>
+                    </CardComposerActions>
+                  </CardComposerForm>
+                </li>
+            ) : (
+              <AddCardBtn onClick={() => setActiveCardInput(list.id)}>+ Add a card</AddCardBtn>
+            )}
             {provided.placeholder}
           </CardList>
         )}
       </Droppable>
 
-      {/* ✅ Thêm card mới */}
-      {isInputActive ? (
-      <CardComposerForm onSubmit={handleAddCard}>
-        <StyledTextarea
-          value={cardInput}
-          onChange={handleInputChange}
-          placeholder="Enter a title or paste a link"
-          autoFocus
-        />
-        <CardComposerActions>
-          <AddCardButton type="submit">Add card</AddCardButton>
-          <CancelButton type="button" onClick={() => setActiveCardInput(null)}>✕</CancelButton>
-        </CardComposerActions>
-      </CardComposerForm>
-    ) : (
-      <AddCardBtn onClick={() => setActiveCardInput(list.id)}>+ Add a card</AddCardBtn>
-    )}
     </Wrapper>
   );
 }
@@ -103,12 +108,15 @@ const Header = styled.h3`
   margin-bottom: 12px;
 `;
 
-const CardList = styled.div`
+const CardList = styled.ul`
+  list-style: none;     // ✅ ẩn dấu chấm
+  padding: 0;
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  min-height: 20px;
 `;
+
 
 
 const AddCardBtn = styled.button`
@@ -136,7 +144,7 @@ const StyledTextarea = styled.textarea`
   border: none;
   border-radius: 3px;
   resize: none;
-  box-shadow: inset 0 0 0 2px #0c66e4;
+  box-shadow: inset 0 0 0 2px #28a745;
   outline: none;
 `;
 
@@ -147,7 +155,7 @@ const CardComposerActions = styled.div`
 `;
 
 const AddCardButton = styled.button`
-  background-color: #0c66e4;
+  background-color: #28a745;
   color: white;
   padding: 6px 12px;
   font-size: 14px;
