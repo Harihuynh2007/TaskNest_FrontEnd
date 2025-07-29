@@ -47,6 +47,7 @@ function ListColumn({
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
+                        draggingOver={snapshot.isDraggingOver ? 1 : 0}
                       >
                         <CardItem
                           card={card}
@@ -115,6 +116,12 @@ const CardList = styled.ul`
   display: flex;
   flex-direction: column;
   gap: 8px;
+
+  background: ${({ draggingOver }) =>
+    draggingOver ? 'rgba(0,0,0,0.03)' : 'transparent'};
+  border-radius: 6px;
+  transition: background 0.2s ease;
+
 `;
 
 
