@@ -1,23 +1,22 @@
 // src/api/cardApi.js
-import { data } from 'react-router-dom';
 import api from './axiosClient';
 
-//hiển thị các card đang có trong list
-export const fetchCards = (listId) => api.get(`/lists/${listId}/cards/`)
-/**
- * Tạo card trong một list
- */
-export const createCard = (listId, data) =>
-  api.post(`/lists/${listId}/cards/`, data);
+export const fetchCards = (listId) =>
+  api.get(`/lists/${listId}/cards/`);
 
-/**
- * Cập nhật card
- */
+export const fetchInboxCards = () =>
+  api.get(`/cards/`); // cần backend filter nếu quá nhiều card toàn hệ thống
+
+export const createCard = (listId, data) => {
+  if (listId !== null) {
+    return api.post(`/lists/${listId}/cards/`, data);
+  } else {
+    return api.post(`/cards/`, data); // API mới cho card không thuộc list
+  }
+};
+
 export const updateCard = (cardId, data) =>
   api.patch(`/cards/${cardId}/`, data);
 
-/**
- * Xóa card
- */
 export const deleteCard = (cardId) =>
   api.delete(`/cards/${cardId}/`);
