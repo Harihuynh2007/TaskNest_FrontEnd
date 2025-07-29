@@ -1,5 +1,4 @@
-
-// ✅ BoardPane.jsx đã cập nhật kéo list và card giống Trello
+// ✅ BoardPane.jsx (hoàn chỉnh, đã fix drag card lưu position)
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import BoardSubHeader from '../../../components/BoardSubHeader';
@@ -68,12 +67,14 @@ export default function BoardPane({ background, boardId }) {
   const handleAddCard = async (listId) => {
     const text = cardInputs[listId]?.trim();
     if (!text) return;
+    const targetList = lists.find((l) => l.id === listId);
     try {
       const res = await createCard(listId, {
         name: text,
         status: 'doing',
         background: '',
         visibility: 'private',
+        position: targetList?.cards?.length || 0,
       });
       const newCard = res.data;
       setLists((prev) =>
@@ -94,16 +95,13 @@ export default function BoardPane({ background, boardId }) {
     if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
     if (type === 'column') {
-      setLists((prev) => {
-        const newLists = [...prev];
-        const [moved] = newLists.splice(source.index, 1);
-        newLists.splice(destination.index, 0, moved);
-
-        newLists.forEach((list, index) => {
-          updateList(list.id, { position: index });  
-        });
-        return newLists;
-      });
+      const newLists = [...lists];
+      const [moved] = newLists.splice(source.index, 1);
+      newLists.splice(destination.index, 0, moved);
+      setLists(newLists);
+      await Promise.all(
+        newLists.map((list, index) => updateList(list.id, { position: index }))
+      );
       return;
     }
 
@@ -111,25 +109,23 @@ export default function BoardPane({ background, boardId }) {
     const destListId = parseInt(destination.droppableId);
     const cardId = parseInt(draggableId);
 
-    setLists((prev) => {
-      const newLists = [...prev];
-      const sourceList = newLists.find((l) => l.id === sourceListId);
-      const destList = newLists.find((l) => l.id === destListId);
-      if (!sourceList || !destList) return prev;
+    const newLists = [...lists];
+    const sourceList = newLists.find((l) => l.id === sourceListId);
+    const destList = newLists.find((l) => l.id === destListId);
+    if (!sourceList || !destList) return;
 
-      const cardIndex = sourceList.cards.findIndex((c) => c.id === cardId);
-      if (cardIndex === -1) return prev;
+    const cardIndex = sourceList.cards.findIndex((c) => c.id === cardId);
+    if (cardIndex === -1) return;
 
-      const [movedCard] = sourceList.cards.splice(cardIndex, 1);
-      destList.cards.splice(destination.index, 0, movedCard);
-      return newLists;
-    });
+    const [movedCard] = sourceList.cards.splice(cardIndex, 1);
+    destList.cards.splice(destination.index, 0, movedCard);
+    setLists(newLists);
 
-    try {
-      await updateCard(cardId, { list: destListId });
-    } catch (err) {
-      console.error('❌ Failed to update card list:', err);
-    }
+    await Promise.all(
+      destList.cards.map((card, index) =>
+        updateCard(card.id, { list: destListId, position: index })
+      )
+    );
   };
 
   const textColor = getTextColor(background);
@@ -168,14 +164,17 @@ export default function BoardPane({ background, boardId }) {
       )}
 
       <DragDropContext onDragEnd={onDragEnd}>
-
         <Droppable droppableId="all-columns" direction="horizontal" type="column">
           {(provided) => (
             <BoardContent {...provided.droppableProps} ref={provided.innerRef}>
               {lists.map((list, index) => (
                 <Draggable key={list.id} draggableId={`list-${list.id}`} index={index}>
                   {(provided) => (
-                    <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                    >
                       <ListColumn
                         list={list}
                         background={background}
@@ -229,7 +228,6 @@ export default function BoardPane({ background, boardId }) {
             <CloseBtn type="button" onClick={() => setShowAddList(false)}>✕</CloseBtn>
           </AddListButtons>
         </AddListForm>
-
       ) : (
         <AddListTrigger onClick={() => setShowAddList(true)}>
           <AddIcon>＋</AddIcon> Add another list
@@ -274,9 +272,7 @@ const ListTitleInput = styled.textarea`
   &:focus {
     box-shadow: inset 0 0 0 2px #28a745;
   }
-
-  `;
-
+`;
 
 const AddListForm = styled.form`
   display: flex;
@@ -288,7 +284,7 @@ const AddListForm = styled.form`
   border-radius: 12px;
 `;
 
-const AddListTrigger = styled.button` 
+const AddListTrigger = styled.button`
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -353,4 +349,3 @@ const CloseBtn = styled.button`
     color: #172b4d;
   }
 `;
-
