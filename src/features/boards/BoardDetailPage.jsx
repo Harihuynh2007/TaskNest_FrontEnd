@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
+
 import InboxPane from './panes/InboxPane';
 import PlannerPane from './panes/PlannerPane';
 import BoardPane from './panes/BoardPane';
+
 import BottomFloatingNav from './BottomFloatingNav';
 import FullCardModal from '../../components/FullCardModal';
 import CardEditPopup from './CardEditPopup';
@@ -13,6 +15,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { fetchInboxCards, updateCard, createCard } from '../../api/cardApi';
 
+import BoardSubHeader from '../../components/BoardSubHeader.jsx';
+import InboxSubHeader from './InboxSubHeader.jsx';
 
 export default function BoardDetailPage() {
   const { workspaceId, boardId } = useParams();

@@ -2,7 +2,7 @@
 // ✅ BoardPane.jsx đã cập nhật kéo list và card giống Trello
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import InboxSubHeader from '../InboxSubHeader';
+import BoardSubHeader from '../../../components/BoardSubHeader';
 import { FaPlus, FaTimes } from 'react-icons/fa';
 import ListColumn from '../../../components/ListColumn';
 import FullCardModal from '../../../components/FullCardModal';
@@ -136,6 +136,7 @@ export default function BoardPane({ background, boardId }) {
 
   return (
     <Wrapper background={background}>
+      <BoardSubHeader boardName="My Board" />
       {editPopup && <DarkOverlay />}
       {selectedCard && <FullCardModal card={selectedCard} onClose={() => setSelectedCard(null)} />}
       {editPopup && (
@@ -165,7 +166,6 @@ export default function BoardPane({ background, boardId }) {
           }}
         />
       )}
-      <InboxSubHeader />
 
       <DragDropContext onDragEnd={onDragEnd}>
 
@@ -239,9 +239,17 @@ export default function BoardPane({ background, boardId }) {
   );
 }
 
-const Wrapper = styled.div`background: ${(props) => props.background}; height: 100%; overflow: hidden;`;
-const BoardContent = styled.div`display: flex; gap: 16px; padding: 16px; overflow-x: auto;`;
+const Wrapper = styled.div`background: ${(props) => props.background}; height: 100%; overflow: auto;`;
 const DarkOverlay = styled.div`position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); z-index: 998;`;
+
+const BoardContent = styled.div`
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 12px;
+  overflow-x: auto;
+`;
 
 const ListTitleInput = styled.textarea`
   width: 100%;
