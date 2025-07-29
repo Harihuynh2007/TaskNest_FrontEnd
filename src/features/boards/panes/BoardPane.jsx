@@ -47,7 +47,8 @@ export default function BoardPane({ background, boardId }) {
     if (boardId) loadListsAndCards();
   }, [boardId]);
 
-  const handleAddList = async () => {
+  const handleAddList = async (e) => {
+    e.preventDefault();
     if (!newListTitle.trim()) return;
     try {
       const res = await createList(boardId, {
@@ -164,9 +165,10 @@ export default function BoardPane({ background, boardId }) {
           }}
         />
       )}
-
       <InboxSubHeader />
+
       <DragDropContext onDragEnd={onDragEnd}>
+
         <Droppable droppableId="all-columns" direction="horizontal" type="column">
           {(provided) => (
             <BoardContent {...provided.droppableProps} ref={provided.innerRef}>
@@ -214,24 +216,23 @@ export default function BoardPane({ background, boardId }) {
       </DragDropContext>
 
       {showAddList ? (
-        <AddListForm background={background}>
+        <AddListForm onSubmit={handleAddList}>
           <ListTitleInput
-            placeholder="Enter list name..."
+            placeholder="Enter list title..."
             value={newListTitle}
             onChange={(e) => setNewListTitle(e.target.value)}
             autoFocus
           />
-          <ActionRow>
-            <AddBtn onClick={handleAddList}>Add list</AddBtn>
-            <PlaceholderBtn>Add from ▾</PlaceholderBtn>
-            <CloseBtn onClick={() => setShowAddList(false)}>
-              <FaTimes aria-label="Close form" />
-            </CloseBtn>
-          </ActionRow>
+          <AddListButtons>
+            <AddBtn type="submit">Add list</AddBtn>
+            <AddFromBtn type="button">Add from ▾</AddFromBtn>
+            <CloseBtn type="button" onClick={() => setShowAddList(false)}>✕</CloseBtn>
+          </AddListButtons>
         </AddListForm>
+
       ) : (
-        <AddListTrigger background={background} style={{ color: textColor }} onClick={() => setShowAddList(true)}>
-          <FaPlus aria-label="Add another list" size={12} style={{ marginRight: 6 }} /> Add another list
+        <AddListTrigger onClick={() => setShowAddList(true)}>
+          <AddIcon>＋</AddIcon> Add another list
         </AddListTrigger>
       )}
     </Wrapper>
@@ -240,11 +241,108 @@ export default function BoardPane({ background, boardId }) {
 
 const Wrapper = styled.div`background: ${(props) => props.background}; height: 100%; overflow: hidden;`;
 const BoardContent = styled.div`display: flex; gap: 16px; padding: 16px; overflow-x: auto;`;
-const AddListForm = styled.div`padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px;`;
-const ListTitleInput = styled.input`padding: 8px; width: 100%;`;
-const ActionRow = styled.div`display: flex; gap: 8px;`;
-const AddBtn = styled.button`background: #0c66e4; color: white; padding: 6px 12px;`;
-const PlaceholderBtn = styled.button`background: transparent;`;
-const CloseBtn = styled.button`background: transparent;`;
-const AddListTrigger = styled.button`background: #d0bfff; padding: 12px; border-radius: 8px; display: flex; align-items: center;`;
 const DarkOverlay = styled.div`position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); z-index: 998;`;
+
+const ListTitleInput = styled.textarea`
+  width: 100%;
+  min-height: 20px;
+  max-height: 256px;
+  height: 32px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  resize: none;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  color: #172b4d;
+  background-color: #ffffff;
+  box-shadow: inset 0 0 0 1px #091e4224;
+  outline: none;
+  overflow: hidden;
+  box-sizing: border-box;
+  transition: background-color 85ms ease, border-color 85ms ease, box-shadow 85ms ease;
+
+  &:focus {
+    box-shadow: inset 0 0 0 2px #28a745;
+  }
+
+  `;
+
+
+const AddListForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  min-width: 272px;
+  max-width: 272px;
+  background-color: #ffffff3d;
+  padding: 12px;
+  border-radius: 12px;
+`;
+
+const AddListTrigger = styled.button` 
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 272px;
+  padding: 12px;
+  border-radius: 12px;
+  background-color: #ffffff3d;
+  border: none;
+  color: #172b4d;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 85ms ease;
+
+  &:hover {
+    background-color: #ffffff52;
+  }
+`;
+
+const AddIcon = styled.span`
+  font-size: 18px;
+  line-height: 1;
+  font-weight: bold;
+`;
+
+const AddListButtons = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+`;
+
+const AddBtn = styled.button`
+  background-color: #28a745;
+  color: white;
+  padding: 6px 12px;
+  font-weight: 500;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+`;
+
+const AddFromBtn = styled.button`
+  background: transparent;
+  border: none;
+  color: #172b4d;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+`;
+
+const CloseBtn = styled.button`
+  background: transparent;
+  border: none;
+  color: #44546f;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+
+  &:hover {
+    color: #172b4d;
+  }
+`;
+
