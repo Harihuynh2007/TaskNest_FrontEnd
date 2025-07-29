@@ -11,6 +11,9 @@ import { getBoard } from '../../api/boardApi.js';
 import { DragDropContext } from '@hello-pangea/dnd';
 import { v4 as uuidv4 } from 'uuid';
 
+import { fetchInboxCards, updateCard, createCard } from '../../api/cardApi';
+
+
 export default function BoardDetailPage() {
   const { workspaceId, boardId } = useParams();
   const numericBoardId = parseInt(boardId);
@@ -46,15 +49,17 @@ export default function BoardDetailPage() {
   }, [workspaceId, boardId]);
 
   useEffect(() => {
-    const saved = localStorage.getItem(`board-${boardId}-cards`);
-    if (saved) {
-      setCards(JSON.parse(saved));
-    }
+    const loadInboxCards = async () => {
+      try {
+        const res = await fetchInboxCards(); // gọi API cards/ => card không có list
+        setCards(res.data || []);
+      } catch (err) {
+        console.error('❌ Lỗi load inbox cards:', err);
+      }
+    };
+    loadInboxCards();
   }, [boardId]);
 
-  useEffect(() => {
-    localStorage.setItem(`board-${boardId}-cards`, JSON.stringify(cards));
-  }, [cards, boardId]);
 
   useEffect(() => {
     const socket = new WebSocket('ws://127.0.0.1:8000/ws/boards/' + boardId + '/');
@@ -67,18 +72,27 @@ export default function BoardDetailPage() {
     return () => socket.close();
   }, [boardId]);
 
-  const handleAddCard = () => {
+  const handleAddCard = async () => {
     if (inputValue.trim() === '') return;
-    const newCard = {
-      id: uuidv4(),
-      title: inputValue,
-      description: '',
-      dueDate: null,
-      completed: false,
-    };
-    setCards([...cards, newCard]);
-    setInputValue('');
+
+    try {
+      const res = await createCard(null, {
+        name: inputValue,
+        status: 'doing',
+        background: '',
+        visibility: 'private',
+        description: '',
+        due_date: null,
+        completed: false,
+      });
+
+      setCards((prev) => [...prev, res.data]);
+      setInputValue('');
+    } catch (err) {
+      console.error('❌ Lỗi tạo card inbox:', err);
+    }
   };
+
 
   const onDragEnd = (result) => {
     const { source, destination } = result;
@@ -175,20 +189,40 @@ export default function BoardDetailPage() {
     );
   };
 
-  const toggleComplete = (index) => {
+  const toggleComplete = async (index) => {
     const updated = [...cards];
-    updated[index].completed = !updated[index].completed;
-    setCards([...updated]);
-  };
+    const card = updated[index];
+    const newCompleted = !card.completed;
 
-  const handleSaveCard = () => {
-    if (editPopup) {
-      const updated = [...cards];
-      updated[editPopup.index].title = editPopup.text;
+    try {
+      await updateCard(card.id, { completed: newCompleted });
+      updated[index].completed = newCompleted;
       setCards(updated);
-      setEditPopup(null);
+    } catch (err) {
+      console.error('❌ Lỗi cập nhật completed:', err);
     }
   };
+
+
+  const handleSaveCard = async () => {
+    if (editPopup) {
+      try {
+        const updated = [...cards];
+        const card = updated[editPopup.index];
+
+        const res = await updateCard(card.id, {
+          name: editPopup.text,
+        });
+
+        updated[editPopup.index] = { ...card, ...res.data };
+        setCards(updated);
+        setEditPopup(null);
+      } catch (err) {
+        console.error('❌ Lỗi update card:', err);
+      }
+    }
+  };
+
 
   const renderPanes = () => (
     <SplitContainer>

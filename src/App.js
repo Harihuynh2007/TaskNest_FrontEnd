@@ -12,6 +12,8 @@ import BoardDetailPage from './features/boards/BoardDetailPage';
 import PrivateRoute from './Layouts/PrivateRoute';
 import WithHeaderOnlyLayout from './Layouts/WithHeaderOnlyLayout.jsx'; // thêm dòng này
 
+import { GlobalStyle } from './styles/GlobalStyle';
+
 const LogoutRedirect = () => {
   const { user } = useContext(AuthContext);
   const location = useLocation();
@@ -24,59 +26,62 @@ const LogoutRedirect = () => {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<AuthForm mode="login" />} />
-      <Route path="/register" element={<AuthForm mode="register" />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route
-        path="/workspaces/:workspaceId/boards/:boardId"
-        element={
-          <PrivateRoute>
-            <WithHeaderOnlyLayout>
-              <BoardDetailPage />
-            </WithHeaderOnlyLayout>
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/workspaces/:workspaceId/boards/:boardId/inbox"
-        element={
-          <PrivateRoute>
-            <WithHeaderOnlyLayout>
-              <BoardDetailPage />
-            </WithHeaderOnlyLayout>
-          </PrivateRoute>
-        }
-      />
+    <>
+      <GlobalStyle/>
+      <Routes>
+        <Route path="/login" element={<AuthForm mode="login" />} />
+        <Route path="/register" element={<AuthForm mode="register" />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route
+          path="/workspaces/:workspaceId/boards/:boardId"
+          element={
+            <PrivateRoute>
+              <WithHeaderOnlyLayout>
+                <BoardDetailPage />
+              </WithHeaderOnlyLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/workspaces/:workspaceId/boards/:boardId/inbox"
+          element={
+            <PrivateRoute>
+              <WithHeaderOnlyLayout>
+                <BoardDetailPage />
+              </WithHeaderOnlyLayout>
+            </PrivateRoute>
+          }
+        />
 
-      <Route
-        path="/boards/*"
-        element={
-          <PrivateRoute>
-            <BoardsPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/templates"
-        element={
-          <PrivateRoute>
-            <TemplatesPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/home"
-        element={
-          <PrivateRoute>
-            <HomePage />
-          </PrivateRoute>
-        }
-      />
+        <Route
+          path="/boards/*"
+          element={
+            <PrivateRoute>
+              <BoardsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/templates"
+          element={
+            <PrivateRoute>
+              <TemplatesPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/home"
+          element={
+            <PrivateRoute>
+              <HomePage />
+            </PrivateRoute>
+          }
+        />
 
-      <Route path="/" element={<LogoutRedirect />} />
-      <Route path="*" element={<Navigate to="/boards" replace />} />
-    </Routes>
+        <Route path="/" element={<LogoutRedirect />} />
+        <Route path="*" element={<Navigate to="/boards" replace />} />
+      </Routes>
+    </>
   );
 }
 
