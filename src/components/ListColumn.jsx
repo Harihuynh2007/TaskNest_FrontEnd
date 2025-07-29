@@ -21,9 +21,11 @@ function ListColumn({
     setCardInputs((prev) => ({ ...prev, [list.id]: e.target.value }));
   };
 
-  const handleAddCard = () => {
-    onAddCard(list.id);
+  const handleAddCard = (e) => {
+    e.preventDefault(); // ✅ ngăn reload khi submit form
+    onAddCard(list.id); // giữ nguyên logic của bạn
   };
+
 
   const isInputActive = activeCardInput === list.id;
   const hasCards = Array.isArray(list.cards) && list.cards.length > 0;
@@ -64,18 +66,21 @@ function ListColumn({
 
       {/* ✅ Thêm card mới */}
       {isInputActive ? (
-        <CardInputWrapper>
-          <Input
-            value={cardInput}
-            onChange={handleInputChange}
-            placeholder="Enter a card title..."
-            autoFocus
-          />
-          <AddButton onClick={handleAddCard}>Add</AddButton>
-        </CardInputWrapper>
-      ) : (
-        <AddCardBtn onClick={() => setActiveCardInput(list.id)}>+ Add a card</AddCardBtn>
-      )}
+      <CardComposerForm onSubmit={handleAddCard}>
+        <StyledTextarea
+          value={cardInput}
+          onChange={handleInputChange}
+          placeholder="Enter a title or paste a link"
+          autoFocus
+        />
+        <CardComposerActions>
+          <AddCardButton type="submit">Add card</AddCardButton>
+          <CancelButton type="button" onClick={() => setActiveCardInput(null)}>✕</CancelButton>
+        </CardComposerActions>
+      </CardComposerForm>
+    ) : (
+      <AddCardBtn onClick={() => setActiveCardInput(list.id)}>+ Add a card</AddCardBtn>
+    )}
     </Wrapper>
   );
 }
@@ -105,30 +110,6 @@ const CardList = styled.div`
   min-height: 20px;
 `;
 
-const CardInputWrapper = styled.div`
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-`;
-
-const Input = styled.textarea`
-  padding: 8px;
-  font-size: 14px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  resize: none;
-`;
-
-const AddButton = styled.button`
-  background: #0c66e4;
-  color: white;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
-`;
 
 const AddCardBtn = styled.button`
   margin-top: 8px;
@@ -138,4 +119,52 @@ const AddCardBtn = styled.button`
   font-weight: 500;
   cursor: pointer;
   text-align: left;
+`;
+
+
+const CardComposerForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`;
+
+const StyledTextarea = styled.textarea`
+  width: 100%;
+  min-height: 56px;
+  padding: 8px;
+  font-size: 14px;
+  border: none;
+  border-radius: 3px;
+  resize: none;
+  box-shadow: inset 0 0 0 2px #0c66e4;
+  outline: none;
+`;
+
+const CardComposerActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const AddCardButton = styled.button`
+  background-color: #0c66e4;
+  color: white;
+  padding: 6px 12px;
+  font-size: 14px;
+  border: none;
+  border-radius: 3px;
+  font-weight: 500;
+  cursor: pointer;
+`;
+
+const CancelButton = styled.button`
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #44546f;
+
+  &:hover {
+    color: #172b4d;
+  }
 `;

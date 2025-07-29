@@ -14,7 +14,7 @@ export default function CardItem({
   return (
 
     <Card
-        isDragging={isDragging}
+        $isDragging={isDragging}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onClick={() => onCardClick(card)}
@@ -62,8 +62,8 @@ const Card = styled.div`
   border-radius: 6px;
   display: flex;
   align-items: center;
-  border: ${({ isDragging }) =>
-    isDragging ? '2px solid #0c66e4' : '1px solid transparent'};
+  border: ${({ $isDragging }) =>
+    $isDragging ? '2px solid #0c66e4' : '1px solid transparent'};
   box-shadow: ${({ isDragging }) =>
     isDragging ? '0 4px 12px rgba(0,0,0,0.2)' : '0 1px 3px rgba(0,0,0,0.1)'};
   transition: all 0.2s ease;
