@@ -243,6 +243,7 @@ export default function BoardPane({ background, boardId }) {
           }}
           card={editPopup.card}
           listId={editPopup.listId}
+          boardId={boardId}
           updateCardLabels={async (cardId, labels) => {
             try {
               await updateCard(cardId, { labels });
