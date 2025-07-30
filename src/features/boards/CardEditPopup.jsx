@@ -1,8 +1,19 @@
-// CardEditPopup.jsx (chuẩn Trello-style)
 import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
+import { BiLabel } from 'react-icons/bi';
+import { HiOutlineUserAdd } from 'react-icons/hi';
 
-export default function CardEditPopup({ anchorRect, cardText, onClose, onChange, onSave, onOpenFullCard }) {
+// ⏰ Icon từ react-icons
+import { BsCardText, BsClock, BsArrowsMove, BsFiles, BsLink45Deg, BsArchive } from 'react-icons/bs';
+
+export default function CardEditPopup({
+  anchorRect,
+  cardText,
+  onClose,
+  onChange,
+  onSave,
+  onOpenFullCard
+}) {
   const popupRef = useRef();
   const textareaRef = useRef();
 
@@ -17,76 +28,82 @@ export default function CardEditPopup({ anchorRect, cardText, onClose, onChange,
   }, [onClose]);
 
   useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.focus();
-    }
+    textareaRef.current?.focus();
   }, []);
 
   return (
     <Dialog
-      role="dialog"
-      aria-modal="true"
-      aria-label="Edit card options"
+      ref={popupRef}
       style={{
         top: anchorRect.bottom + window.scrollY + 8,
         left: Math.min(anchorRect.left + 6, window.innerWidth - 320),
-        maxWidth: 320,
-        width: '100%'
       }}
-
-      ref={popupRef}
     >
-      <Form
-        onSubmit={(e) => {
-          e.preventDefault();
-          onSave();
-        }}
-      >
+      <Form onSubmit={(e) => { e.preventDefault(); onSave(); }}>
         <CardTextArea
           ref={textareaRef}
           value={cardText}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Enter card title"
-          rows={2}
         />
         <SaveButton type="submit">Save</SaveButton>
       </Form>
 
       <MenuList>
-        <MenuItem onClick={() => {
-          onClose();
-          onOpenFullCard(); // Gọi modal chi tiết
-        }}>📄 Open card</MenuItem>
-        <MenuItem onClick={() => alert('Change cover')}>🖼 Change cover</MenuItem>
-        <MenuItem onClick={() => alert('Edit dates')}>🕓 Edit dates</MenuItem>
-        <MenuItem onClick={() => alert('Move')}>➡️ Move</MenuItem>
-        <MenuItem onClick={() => alert('Copy card')}>📋 Copy card</MenuItem>
-        <MenuItem onClick={() => alert('Copy link')}>🔗 Copy link</MenuItem>
-        <MenuItem onClick={() => alert('Archive')}>🗂 Archive</MenuItem>
+        <MenuItem onClick={() => { onClose(); onOpenFullCard(); }}>
+          <BsCardText />
+          <span>Open card</span>
+        </MenuItem>
+        <MenuItem onClick={() => alert('Edit labels')}>
+          <BiLabel />
+          <span>Edit labels</span>
+        </MenuItem>
+        <MenuItem onClick={() => alert('Change members')}>
+          <HiOutlineUserAdd />
+          <span>Change members</span>
+        </MenuItem>
+        <MenuItem onClick={() => alert('Edit dates')}>
+          <BsClock />
+          <span>Edit dates</span>
+        </MenuItem>
+        <MenuItem onClick={() => alert('Move')}>
+          <BsArrowsMove />
+          <span>Move</span>
+        </MenuItem>
+        <MenuItem onClick={() => alert('Copy')}>
+          <BsFiles />
+          <span>Copy card</span>
+        </MenuItem>
+        <MenuItem onClick={() => alert('Copy link')}>
+          <BsLink45Deg />
+          <span>Copy link</span>
+        </MenuItem>
+        <MenuItem onClick={() => alert('Archive')}>
+          <BsArchive />
+          <span>Archive</span>
+        </MenuItem>
       </MenuList>
+
     </Dialog>
   );
 }
 
+// Styled-components
 const Dialog = styled.div`
   position: absolute;
+  width: 320px;
   background: white;
   border-radius: 8px;
   box-shadow: 0 12px 24px rgba(0,0,0,0.2);
   padding: 12px;
   z-index: 2000;
-
-  @media (max-width: 768px) {
-    left: 16px !important;
-    right: 16px;
-    width: auto;
-  }
 `;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-bottom: 12px;
 `;
 
 const CardTextArea = styled.textarea`
@@ -113,22 +130,30 @@ const SaveButton = styled.button`
 
 const MenuList = styled.ul`
   list-style: none;
-  margin-top: 12px;
+  margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
 `;
 
 const MenuItem = styled.li`
-  background: white;
-  border: 1px solid #dcdfe4;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
   padding: 6px 12px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  color: #172b4d;
+  background-color: #f1f2f4;
+  margin-bottom: 4px;
+
   &:hover {
-    background: #f4f5f7;
+    background-color: #e9f2ff;
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
   }
 `;
-
