@@ -213,6 +213,7 @@ export default function BoardPane({ background, boardId }) {
       />
       {editPopup && <DarkOverlay />}
       {selectedCard && <FullCardModal card={selectedCard} onClose={() => setSelectedCard(null)} />}
+      
       {editPopup && (
         <CardEditPopup
           anchorRect={editPopup.anchorRect}
@@ -237,6 +238,27 @@ export default function BoardPane({ background, boardId }) {
           onOpenFullCard={() => {
             setEditPopup(null);
             setSelectedCard(editPopup.card);
+          }}
+          card={editPopup.card}
+          listId={editPopup.listId}
+          updateCardLabels={async (cardId, labels) => {
+            try {
+              await updateCard(cardId, { labels });
+              setLists((prev) =>
+                prev.map((list) =>
+                  list.id === editPopup.listId
+                    ? {
+                        ...list,
+                        cards: list.cards.map((c) =>
+                          c.id === cardId ? { ...c, labels } : c
+                        ),
+                      }
+                    : list
+                )
+              );
+            } catch (err) {
+              console.error('❌ Failed to update card labels:', err);
+            }
           }}
         />
       )}

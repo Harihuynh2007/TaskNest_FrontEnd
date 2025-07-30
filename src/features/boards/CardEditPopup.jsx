@@ -1,10 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { BiLabel } from 'react-icons/bi';
 import { HiOutlineUserAdd } from 'react-icons/hi';
-
-// ⏰ Icon từ react-icons
 import { BsCardText, BsClock, BsArrowsMove, BsFiles, BsLink45Deg, BsArchive } from 'react-icons/bs';
+import LabelPopup from '../../components/Label/LabelPopup';
+import CreateLabelModal from '../../components/Label/CreateLabelModal'; // Import CreateLabelModal
+import { fetchBoardLabels } from '../../api/boardApi';
 
 export default function CardEditPopup({
   anchorRect,
@@ -12,10 +13,29 @@ export default function CardEditPopup({
   onClose,
   onChange,
   onSave,
-  onOpenFullCard
+  onOpenFullCard,
+  card,
+  listId,
+  updateCardLabels,
 }) {
   const popupRef = useRef();
   const textareaRef = useRef();
+  const [text, setText] = useState(cardText);
+  const [showLabelPopup, setShowLabelPopup] = useState(false);
+  const [showCreateLabelModal, setShowCreateLabelModal] = useState(false);
+  const [labels, setLabels] = useState([]); // Danh sách nhãn từ board
+
+  useEffect(() => {
+    const loadLabels = async () => {
+      try {
+        const res = await fetchBoardLabels(listId);
+        setLabels(res.data || []);
+      } catch (err) {
+        console.error('❌ Failed to fetch labels:', err);
+      }
+    };
+    loadLabels();
+  }, [listId]);
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -31,6 +51,26 @@ export default function CardEditPopup({
     textareaRef.current?.focus();
   }, []);
 
+  const handleSave = () => {
+    onSave();
+    if (updateCardLabels) {
+      updateCardLabels(card.id, card.labels || []); // Cập nhật nhãn hiện tại
+    }
+    onClose();
+  };
+
+  const handleToggleLabel = (labelId) => {
+    const newLabels = card.labels.includes(labelId)
+      ? card.labels.filter((id) => id !== labelId)
+      : [...(card.labels || []), labelId];
+    card.labels = newLabels; // Cập nhật tạm thời trong card
+  };
+
+  const handleCreateLabel = (newLabel) => {
+    setLabels((prev) => [...prev, newLabel]);
+    setShowCreateLabelModal(false);
+  };
+
   return (
     <Dialog
       ref={popupRef}
@@ -39,11 +79,14 @@ export default function CardEditPopup({
         left: Math.min(anchorRect.left + 6, window.innerWidth - 320),
       }}
     >
-      <Form onSubmit={(e) => { e.preventDefault(); onSave(); }}>
+      <Form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
         <CardTextArea
           ref={textareaRef}
-          value={cardText}
-          onChange={(e) => onChange(e.target.value)}
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+            onChange(e.target.value);
+          }}
           placeholder="Enter card title"
         />
         <SaveButton type="submit">Save</SaveButton>
@@ -54,7 +97,7 @@ export default function CardEditPopup({
           <BsCardText />
           <span>Open card</span>
         </MenuItem>
-        <MenuItem onClick={() => alert('Edit labels')}>
+        <MenuItem onClick={() => setShowLabelPopup(true)}>
           <BiLabel />
           <span>Edit labels</span>
         </MenuItem>
@@ -84,9 +127,31 @@ export default function CardEditPopup({
         </MenuItem>
       </MenuList>
 
+      {showLabelPopup && (
+        <LabelPopup
+          anchorRect={anchorRect}
+          labels={labels}
+          selectedLabelIds={card.labels || []}
+          onToggleLabel={handleToggleLabel}
+          onCreateLabel={() => setShowCreateLabelModal(true)}
+          onEditLabel={(label) => alert(`Edit label ${label.name}`)} // Chưa triển khai
+          onClose={() => setShowLabelPopup(false)}
+          boardId={listId} // Truyền boardId (giả định listId liên quan)
+        />
+      )}
+
+      {showCreateLabelModal && (
+        <CreateLabelModal
+          boardId={listId}
+          onClose={() => setShowCreateLabelModal(false)}
+          onLabelCreated={handleCreateLabel}
+        />
+      )}
     </Dialog>
   );
 }
+
+// (Styled components giữ nguyên)
 
 // Styled-components
 const Dialog = styled.div`

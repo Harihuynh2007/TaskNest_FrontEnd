@@ -9,24 +9,20 @@ export default function LabelPopup({
   onToggleLabel,
   onCreateLabel,
   onEditLabel,
-  onClose
+  onClose,
+  boardId, // Thêm boardId để truyền vào CreateLabelModal
 }) {
   const popupRef = useRef();
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    console.log('popupRef.current:', popupRef.current);
-    const timer = setTimeout(() => {
-      function handleClickOutside(e) {
-        console.log('Click target:', e.target, 'Contains:', popupRef.current?.contains(e.target));
-        if (popupRef.current && !popupRef.current.contains(e.target)) {
-          onClose();
-        }
+    const handleClickOutside = (e) => {
+      if (popupRef.current && !popupRef.current.contains(e.target)) {
+        onClose();
       }
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, 0);
-    return () => clearTimeout(timer);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onClose]);
 
   const filteredLabels = labels.filter(label =>
@@ -37,8 +33,8 @@ export default function LabelPopup({
     <Wrapper
       ref={popupRef}
       style={{
-        top: (anchorRect?.bottom || 100) + window.scrollY + 8,
-        left: Math.min(anchorRect?.left || 100, window.innerWidth - 280),
+        top: (anchorRect?.bottom || 0) + window.scrollY + 8,
+        left: Math.min(anchorRect?.left || 0, window.innerWidth - 280),
       }}
     >
       <Header>
@@ -70,13 +66,14 @@ export default function LabelPopup({
         ))}
       </LabelList>
 
-      <CreateBtn onClick={(e) => { e.stopPropagation(); onCreateLabel(); }}>
+      <CreateBtn onClick={(e) => { e.stopPropagation(); onCreateLabel(boardId); }}>
         + Create a new label
       </CreateBtn>
     </Wrapper>
   );
 }
 
+// (Styled components giữ nguyên, chỉ tăng z-index nếu cần)
 const Wrapper = styled.div`
   position: absolute;
   width: 260px;
@@ -84,9 +81,8 @@ const Wrapper = styled.div`
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
   border-radius: 8px;
   padding: 12px;
-  z-index: 2100;
+  z-index: 2200; // Tăng z-index để tránh bị che
 `;
-
 const Header = styled.div`
   display: flex;
   justify-content: space-between;

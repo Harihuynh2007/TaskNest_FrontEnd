@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import axios from '../../api/axiosClient';
 
 const COLORS = [
-  'green', 'yellow', 'red', 'blue', 'orange', 'purple'
+  '#61bd4f', '#f2d600', '#ff9f1a', '#eb5a46', '#c377e0', '#0079bf', '#00c2e0', '#51e898',
 ];
 
 export default function CreateLabelModal({ boardId, onClose, onLabelCreated }) {
@@ -16,15 +16,16 @@ export default function CreateLabelModal({ boardId, onClose, onLabelCreated }) {
     if (!name.trim()) return;
     setLoading(true);
     try {
-      await axios.post(`/boards/${boardId}/labels/`, {
+      const response = await axios.post(`/boards/${boardId}/labels/`, {
         name,
         color,
       });
-      onLabelCreated();
+      onLabelCreated(response.data); // Truyền nhãn mới về để cập nhật state
     } catch (err) {
       console.error('Failed to create label:', err);
     } finally {
       setLoading(false);
+      onClose(); // Đóng modal sau khi tạo
     }
   };
 
@@ -48,7 +49,9 @@ export default function CreateLabelModal({ boardId, onClose, onLabelCreated }) {
           ))}
         </ColorList>
         <ActionRow>
-          <CreateBtn onClick={handleCreate} disabled={loading}>Create</CreateBtn>
+          <CreateBtn onClick={handleCreate} disabled={loading}>
+            {loading ? 'Creating...' : 'Create'}
+          </CreateBtn>
           <CancelBtn onClick={onClose}>Cancel</CancelBtn>
         </ActionRow>
       </Modal>
@@ -56,17 +59,18 @@ export default function CreateLabelModal({ boardId, onClose, onLabelCreated }) {
   );
 }
 
+// (Styled components giữ nguyên, z-index tăng nếu cần)
 const Backdrop = styled.div`
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0,0,0,0.3);
+  background: rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 3000;
+  z-index: 2300; // Tăng z-index
 `;
 
 const Modal = styled.div`
@@ -75,7 +79,6 @@ const Modal = styled.div`
   border-radius: 8px;
   width: 300px;
 `;
-
 const Title = styled.h4`
   margin-bottom: 10px;
 `;
