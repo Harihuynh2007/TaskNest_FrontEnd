@@ -29,13 +29,13 @@ export default function InboxSubHeader({ setShowFeedback, setShowFilter }) {
 
 const HeaderWrapper = styled.div`
   width: 100%;
-  height: 56px;
+  min-height: 56px;
+  flex-shrink: 0;
   background: var(--board-header-background-color, #ffffff3d);
   border-bottom: 1px solid #dcdfe4;
   display: flex;
   align-items: center;
-  font-family: var(--ds-font-body, sans-serif);
-  color: var(--ds-text, #172b4d);
+  padding: 0 16px;
 `;
 
 const Right = styled.div`

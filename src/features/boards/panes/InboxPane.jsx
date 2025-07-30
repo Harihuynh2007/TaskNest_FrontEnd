@@ -7,7 +7,7 @@ import CardEditPopup from '../CardEditPopup';
 import FullCardModal from '../../../components/FullCardModal';
 import CardItem from '../../../components/CardItem';
 import FeedbackPopup from '../../../components/FeedbackPopup';
-import FilterPopup from '../../../components/FilterPopup';
+import FilterPopup from '../../../components/filter/FilterPopup';
 
 export default function InboxPane({
   cards,
@@ -27,22 +27,40 @@ export default function InboxPane({
 }) {
   const [showFeedback, setShowFeedback] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
+  const [filter, setFilter] = useState({ keyword: '', status: 'all' });
+
+  const filteredCards = cards.filter((card) => {
+              const matchKeyword = card.name.toLowerCase().includes(filter.keyword.toLowerCase());
+              const matchStatus =
+                filter.status === 'all' ||
+                (filter.status === 'completed' && card.completed) ||
+                (filter.status === 'incomplete' && !card.completed);
+
+              return matchKeyword && matchStatus;
+  });
 
   return (
     <PaneWrapper background={background}>
+
+      <InboxSubHeader
+          setShowFeedback={setShowFeedback}
+          setShowFilter={setShowFilter}
+      />
+      {editPopup && <DarkOverlay />}
       <InnerContent>
-        {editPopup && <DarkOverlay />}
         {selectedCard && (
           <FullCardModal card={selectedCard} onClose={() => setSelectedCard(null)} />
         )}
 
-        <InboxSubHeader
-          setShowFeedback={setShowFeedback}
-          setShowFilter={setShowFilter}
-        />
-
         {showFeedback && <FeedbackPopup onClose={() => setShowFeedback(false)} />}
-        {showFilter && <FilterPopup onClose={() => setShowFilter(false)} />}
+        {showFilter && (
+          <FilterPopup
+            filter={filter}
+            setFilter={setFilter}
+            onClose={() => setShowFilter(false)}
+          />
+        )}
+
 
         {showInput ? (
           <CardInputWrapper>
@@ -71,28 +89,30 @@ export default function InboxPane({
         <Droppable droppableId="inbox" type="CARD">
           {(provided) => (
             <CardList ref={provided.innerRef} {...provided.droppableProps}>
-              {cards.map((card, index) => (
-                <Draggable key={card.id} draggableId={String(card.id)} index={index}>
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                    >
-                      <CardItem
-                        card={card}
-                        index={index}
-                        isDragging={snapshot.isDragging}
-                        onEditClick={(e, card, index, rect) => {
-                          setEditPopup({ index, text: card.name, anchorRect: rect });
-                        }}
-                        onCheckClick={toggleComplete}
-                        onCardClick={(card) => setSelectedCard(card)}
-                      />
-                    </div>
-                  )}
-                </Draggable>
-              ))}
+
+            {filteredCards.map((card, index) => (
+              <Draggable key={card.id} draggableId={String(card.id)} index={index}>
+                {(provided, snapshot) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.draggableProps}
+                    {...provided.dragHandleProps}
+                  >
+                    <CardItem
+                      card={card}
+                      index={index}
+                      isDragging={snapshot.isDragging}
+                      onEditClick={(e, card, index, rect) => {
+                        setEditPopup({ index, text: card.name, anchorRect: rect });
+                      }}
+                      onCheckClick={toggleComplete}
+                      onCardClick={(card) => setSelectedCard(card)}
+                    />
+                  </div>
+                )}
+              </Draggable>
+            ))}
+
               {provided.placeholder}
             </CardList>
           )}
@@ -121,6 +141,7 @@ const PaneWrapper = styled.div`
   background: ${({ background }) => background || '#e4f0f6'};
   flex: 1;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   overflow-y: auto;
 `;
@@ -128,6 +149,10 @@ const PaneWrapper = styled.div`
 const InnerContent = styled.div`
   width: 100%;
   max-width: 784px;
+  margin: 0 auto;
+  flex: 1; /* 👈 để chiếm phần còn lại sau header */
+  display: flex;
+  flex-direction: column;
 `;
 
 const DarkOverlay = styled.div`
