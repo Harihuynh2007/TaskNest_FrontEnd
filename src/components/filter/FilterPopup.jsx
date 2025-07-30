@@ -6,100 +6,146 @@ import styled from 'styled-components';
 export default function FilterPopup({ filter, setFilter, onClose,position  }) {
   return (
     <Wrapper  style={{ top: position.top, left: position.left }}>
-      <Header>
-        <Title>Filter</Title>
-        <CloseBtn onClick={onClose}>×</CloseBtn>
-      </Header>
 
-      <Section>
-        <SectionLabel>Keyword</SectionLabel>
-        <KeywordInput
-          type="text"
-          placeholder="Enter keyword..."
-          value={filter.keyword}
-          onChange={(e) => setFilter((prev) => ({ ...prev, keyword: e.target.value }))}
-        />
-      </Section>
+        <Header>
+            <Title>Filter</Title>
+            <CloseBtn onClick={onClose}>×</CloseBtn>
+        </Header>
 
-      <Section>
-        <SectionLabel>Status</SectionLabel>
-        <CheckboxGroup>
-          <CheckboxItem>
-            <input
-              type="checkbox"
-              checked={filter.status === 'all'}
-              onChange={() => setFilter(prev => ({ ...prev, status: prev.status === 'all' ? '' : 'all' }))}
+        <Section>
+            <SectionLabel>Keyword</SectionLabel>
+            <KeywordInput
+            type="text"
+            placeholder="Enter keyword..."
+            value={filter.keyword}
+            onChange={(e) => setFilter((prev) => ({ ...prev, keyword: e.target.value }))}
             />
-            <span>All</span>
-          </CheckboxItem>
-          <CheckboxItem>
-            <input
-              type="checkbox"
-              checked={filter.status === 'completed'}
-              onChange={() => setFilter(prev => ({ ...prev, status: prev.status === 'completed' ? '' : 'completed' }))}
-            />
-            <span>Completed</span>
-          </CheckboxItem>
-          <CheckboxItem>
-            <input
-              type="checkbox"
-              checked={filter.status === 'incomplete'}
-              onChange={() => setFilter(prev => ({ ...prev, status: prev.status === 'incomplete' ? '' : 'incomplete' }))}
-            />
-            <span>Incomplete</span>
-          </CheckboxItem>
-        </CheckboxGroup>
-      </Section>
+        </Section>
 
-      <Section>
-        <SectionLabel>Due Date</SectionLabel>
-        <CheckboxGroup>
+        <Section>
+            <SectionLabel>Created Date</SectionLabel>
+            <CheckboxGroup>
+                <CheckboxItem>
+                <input
+                    type="checkbox"
+                    checked={filter.created === 'week'}
+                    onChange={() =>
+                    setFilter((prev) => ({
+                        ...prev,
+                        created: prev.created === 'week' ? 'all' : 'week',
+                    }))
+                    }
+                />
+                <span>Created in the last week</span>
+                </CheckboxItem>
+                <CheckboxItem>
+                <input
+                    type="checkbox"
+                    checked={filter.created === '2weeks'}
+                    onChange={() =>
+                    setFilter((prev) => ({
+                        ...prev,
+                        created: prev.created === '2weeks' ? 'all' : '2weeks',
+                    }))
+                    }
+                />
+                <span>Created in the last two weeks</span>
+                </CheckboxItem>
+                <CheckboxItem>
+                <input
+                    type="checkbox"
+                    checked={filter.created === 'month'}
+                    onChange={() =>
+                    setFilter((prev) => ({
+                        ...prev,
+                        created: prev.created === 'month' ? 'all' : 'month',
+                    }))
+                    }
+                />
+                <span>Created in the last month</span>
+                </CheckboxItem>
+            </CheckboxGroup>
+        </Section>
+
+        <Section>
+            <SectionLabel>Status</SectionLabel>
+            <CheckboxGroup>
             <CheckboxItem>
-            <input
+                <input
                 type="checkbox"
-                checked={filter.due === 'overdue'}
-                onChange={() => setFilter(prev => ({
-                ...prev,
-                due: prev.due === 'overdue' ? 'all' : 'overdue'
-                }))}
-            />
-            <span>Overdue</span>
+                checked={filter.status === 'all'}
+                onChange={() => setFilter(prev => ({ ...prev, status: prev.status === 'all' ? '' : 'all' }))}
+                />
+                <span>All</span>
             </CheckboxItem>
             <CheckboxItem>
-            <input
+                <input
                 type="checkbox"
-                checked={filter.due === 'today'}
-                onChange={() => setFilter(prev => ({
-                ...prev,
-                due: prev.due === 'today' ? 'all' : 'today'
-                }))}
-            />
-            <span>Due Today</span>
+                checked={filter.status === 'completed'}
+                onChange={() => setFilter(prev => ({ ...prev, status: prev.status === 'completed' ? '' : 'completed' }))}
+                />
+                <span>Completed</span>
             </CheckboxItem>
             <CheckboxItem>
-            <input
+                <input
                 type="checkbox"
-                checked={filter.due === 'week'}
-                onChange={() => setFilter(prev => ({
-                ...prev,
-                due: prev.due === 'week' ? 'all' : 'week'
-                }))}
-            />
-            <span>This Week</span>
+                checked={filter.status === 'incomplete'}
+                onChange={() => setFilter(prev => ({ ...prev, status: prev.status === 'incomplete' ? '' : 'incomplete' }))}
+                />
+                <span>Incomplete</span>
             </CheckboxItem>
-            <CheckboxItem>
-            <input
-                type="checkbox"
-                checked={filter.due === 'none'}
-                onChange={() => setFilter(prev => ({
-                ...prev,
-                due: prev.due === 'none' ? 'all' : 'none'
-                }))}
-            />
-            <span>No due date</span>
-            </CheckboxItem>
-        </CheckboxGroup>
-    </Section>
+            </CheckboxGroup>
+        </Section>
+
+        <Section>
+            <SectionLabel>Due Date</SectionLabel>
+            <CheckboxGroup>
+                <CheckboxItem>
+                <input
+                    type="checkbox"
+                    checked={filter.due === 'overdue'}
+                    onChange={() => setFilter(prev => ({
+                    ...prev,
+                    due: prev.due === 'overdue' ? 'all' : 'overdue'
+                    }))}
+                />
+                <span>Overdue</span>
+                </CheckboxItem>
+                <CheckboxItem>
+                <input
+                    type="checkbox"
+                    checked={filter.due === 'today'}
+                    onChange={() => setFilter(prev => ({
+                    ...prev,
+                    due: prev.due === 'today' ? 'all' : 'today'
+                    }))}
+                />
+                <span>Due Today</span>
+                </CheckboxItem>
+                <CheckboxItem>
+                <input
+                    type="checkbox"
+                    checked={filter.due === 'week'}
+                    onChange={() => setFilter(prev => ({
+                    ...prev,
+                    due: prev.due === 'week' ? 'all' : 'week'
+                    }))}
+                />
+                <span>This Week</span>
+                </CheckboxItem>
+                <CheckboxItem>
+                <input
+                    type="checkbox"
+                    checked={filter.due === 'none'}
+                    onChange={() => setFilter(prev => ({
+                    ...prev,
+                    due: prev.due === 'none' ? 'all' : 'none'
+                    }))}
+                />
+                <span>No due date</span>
+                </CheckboxItem>
+            </CheckboxGroup>
+        </Section>
 
     </Wrapper>
   );

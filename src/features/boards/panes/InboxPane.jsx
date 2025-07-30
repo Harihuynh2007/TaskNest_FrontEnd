@@ -35,7 +35,7 @@ export default function InboxPane({
 }) {
   const [showFeedback, setShowFeedback] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
-  const [filter, setFilter] = useState({ keyword: '', status: 'all' });
+  const [filter, setFilter] = useState({ keyword: '', status: 'all', due: 'all',created: 'all', });
   const [popupPos, setPopupPos] = useState({ top: 0, left: 0 });
 
   const today = dayjs();
@@ -62,9 +62,20 @@ export default function InboxPane({
           ? !due
           : true;
 
-    return matchKeyword && matchStatus && matchDue;
+    const created = card.created_at ? dayjs(card.created_at) : null;
+
+    const matchCreated =
+      filter.created === 'week'
+        ? created && created.isoWeek() === today.isoWeek()
+        : filter.created === '2weeks'
+        ? created && created.isAfter(today.subtract(14, 'day'))
+        : filter.created === 'month'
+        ? created && created.month() === today.month()
+        : true;
+    return matchKeyword && matchStatus && matchDue && matchCreated;
   });
 
+  
   useEffect(() => {
   if (showFilter && filterButtonRef.current) {
     const rect = filterButtonRef.current.getBoundingClientRect();
