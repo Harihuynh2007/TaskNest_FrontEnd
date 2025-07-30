@@ -18,21 +18,36 @@ export default function CardEditPopup({
   updateCardLabels,
   isInboxMode = false,
 }) {
-
   const labelButtonRef = useRef();
   const popupRef = useRef();
   const textareaRef = useRef();
   const [text, setText] = useState(cardText);
   const [showLabelPopup, setShowLabelPopup] = useState(false);
-  const [labels, setLabels] = useState([]); // Danh sách nhãn từ board
+  const [labels, setLabels] = useState([]);
+  const [loadingLabels, setLoadingLabels] = useState(false);
+  const [labelError, setLabelError] = useState(null);
+  const [labelAnchorRect, setLabelAnchorRect] = useState(null);
+
+  useEffect(() => {
+    if (showLabelPopup && labelButtonRef.current) {
+      requestAnimationFrame(() => {
+        const rect = labelButtonRef.current.getBoundingClientRect();
+        setLabelAnchorRect(rect);
+      });
+    }
+  }, [showLabelPopup]);
 
   useEffect(() => {
     const loadLabels = async () => {
+      setLoadingLabels(true);
       try {
         const res = await fetchBoardLabels(listId);
         setLabels(res.data || []);
       } catch (err) {
         console.error('❌ Failed to fetch labels:', err);
+        setLabelError('Failed to load labels');
+      } finally {
+        setLoadingLabels(false);
       }
     };
     loadLabels();
@@ -55,7 +70,7 @@ export default function CardEditPopup({
   const handleSave = () => {
     onSave();
     if (updateCardLabels) {
-      updateCardLabels(card.id, card.labels || []); // Cập nhật nhãn hiện tại
+      updateCardLabels(card.id, card.labels || []);
     }
     onClose();
   };
@@ -64,96 +79,99 @@ export default function CardEditPopup({
     const newLabels = card.labels.includes(labelId)
       ? card.labels.filter((id) => id !== labelId)
       : [...(card.labels || []), labelId];
-    card.labels = newLabels; // Cập nhật tạm thời trong card
+    card.labels = newLabels;
   };
 
   return (
     <>
       <Dialog
-      ref={popupRef}
-      style={{
-        top: anchorRect.bottom + window.scrollY + 8,
-        left: Math.min(anchorRect.left + 6, window.innerWidth - 320),
-      }}
-    >
-      <Form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
-        <CardTextArea
-          ref={textareaRef}
-          value={text}
-          onChange={(e) => {
-            setText(e.target.value);
-            onChange(e.target.value);
-          }}
-          placeholder="Enter card title"
-        />
-        <SaveButton type="submit">Save</SaveButton>
-      </Form>
+        ref={popupRef}
+        style={{
+          top: anchorRect.bottom + window.scrollY + 8,
+          left: Math.min(anchorRect.left + 6, window.innerWidth - 320),
+        }}
+      >
+        <Form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
+          <CardTextArea
+            ref={textareaRef}
+            value={text}
+            onChange={(e) => {
+              setText(e.target.value);
+              onChange(e.target.value);
+            }}
+            placeholder="Enter card title"
+          />
+          <SaveButton type="submit">Save</SaveButton>
+        </Form>
 
-      <MenuList>
-        <MenuItem onClick={() => { onClose(); onOpenFullCard(); }}>
-          <BsCardText />
-          <span>Open card</span>
-        </MenuItem>
+        <MenuList>
+          <MenuItem onClick={() => { onClose(); onOpenFullCard(); }}>
+            <BsCardText />
+            <span>Open card</span>
+          </MenuItem>
 
-        {!isInboxMode && (
-          <>
-            <MenuItem  ref={labelButtonRef} onClick={() => setShowLabelPopup(true)}>
-              <BiLabel />
-              <span>Edit labels</span>
-            </MenuItem>
-            <MenuItem onClick={() => alert('Change members')}>
-              <HiOutlineUserAdd />
-              <span>Change members</span>
-            </MenuItem>
-          </>
-        )}
+          {!isInboxMode && (
+            <>
+              <MenuItem
+                ref={labelButtonRef}
+                onClick={() => {
+                  setShowLabelPopup(true);
+                }}
+              >
+                <BiLabel />
+                <span>Edit labels</span>
+              </MenuItem>
 
-        <MenuItem onClick={() => alert('Edit dates')}>
-          <BsClock />
-          <span>Edit dates</span>
-        </MenuItem>
-        <MenuItem onClick={() => alert('Move')}>
-          <BsArrowsMove />
-          <span>Move</span>
-        </MenuItem>
-        <MenuItem onClick={() => alert('Copy')}>
-          <BsFiles />
-          <span>Copy card</span>
-        </MenuItem>
-        <MenuItem onClick={() => alert('Copy link')}>
-          <BsLink45Deg />
-          <span>Copy link</span>
-        </MenuItem>
-        <MenuItem onClick={() => alert('Archive')}>
-          <BsArchive />
-          <span>Archive</span>
-        </MenuItem>
-      </MenuList>
+              <MenuItem onClick={() => alert('Change members')}>
+                <HiOutlineUserAdd />
+                <span>Change members</span>
+              </MenuItem>
+            </>
+          )}
 
+          <MenuItem onClick={() => alert('Edit dates')}>
+            <BsClock />
+            <span>Edit dates</span>
+          </MenuItem>
+          <MenuItem onClick={() => alert('Move')}>
+            <BsArrowsMove />
+            <span>Move</span>
+          </MenuItem>
+          <MenuItem onClick={() => alert('Copy')}>
+            <BsFiles />
+            <span>Copy card</span>
+          </MenuItem>
+          <MenuItem onClick={() => alert('Copy link')}>
+            <BsLink45Deg />
+            <span>Copy link</span>
+          </MenuItem>
+          <MenuItem onClick={() => alert('Archive')}>
+            <BsArchive />
+            <span>Archive</span>
+          </MenuItem>
+        </MenuList>
+      </Dialog>
 
-      
-
-      
-    </Dialog>
-    {showLabelPopup && (
+      {showLabelPopup && (
         <LabelPopup
-          anchorRect={labelButtonRef.current?.getBoundingClientRect()}
+          anchorRect={labelAnchorRect}
           labels={labels}
           selectedLabelIds={card.labels || []}
           onToggleLabel={handleToggleLabel}
-          onEditLabel={(label) => alert(`Edit label ${label.name}`)} // Chưa triển khai
-          onClose={() => setShowLabelPopup(false)}
-          boardId={listId} 
+          onEditLabel={(label) => alert(`Edit label ${label.name}`)}
+          onClose={() => {
+            setShowLabelPopup(false);
+            setLabelAnchorRect(null);
+          }}
+          boardId={listId}
+          loadingLabels={loadingLabels}
+          labelError={labelError}
         />
       )}
     </>
-    
   );
 }
 
-// (Styled components giữ nguyên)
-
-// Styled-components
 const Dialog = styled.div`
   position: absolute;
   width: 320px;
@@ -191,6 +209,7 @@ const SaveButton = styled.button`
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  transition: background 0.2s ease;
 `;
 
 const MenuList = styled.ul`

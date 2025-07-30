@@ -1,8 +1,9 @@
-// LabelPopup.jsx – giống Trello, có ô tick chọn label trực tiếp
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { FaPen } from 'react-icons/fa';
 import { IoMdCheckmark } from 'react-icons/io';
+import LabelEditView from './LabelEditView';
+import LabelCreateView from './LabelCreateView';
 
 const DEFAULT_LABELS = [
   { id: 'green', color: '#61bd4f', name: '' },
@@ -22,102 +23,162 @@ export default function LabelPopup({
   onEditLabel,
   onClose,
   boardId,
+  loadingLabels,
+  labelError,
 }) {
   const popupRef = useRef();
   const [search, setSearch] = useState('');
+  const [mode, setMode] = useState('list');
+  const [editingLabel, setEditingLabel] = useState(null);
+  const [newLabel, setNewLabel] = useState({ name: '', color: '' });
 
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (popupRef.current && !popupRef.current.contains(e.target)) {
-        onClose();
+        if (mode === 'list') {
+          console.log('Closing popup due to click outside in list mode');
+          onClose();
+        }
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [onClose]);
+  }, [onClose, mode]);
 
   const allLabels = labels.length === 0 ? DEFAULT_LABELS : labels;
-  const filteredLabels = allLabels.filter((label) =>
-    label.name.toLowerCase().includes(search.toLowerCase())
+  const filteredLabels = useMemo(() =>
+    allLabels.filter((label) =>
+      label.name.toLowerCase().includes(search.toLowerCase())
+    ),
+    [allLabels, search]
   );
+
+  const handleModeChange = (newMode) => {
+    console.log('Switching mode to:', newMode);
+    setMode(newMode);
+    if (newMode === 'list') {
+      setEditingLabel(null);
+      setNewLabel({ name: '', color: '' });
+      setSearch('');
+    }
+  };
 
   return (
     <Wrapper
       ref={popupRef}
       style={{
-        top: (anchorRect?.bottom || 0) + window.scrollY + 8,
-        left: Math.min(anchorRect?.left || 0, window.innerWidth - 280),
+        top: Math.min(
+          (anchorRect?.bottom ?? window.innerHeight / 2) + window.scrollY + 8,
+          window.scrollY + window.innerHeight - 100
+        ),
+        left: anchorRect?.left
+          ? Math.min(anchorRect.left, window.innerWidth - 304)
+          : (window.innerWidth - 304) / 2,
       }}
-      role="dialog"
-      aria-labelledby="label-popup-title"
     >
-      <Header>
-        <Title id="label-popup-title">Labels</Title>
-        <CloseBtn onClick={(e) => { e.stopPropagation(); onClose(); }} aria-label="Close">✕</CloseBtn>
-      </Header>
+      {mode === 'list' && (
+        <>
+          <Header>
+            <Title>Labels</Title>
+            <CloseBtn onClick={(e) => { e.stopPropagation(); onClose(); }}>✕</CloseBtn>
+          </Header>
 
-      <SearchInput
-        type="text"
-        placeholder="Search labels…"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        aria-label="Search labels"
-      />
+          <SearchInput
+            placeholder="Search labels…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
 
-      <LabelList>
-        {filteredLabels.map((label) => {
-          const isSelected = selectedLabelIds.includes(label.id);
-          return (
-            <LabelItem key={label.id}>
-              <StyledLabelDiv onClick={() => onToggleLabel(label.id)}>
-                <Checkbox
-                  type="checkbox"
-                  checked={isSelected}
-                  readOnly // ✅ cần thiết nếu không có onChange
-                />
+          {loadingLabels ? (
+            <Loading>Loading labels...</Loading>
+          ) : labelError ? (
+            <Error>{labelError}</Error>
+          ) : filteredLabels.length === 0 ? (
+            <EmptyMessage>No labels found</EmptyMessage>
+          ) : (
+            <LabelList>
+              {filteredLabels.map((label) => {
+                const isSelected = selectedLabelIds.includes(label.id);
+                return (
+                  <LabelItem key={label.id}>
+                    <StyledLabelDiv onClick={(e) => { e.stopPropagation(); onToggleLabel(label.id); }}>
+                      <Checkbox type="checkbox" checked={isSelected} readOnly />
+                      <ColorBlock color={label.color}>
+                        <LabelName>{label.name || ''}</LabelName>
+                        <EditBtn
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            console.log('Edit button clicked for label:', label.id);
+                            setEditingLabel(label);
+                            handleModeChange('edit');
+                          }}
+                        >
+                          <FaPen />
+                        </EditBtn>
+                      </ColorBlock>
+                    </StyledLabelDiv>
+                  </LabelItem>
+                );
+              })}
+            </LabelList>
+          )}
 
-                <ColorBlock color={label.color}>
-                  <LabelName>{label.name || ''}</LabelName>
-                  <EditBtn
-                    aria-label={`Edit Color: ${label.color}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      onEditLabel(label, rect);
-                    }}
-                  >
-                    <FaPen />
-                  </EditBtn>
-                </ColorBlock>
-              </StyledLabelDiv>
-            </LabelItem>
-          );
-        })}
-      </LabelList>
+          <CreateButton onClick={(e) => { e.stopPropagation(); console.log('Create button clicked'); handleModeChange('create'); }}>
+            + Create a new label
+          </CreateButton>
+        </>
+      )}
 
-      <CreateButton onClick={() => onCreateLabel(boardId)}>
-        + Create a new label
-      </CreateButton>
+      {mode === 'create' && (
+        <LabelCreateView
+          newLabel={newLabel}
+          onBack={() => handleModeChange('list')}
+          onClose={onClose}
+          onChangeTitle={(name) => setNewLabel({ ...newLabel, name })}
+          onSelectColor={(color) => setNewLabel({ ...newLabel, color })}
+          onCreate={() => {
+            console.log('Creating label:', newLabel);
+            onCreateLabel(newLabel);
+            handleModeChange('list');
+          }}
+        />
+      )}
+
+      {mode === 'edit' && editingLabel && (
+        <LabelEditView
+          label={editingLabel}
+          onBack={() => handleModeChange('list')}
+          onClose={onClose}
+          onChangeTitle={(name) => setEditingLabel({ ...editingLabel, name })}
+          onSelectColor={(color) => setEditingLabel({ ...editingLabel, color })}
+          onRemoveColor={() => setEditingLabel({ ...editingLabel, color: '' })}
+          onSave={() => {
+            console.log('Saving label:', editingLabel);
+            onEditLabel(editingLabel);
+            handleModeChange('list');
+          }}
+          onDelete={() => {
+            console.log('Deleting label:', editingLabel.id);
+            handleModeChange('list');
+          }}
+        />
+      )}
     </Wrapper>
   );
 }
 
-const StyledLabelDiv = styled.div`
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  gap: 8px;
-`;
-
-
 const Wrapper = styled.div`
-  position: absolute;
-  width: 260px;
+  width: 304px;
+  max-width: 90vw;
+  height: auto;
+  max-height: 80vh;
+  overflow-y: auto;
   background: white;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
   padding: 12px;
-  z-index: 2200;
+  border-radius: 8px;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.2);
+  z-index: 2100;
+  position: absolute;
 `;
 
 const Header = styled.div`
@@ -137,6 +198,11 @@ const CloseBtn = styled.button`
   background: none;
   font-size: 16px;
   cursor: pointer;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: #e9f2ff;
+  }
 `;
 
 const SearchInput = styled.input`
@@ -152,19 +218,21 @@ const LabelList = styled.ul`
   list-style: none;
   padding: 0;
   margin: 0 0 12px 0;
-  max-height: 200px;
+  max-height: 50vh;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 `;
 
 const LabelItem = styled.li`
   margin-bottom: 6px;
 `;
 
-const StyledLabel = styled.label`
+const StyledLabelDiv = styled.div`
   display: flex;
   align-items: center;
-  cursor: pointer;
   gap: 8px;
+  padding: 4px 0;
+  cursor: pointer;
 `;
 
 const Checkbox = styled.input`
@@ -177,16 +245,20 @@ const ColorBlock = styled.div`
   flex: 1;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  background-color: ${({ color }) => color};
+  background-color: ${({ color }) => color || '#ccc'};
   border-radius: 4px;
   padding: 6px 10px;
   color: var(--ds-text-inverse);
   font-size: 13px;
   font-weight: 500;
+  min-height: 32px;
+  overflow: hidden;
+  transition: filter 0.2s ease;
+
   &:hover {
     filter: brightness(1.05);
   }
+
   &:active {
     filter: brightness(0.95);
   }
@@ -201,11 +273,22 @@ const LabelName = styled.span`
 const EditBtn = styled.button`
   background: none;
   border: none;
-  color: white;
-  opacity: 0.7;
+  color: #172b4d;
   cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+
   &:hover {
-    opacity: 1;
+    background: #e9f2ff;
+    border-radius: 4px;
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
   }
 `;
 
@@ -217,7 +300,27 @@ const CreateButton = styled.button`
   border-radius: 4px;
   background: #f4f5f7;
   cursor: pointer;
+  transition: background 0.2s ease;
+
   &:hover {
     background: #e9f2ff;
   }
+`;
+
+const Loading = styled.div`
+  text-align: center;
+  padding: 12px;
+  color: #172b4d;
+`;
+
+const Error = styled.div`
+  text-align: center;
+  padding: 12px;
+  color: #eb5a46;
+`;
+
+const EmptyMessage = styled.div`
+  text-align: center;
+  padding: 12px;
+  color: #172b4d;
 `;
