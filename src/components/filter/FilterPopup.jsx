@@ -2,9 +2,9 @@
 import React from 'react';
 import styled from 'styled-components';
 
-export default function FilterPopup({ filter, setFilter, onClose }) {
+export default function FilterPopup({ filter, setFilter, onClose,position  }) {
   return (
-    <Wrapper>
+    <Wrapper  style={{ top: position.top, left: position.left }}>
       <Header>
         <Title>Filter</Title>
         <CloseBtn onClick={onClose}>×</CloseBtn>

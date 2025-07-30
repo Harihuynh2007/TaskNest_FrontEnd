@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef,useEffect } from 'react';
 import styled from 'styled-components';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 
@@ -28,7 +28,9 @@ export default function InboxPane({
   const [showFeedback, setShowFeedback] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [filter, setFilter] = useState({ keyword: '', status: 'all' });
+  const [popupPos, setPopupPos] = useState({ top: 0, left: 0 });
 
+  const filterButtonRef = useRef(null);
   const filteredCards = cards.filter((card) => {
               const matchKeyword = card.name.toLowerCase().includes(filter.keyword.toLowerCase());
               const matchStatus =
@@ -39,13 +41,25 @@ export default function InboxPane({
               return matchKeyword && matchStatus;
   });
 
+  useEffect(() => {
+  if (showFilter && filterButtonRef.current) {
+    const rect = filterButtonRef.current.getBoundingClientRect();
+    setPopupPos({
+      top: rect.top + window.scrollY, // ngang với nút
+      left: rect.left + window.scrollX - 304 - 8, // 304 = popup width, 8px = khoảng cách
+    });
+  }
+}, [showFilter]);
+
+
   return (
     <PaneWrapper background={background}>
-
       <InboxSubHeader
           setShowFeedback={setShowFeedback}
           setShowFilter={setShowFilter}
+          filterButtonRef={filterButtonRef}
       />
+
       {editPopup && <DarkOverlay />}
       <InnerContent>
         {selectedCard && (
@@ -58,6 +72,7 @@ export default function InboxPane({
             filter={filter}
             setFilter={setFilter}
             onClose={() => setShowFilter(false)}
+            position={popupPos}
           />
         )}
 

@@ -3,7 +3,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { MdOutlineFeedback, MdFilterList, MdMoreHoriz, MdInbox } from 'react-icons/md';
 
-export default function InboxSubHeader({ setShowFeedback, setShowFilter }) {
+export default function InboxSubHeader({ setShowFeedback, setShowFilter,filterButtonRef }) {
   return (
     <HeaderWrapper>
       <Wrapper>
@@ -15,7 +15,10 @@ export default function InboxSubHeader({ setShowFeedback, setShowFilter }) {
           <IconButton title="Feedback" onClick={() => setShowFeedback(true)}>
             <MdOutlineFeedback size={20} />
           </IconButton>
-          <IconButton title="Filter" onClick={() => setShowFilter(true)}>
+          <IconButton
+          ref={filterButtonRef} 
+          title="Filter" 
+          onClick={() => setShowFilter(prev => !prev)}>
             <MdFilterList size={20} />
           </IconButton>
           <IconButton title="More options">
