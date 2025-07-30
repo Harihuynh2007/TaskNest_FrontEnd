@@ -1,5 +1,5 @@
-// ✅ BoardPane.jsx (hoàn chỉnh, đã fix drag card lưu position)
-import React, { useState, useEffect } from 'react';
+// ✅ BoardPane.jsx (hoàn chỉnh, đã fix drag card lưu position và tích hợp BoardFilterPopup)
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import BoardSubHeader from '../../../components/BoardSubHeader';
 import { FaPlus, FaTimes } from 'react-icons/fa';
@@ -9,6 +9,14 @@ import CardEditPopup from '../CardEditPopup';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { createList, fetchLists, updateList } from '../../../api/listApi';
 import { createCard, fetchCards, updateCard } from '../../../api/cardApi';
+import BoardFilterPopup from '../../../components/filter/BoardFilterPopup'; 
+import { fetchBoardMembers, fetchBoardLabels } from '../../../api/boardApi'; 
+import dayjs from 'dayjs';
+import isoWeek from 'dayjs/plugin/isoWeek';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+
+dayjs.extend(isoWeek);
+dayjs.extend(isSameOrBefore);
 
 function getTextColor(bg) {
   const hex = bg?.startsWith('#') ? bg.slice(1) : 'ffffff';
@@ -27,10 +35,17 @@ export default function BoardPane({ background, boardId }) {
   const [cardInputs, setCardInputs] = useState({});
   const [editPopup, setEditPopup] = useState(null);
   const [selectedCard, setSelectedCard] = useState(null);
+  const [showFilter, setShowFilter] = useState(false);
+  const [filter, setFilter] = useState({ keyword: '', status: 'all', due: 'all', members: [], labels: [] });
+  const [members, setMembers] = useState([]);
+  const [labels, setLabels] = useState([]);
+  const [popupPos, setPopupPos] = useState({ top: 0, left: 0 });
+  const filterButtonRef = useRef(null);
 
   useEffect(() => {
-    const loadListsAndCards = async () => {
+    const loadData = async () => {
       try {
+        // Fetch lists and cards
         const resLists = await fetchLists(boardId);
         const listsWithCards = await Promise.all(
           resLists.data.map(async (list) => {
@@ -39,11 +54,17 @@ export default function BoardPane({ background, boardId }) {
           })
         );
         setLists(listsWithCards);
+
+        // Fetch members and labels
+        const resMembers = await fetchBoardMembers(boardId);
+        const resLabels = await fetchBoardLabels(boardId);
+        setMembers(resMembers.data || []);
+        setLabels(resLabels.data || []);
       } catch (err) {
-        console.error('❌ Failed to fetch lists/cards:', err);
+        console.error('❌ Failed to fetch data:', err);
       }
     };
-    if (boardId) loadListsAndCards();
+    if (boardId) loadData();
   }, [boardId]);
 
   const handleAddList = async (e) => {
@@ -128,11 +149,68 @@ export default function BoardPane({ background, boardId }) {
     );
   };
 
+  // Logic lọc cards
+  const filteredLists = lists.map((list) => ({
+    ...list,
+    cards: list.cards.filter((card) => {
+      const matchKeyword = card.name.toLowerCase().includes(filter.keyword.toLowerCase());
+      const matchStatus =
+        filter.status === 'all' ||
+        (filter.status === 'completed' && card.completed) ||
+        (filter.status === 'incomplete' && !card.completed);
+
+      const matchDue =
+        filter.due === 'all' ||
+        (filter.due === 'none' && !card.due_date) ||
+        (filter.due === 'overdue' && card.due_date && dayjs(card.due_date).isBefore(dayjs(), 'day') && !card.completed) ||
+        (filter.due === 'today' && card.due_date && dayjs(card.due_date).isSame(dayjs(), 'day')) ||
+        (filter.due === 'week' && card.due_date && dayjs(card.due_date).isoWeek() === dayjs().isoWeek());
+
+      const matchMembers = filter.members.length === 0 || (card.assignee && filter.members.includes(card.assignee));
+      const matchLabels = filter.labels.length === 0 || (card.labels && filter.labels.some(label => card.labels.includes(label)));
+
+      return matchKeyword && matchStatus && matchDue && matchMembers && matchLabels;
+    }),
+  }));
+
+  // Cập nhật vị trí popup lọc
+  useEffect(() => {
+    if (showFilter && filterButtonRef.current) {
+      const rect = filterButtonRef.current.getBoundingClientRect();
+      setPopupPos({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX - 320 - 8, // 320 = popup width, 8px = khoảng cách
+      });
+    }
+  }, [showFilter]);
+
   const textColor = getTextColor(background);
+
+  const toggleMemberFilter = (memberId) => {
+    setFilter((prev) => {
+      const newMembers = prev.members.includes(memberId)
+        ? prev.members.filter((id) => id !== memberId)
+        : [...prev.members, memberId];
+      return { ...prev, members: newMembers };
+    });
+  };
+
+  const toggleLabelFilter = (labelId) => {
+    setFilter((prev) => {
+      const newLabels = prev.labels.includes(labelId)
+        ? prev.labels.filter((id) => id !== labelId)
+        : [...prev.labels, labelId];
+      return { ...prev, labels: newLabels };
+    });
+  };
 
   return (
     <Wrapper background={background}>
-      <BoardSubHeader boardName="My Board" />
+      <BoardSubHeader
+        boardName="My Board"
+        setShowFilter={setShowFilter}
+        filterButtonRef={filterButtonRef} // Truyền ref cho nút lọc
+      />
       {editPopup && <DarkOverlay />}
       {selectedCard && <FullCardModal card={selectedCard} onClose={() => setSelectedCard(null)} />}
       {editPopup && (
@@ -167,7 +245,7 @@ export default function BoardPane({ background, boardId }) {
         <Droppable droppableId="all-columns" direction="horizontal" type="column">
           {(provided) => (
             <BoardContent {...provided.droppableProps} ref={provided.innerRef}>
-              {lists.map((list, index) => (
+              {filteredLists.map((list, index) => (
                 <Draggable key={list.id} draggableId={`list-${list.id}`} index={index}>
                   {(provided) => (
                     <div
@@ -233,10 +311,24 @@ export default function BoardPane({ background, boardId }) {
           <AddIcon>＋</AddIcon> Add another list
         </AddListTrigger>
       )}
+
+      {showFilter && (
+        <BoardFilterPopup
+          filter={filter}
+          setFilter={setFilter}
+          onClose={() => setShowFilter(false)}
+          position={popupPos}
+          members={members}
+          toggleMemberFilter={toggleMemberFilter}
+          labels={labels}
+          toggleLabelFilter={toggleLabelFilter}
+        />
+      )}
     </Wrapper>
   );
 }
 
+// (Styled components giữ nguyên như trước)
 const Wrapper = styled.div`background: ${(props) => props.background}; height: 100%; overflow: auto;`;
 const DarkOverlay = styled.div`position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); z-index: 998;`;
 

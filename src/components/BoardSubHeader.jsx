@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import BoardSubHeaderLeft from './BoardSubHeaderLeft';
 import BoardSubHeaderRight from './BoardSubHeaderRight';
 
-export default function BoardSubHeader({ boardName = 'Untitled Board' }) {
+export default function BoardSubHeader({ boardName = 'Untitled Board', setShowFilter, filterButtonRef }) {
   return (
     <HeaderContainer>
       <InnerWrapper>
@@ -12,7 +12,7 @@ export default function BoardSubHeader({ boardName = 'Untitled Board' }) {
         </LeftSpan>
 
         <RightSpan>
-          <BoardSubHeaderRight />
+          <BoardSubHeaderRight setShowFilter={setShowFilter} filterButtonRef={filterButtonRef} />
         </RightSpan>
       </InnerWrapper>
     </HeaderContainer>
