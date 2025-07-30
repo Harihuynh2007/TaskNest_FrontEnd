@@ -216,6 +216,7 @@ export default function BoardPane({ background, boardId }) {
       
       {editPopup && (
         <CardEditPopup
+          isInboxMode={false}
           anchorRect={editPopup.anchorRect}
           cardText={editPopup.text}
           onChange={(val) => setEditPopup({ ...editPopup, text: val })}
@@ -233,6 +234,7 @@ export default function BoardPane({ background, boardId }) {
               )
             );
             setEditPopup(null);
+            
           }}
           onClose={() => setEditPopup(null)}
           onOpenFullCard={() => {

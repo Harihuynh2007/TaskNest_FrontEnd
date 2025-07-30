@@ -17,6 +17,7 @@ export default function CardEditPopup({
   card,
   listId,
   updateCardLabels,
+  isInboxMode = false,
 }) {
   const popupRef = useRef();
   const textareaRef = useRef();
@@ -97,14 +98,20 @@ export default function CardEditPopup({
           <BsCardText />
           <span>Open card</span>
         </MenuItem>
-        <MenuItem onClick={() => setShowLabelPopup(true)}>
-          <BiLabel />
-          <span>Edit labels</span>
-        </MenuItem>
-        <MenuItem onClick={() => alert('Change members')}>
-          <HiOutlineUserAdd />
-          <span>Change members</span>
-        </MenuItem>
+
+        {!isInboxMode && (
+          <>
+            <MenuItem onClick={() => setShowLabelPopup(true)}>
+              <BiLabel />
+              <span>Edit labels</span>
+            </MenuItem>
+            <MenuItem onClick={() => alert('Change members')}>
+              <HiOutlineUserAdd />
+              <span>Change members</span>
+            </MenuItem>
+          </>
+        )}
+
         <MenuItem onClick={() => alert('Edit dates')}>
           <BsClock />
           <span>Edit dates</span>
@@ -126,6 +133,7 @@ export default function CardEditPopup({
           <span>Archive</span>
         </MenuItem>
       </MenuList>
+
 
       {showLabelPopup && (
         <LabelPopup

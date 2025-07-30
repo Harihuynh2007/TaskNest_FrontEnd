@@ -180,6 +180,7 @@ export default function InboxPane({
               setEditPopup(null);
               setSelectedCard(cards[editPopup.index]);
             }}
+            isInboxMode={true}
           />
         )}
       </InnerContent>
