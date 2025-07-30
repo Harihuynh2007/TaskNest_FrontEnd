@@ -6,6 +6,8 @@ import InboxPane from './panes/InboxPane';
 import PlannerPane from './panes/PlannerPane';
 import BoardPane from './panes/BoardPane';
 
+import dayjs from 'dayjs';
+
 import BottomFloatingNav from './BottomFloatingNav';
 import FullCardModal from '../../components/FullCardModal';
 import CardEditPopup from './CardEditPopup';
@@ -84,9 +86,10 @@ export default function BoardDetailPage() {
         background: '',
         visibility: 'private',
         description: '',
-        due_date: null,
+        due_date: dayjs().toISOString(),
         completed: false,
         position: cards.length,  // ✅ GÁN POSITION CHUẨN!
+        
       });
 
       setCards((prev) => [...prev, res.data]);

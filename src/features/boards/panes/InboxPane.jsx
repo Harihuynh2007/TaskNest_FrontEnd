@@ -9,6 +9,14 @@ import CardItem from '../../../components/CardItem';
 import FeedbackPopup from '../../../components/FeedbackPopup';
 import FilterPopup from '../../../components/filter/FilterPopup';
 
+import dayjs from 'dayjs';
+import isoWeek from 'dayjs/plugin/isoWeek';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+
+dayjs.extend(isoWeek);
+dayjs.extend(isSameOrBefore);
+
+
 export default function InboxPane({
   cards,
   setCards,
@@ -30,15 +38,31 @@ export default function InboxPane({
   const [filter, setFilter] = useState({ keyword: '', status: 'all' });
   const [popupPos, setPopupPos] = useState({ top: 0, left: 0 });
 
+  const today = dayjs();
+
   const filterButtonRef = useRef(null);
   const filteredCards = cards.filter((card) => {
-              const matchKeyword = card.name.toLowerCase().includes(filter.keyword.toLowerCase());
-              const matchStatus =
-                filter.status === 'all' ||
-                (filter.status === 'completed' && card.completed) ||
-                (filter.status === 'incomplete' && !card.completed);
+    const matchKeyword = card.name.toLowerCase().includes(filter.keyword.toLowerCase());
 
-              return matchKeyword && matchStatus;
+    const matchStatus =
+      filter.status === 'all' ||
+      (filter.status === 'completed' && card.completed) ||
+      (filter.status === 'incomplete' && !card.completed);
+
+      const due = card.due_date ? dayjs(card.due_date) : null;
+
+      const matchDue =
+        filter.due === 'overdue'
+          ? due && due.isBefore(today, 'day') && !card.completed
+          : filter.due === 'today'
+          ? due && due.isSame(today, 'day')
+          : filter.due === 'week'
+          ? due && due.isoWeek() === today.isoWeek()
+          : filter.due === 'none'
+          ? !due
+          : true;
+
+    return matchKeyword && matchStatus && matchDue;
   });
 
   useEffect(() => {
@@ -73,6 +97,7 @@ export default function InboxPane({
             setFilter={setFilter}
             onClose={() => setShowFilter(false)}
             position={popupPos}
+            
           />
         )}
 
