@@ -2,6 +2,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
+
 export default function FilterPopup({ filter, setFilter, onClose,position  }) {
   return (
     <Wrapper  style={{ top: position.top, left: position.left }}>
@@ -22,36 +23,84 @@ export default function FilterPopup({ filter, setFilter, onClose,position  }) {
 
       <Section>
         <SectionLabel>Status</SectionLabel>
-        <RadioGroup>
-          <RadioItem>
+        <CheckboxGroup>
+          <CheckboxItem>
             <input
-              type="radio"
-              name="status"
+              type="checkbox"
               checked={filter.status === 'all'}
-              onChange={() => setFilter((prev) => ({ ...prev, status: 'all' }))}
+              onChange={() => setFilter(prev => ({ ...prev, status: prev.status === 'all' ? '' : 'all' }))}
             />
             <span>All</span>
-          </RadioItem>
-          <RadioItem>
+          </CheckboxItem>
+          <CheckboxItem>
             <input
-              type="radio"
-              name="status"
+              type="checkbox"
               checked={filter.status === 'completed'}
-              onChange={() => setFilter((prev) => ({ ...prev, status: 'completed' }))}
+              onChange={() => setFilter(prev => ({ ...prev, status: prev.status === 'completed' ? '' : 'completed' }))}
             />
             <span>Completed</span>
-          </RadioItem>
-          <RadioItem>
+          </CheckboxItem>
+          <CheckboxItem>
             <input
-              type="radio"
-              name="status"
+              type="checkbox"
               checked={filter.status === 'incomplete'}
-              onChange={() => setFilter((prev) => ({ ...prev, status: 'incomplete' }))}
+              onChange={() => setFilter(prev => ({ ...prev, status: prev.status === 'incomplete' ? '' : 'incomplete' }))}
             />
             <span>Incomplete</span>
-          </RadioItem>
-        </RadioGroup>
+          </CheckboxItem>
+        </CheckboxGroup>
       </Section>
+
+      <Section>
+        <SectionLabel>Due Date</SectionLabel>
+        <CheckboxGroup>
+            <CheckboxItem>
+            <input
+                type="checkbox"
+                checked={filter.due === 'overdue'}
+                onChange={() => setFilter(prev => ({
+                ...prev,
+                due: prev.due === 'overdue' ? 'all' : 'overdue'
+                }))}
+            />
+            <span>Overdue</span>
+            </CheckboxItem>
+            <CheckboxItem>
+            <input
+                type="checkbox"
+                checked={filter.due === 'today'}
+                onChange={() => setFilter(prev => ({
+                ...prev,
+                due: prev.due === 'today' ? 'all' : 'today'
+                }))}
+            />
+            <span>Due Today</span>
+            </CheckboxItem>
+            <CheckboxItem>
+            <input
+                type="checkbox"
+                checked={filter.due === 'week'}
+                onChange={() => setFilter(prev => ({
+                ...prev,
+                due: prev.due === 'week' ? 'all' : 'week'
+                }))}
+            />
+            <span>This Week</span>
+            </CheckboxItem>
+            <CheckboxItem>
+            <input
+                type="checkbox"
+                checked={filter.due === 'none'}
+                onChange={() => setFilter(prev => ({
+                ...prev,
+                due: prev.due === 'none' ? 'all' : 'none'
+                }))}
+            />
+            <span>No due date</span>
+            </CheckboxItem>
+        </CheckboxGroup>
+    </Section>
+
     </Wrapper>
   );
 }
@@ -125,16 +174,33 @@ const KeywordInput = styled.input`
   }
 `;
 
-const RadioGroup = styled.div`
+const CheckboxGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
 `;
 
-const RadioItem = styled.label`
+const CheckboxItem = styled.label`
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: #172b4d;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: var(--ds-background-neutral-hovered, #f0f0f0);
+  }
+
+  input[type='checkbox'] {
+    width: 16px;
+    height: 16px;
+    accent-color: #0c66e4; /* Trello blue */
+  }
+
+  span {
+    color: var(--ds-text, #172b4d);
+  }
 `;
