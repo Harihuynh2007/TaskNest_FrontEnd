@@ -4,7 +4,6 @@ import { BiLabel } from 'react-icons/bi';
 import { HiOutlineUserAdd } from 'react-icons/hi';
 import { BsCardText, BsClock, BsArrowsMove, BsFiles, BsLink45Deg, BsArchive } from 'react-icons/bs';
 import LabelPopup from '../../components/Label/LabelPopup';
-import CreateLabelModal from '../../components/Label/CreateLabelModal'; // Import CreateLabelModal
 import { fetchBoardLabels } from '../../api/boardApi';
 
 export default function CardEditPopup({
@@ -19,11 +18,12 @@ export default function CardEditPopup({
   updateCardLabels,
   isInboxMode = false,
 }) {
+
+  const labelButtonRef = useRef();
   const popupRef = useRef();
   const textareaRef = useRef();
   const [text, setText] = useState(cardText);
   const [showLabelPopup, setShowLabelPopup] = useState(false);
-  const [showCreateLabelModal, setShowCreateLabelModal] = useState(false);
   const [labels, setLabels] = useState([]); // Danh sách nhãn từ board
 
   useEffect(() => {
@@ -67,13 +67,9 @@ export default function CardEditPopup({
     card.labels = newLabels; // Cập nhật tạm thời trong card
   };
 
-  const handleCreateLabel = (newLabel) => {
-    setLabels((prev) => [...prev, newLabel]);
-    setShowCreateLabelModal(false);
-  };
-
   return (
-    <Dialog
+    <>
+      <Dialog
       ref={popupRef}
       style={{
         top: anchorRect.bottom + window.scrollY + 8,
@@ -101,7 +97,7 @@ export default function CardEditPopup({
 
         {!isInboxMode && (
           <>
-            <MenuItem onClick={() => setShowLabelPopup(true)}>
+            <MenuItem  ref={labelButtonRef} onClick={() => setShowLabelPopup(true)}>
               <BiLabel />
               <span>Edit labels</span>
             </MenuItem>
@@ -135,27 +131,23 @@ export default function CardEditPopup({
       </MenuList>
 
 
-      {showLabelPopup && (
+      
+
+      
+    </Dialog>
+    {showLabelPopup && (
         <LabelPopup
-          anchorRect={anchorRect}
+          anchorRect={labelButtonRef.current?.getBoundingClientRect()}
           labels={labels}
           selectedLabelIds={card.labels || []}
           onToggleLabel={handleToggleLabel}
-          onCreateLabel={() => setShowCreateLabelModal(true)}
           onEditLabel={(label) => alert(`Edit label ${label.name}`)} // Chưa triển khai
           onClose={() => setShowLabelPopup(false)}
-          boardId={listId} // Truyền boardId (giả định listId liên quan)
+          boardId={listId} 
         />
       )}
-
-      {showCreateLabelModal && (
-        <CreateLabelModal
-          boardId={listId}
-          onClose={() => setShowCreateLabelModal(false)}
-          onLabelCreated={handleCreateLabel}
-        />
-      )}
-    </Dialog>
+    </>
+    
   );
 }
 
