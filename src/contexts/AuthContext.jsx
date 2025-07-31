@@ -53,8 +53,10 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     const res = await authLogin(email, password);
-    const token = res.data.token || res.data.access;
-    localStorage.setItem('token', token);
+    const access = res.data.access;
+    const refresh = res.data.refresh;
+    localStorage.setItem('token', access);
+    localStorage.setItem('refresh_token', refresh);
     await fetchUserDetails();      // 1. Fetch user
     await preloadWorkspaces();     // 2. Preload workspaces
     return res;
@@ -62,8 +64,10 @@ export function AuthProvider({ children }) {
 
   const signup = useCallback(async (email, password) => {
   const res = await authRegister(email, password);
-  const token = res.data.token || res.data.access;
-  localStorage.setItem('token', token);
+  const access = res.data.access;
+  const refresh = res.data.refresh;
+  localStorage.setItem('token', access);
+  localStorage.setItem('refresh_token', refresh);
   await fetchUserDetails();
   await preloadWorkspaces();
   return res;
