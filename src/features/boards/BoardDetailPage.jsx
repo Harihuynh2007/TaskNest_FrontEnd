@@ -69,7 +69,8 @@ export default function BoardDetailPage() {
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.type === 'card_update') {
-        setCards(data.cards);
+        setCards(data.cards || []);
+        setLists(data.lists || []);
       }
     };
     return () => socket.close();
