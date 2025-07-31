@@ -161,6 +161,8 @@ export default function InboxPane({
                     {...provided.dragHandleProps}
                   >
                     <CardItem
+                      isInbox={true}
+                      draggingOver={snapshot.draggingOver}
                       card={card}
                       index={index}
                       isDragging={snapshot.isDragging}

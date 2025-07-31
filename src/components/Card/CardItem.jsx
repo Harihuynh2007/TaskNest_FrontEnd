@@ -5,15 +5,23 @@ export default function CardItem({
   card,
   index,
   isDragging,
+  draggingOver,
   onEditClick,
   onCheckClick,
   onCardClick = () => {},
 }) {
   const [hovered, setHovered] = useState(false);
+  
+  // ✅ Nếu đang kéo → xác định vùng hiện tại bằng draggingOver
+  // ❌ Nếu không kéo → giữ nguyên chiều rộng (auto fit theo list/inbox layout)
+  // CardItem.jsx
+  const forceWidth = isDragging ? '240px' : 'auto'; 
 
   return (
     <CardWrapper
+      className={`drag-preview-${draggingOver || 'none'}`}
       $isDragging={isDragging}
+      $forceWidth={forceWidth}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => onCardClick(card)}
@@ -74,6 +82,7 @@ export default function CardItem({
 }
 
 const CardWrapper = styled.div`
+  width: ${({ $forceWidth }) => $forceWidth || '100%'}; // Default to 100% for flexibility
   background: #fff;
   padding: 8px 12px 4px;
   border-radius: 8px;
@@ -84,9 +93,10 @@ const CardWrapper = styled.div`
     $isDragging ? '2px solid #0c66e4' : '1px solid transparent'};
   box-shadow: ${({ $isDragging }) =>
     $isDragging ? '0 4px 12px rgba(0,0,0,0.2)' : '0 1px 3px rgba(0,0,0,0.1)'};
-  transition: all 0.2s ease;
   cursor: pointer;
   opacity: ${({ $isDragging }) => ($isDragging ? 0.8 : 1)};
+  transform: ${({ $isDragging }) => ($isDragging ? 'scale(1.02)' : 'none')}; // Slight scale for visual feedback
+  transition: box-shadow 0.2s ease, transform 0.2s ease; // Remove width from transition
 
   &:hover {
     border: 2px solid #0c66e4;

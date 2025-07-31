@@ -50,6 +50,7 @@ function ListColumn({
                         draggingOver={snapshot.isDraggingOver ? 1 : 0}
                       >
                         <CardItem
+                          draggingOver={snapshot.draggingOver}
                           card={card}
                           index={index}
                           isDragging={snapshot.isDragging}
@@ -110,18 +111,19 @@ const Header = styled.h3`
 `;
 
 const CardList = styled.ul`
-  list-style: none;     // ✅ ẩn dấu chấm
+  list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
-
+  min-height: 40px; // Ensure droppable area is visible even when empty
   background: ${({ draggingOver }) =>
-    draggingOver ? 'rgba(0,0,0,0.03)' : 'transparent'};
+    draggingOver ? 'rgba(12, 102, 228, 0.1)' : 'transparent'}; // Subtle highlight
   border-radius: 6px;
   transition: background 0.2s ease;
-
+  width: 100%; // Ensure full width within container
+  overflow: hidden; // Prevent overflow during dragging
 `;
 
 
