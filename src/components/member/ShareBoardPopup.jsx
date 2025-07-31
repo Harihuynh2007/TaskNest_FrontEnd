@@ -3,29 +3,33 @@ import styled from 'styled-components';
 import { addMemberToBoard, fetchBoardMembers } from '../../api/boardApi';
 import { toast } from 'react-toastify';
 
+import {
+  mockFetchBoardMembers,
+  mockFetchUsers,
+  mockAddMemberToBoard,
+} from '../../api/mockApi';
+
 export default function ShareBoardPopup({ boardId, onClose }) {
   const [users, setUsers] = useState([]);
   const [members, setMembers] = useState([]);
   const [search, setSearch] = useState('');
   const [role, setRole] = useState('member');
+  const [activeTab, setActiveTab] = useState('members');
 
   useEffect(() => {
-    fetch('/api/users/')
-      .then(res => res.json())
-      .then(setUsers);
-    fetchBoardMembers(boardId)
-      .then(res => setMembers(res.data || []));
+    mockFetchUsers().then((res) => setUsers(res.data));
+    mockFetchBoardMembers(boardId).then((res) => setMembers(res.data));
   }, [boardId]);
 
   const handleInvite = async () => {
     const target = users.find(u => u.username === search || u.email === search);
     if (!target) return toast.error('User not found');
     try {
-      await addMemberToBoard(boardId, target.id);
+      await mockAddMemberToBoard(boardId, target.id);
       toast.success('User added');
       setSearch('');
-      const res = await fetchBoardMembers(boardId);
-      setMembers(res.data || []);
+      const res = await mockFetchBoardMembers(boardId);
+      setMembers(res.data);
     } catch (err) {
       toast.error('Failed to add');
     }
@@ -61,22 +65,34 @@ export default function ShareBoardPopup({ boardId, onClose }) {
       </LinkSection>
 
       <Tabs>
-        <Tab active>Board members ({members.length})</Tab>
-        <Tab>Join requests</Tab>
+        <Tab active={activeTab === 'members'} onClick={() => setActiveTab('members')}>
+          Board members ({members.length})
+        </Tab>
+        <Tab active={activeTab === 'requests'} onClick={() => setActiveTab('requests')}>
+          Join requests
+        </Tab>
       </Tabs>
 
-      <MemberList>
-        {members.map((m) => (
-          <MemberRow key={m.id}>
-            <Avatar src="https://i.imgur.com/4ZQZ4Zl.png" />
-            <div>
-              <strong>{m.username}</strong> {m.is_you && '(you)'}
-              <Sub>{m.email}</Sub>
-            </div>
-            <RoleBtn>{m.role || 'Member'} ▾</RoleBtn>
-          </MemberRow>
-        ))}
-      </MemberList>
+      {activeTab === 'members' && (
+        <MemberList>
+          {members.map((m) => (
+            <MemberRow key={m.id}>
+              <Avatar src="https://i.imgur.com/4ZQZ4Zl.png" />
+              <div>
+                <strong>{m.username}</strong> {m.is_you && '(you)'}
+                <Sub>{m.email}</Sub>
+              </div>
+              <RoleBtn>{m.role || 'Member'} ▾</RoleBtn>
+            </MemberRow>
+          ))}
+        </MemberList>
+      )}
+
+      {activeTab === 'requests' && (
+        <EmptyState>
+          There are no requests to join this board.
+        </EmptyState>
+      )}
     </Wrapper>
   );
 }
@@ -96,7 +112,6 @@ const Wrapper = styled.div`
   gap: 16px;
   z-index: 999;
 `;
-
 
 const Header = styled.div`
   display: flex;
@@ -229,4 +244,11 @@ const RoleBtn = styled.button`
   padding: 6px 12px;
   font-size: 13px;
   cursor: pointer;
+`;
+
+const EmptyState = styled.div`
+  font-size: 14px;
+  color: #626f86;
+  padding: 16px;
+  text-align: center;
 `;
