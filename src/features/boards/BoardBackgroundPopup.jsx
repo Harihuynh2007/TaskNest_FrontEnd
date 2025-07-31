@@ -43,8 +43,8 @@ export default function BoardBackgroundPopup({ onClose, onSelectBackground }) {
 
       <Section>
         <Label>
-  Colors <LinkButton type="button">View more</LinkButton>
-</Label>
+          Colors <LinkButton type="button">View more</LinkButton>
+        </Label>
         <Grid>
           {gradients.map((color, idx) => (
             <ColorBox

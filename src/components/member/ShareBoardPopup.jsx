@@ -35,6 +35,12 @@ export default function ShareBoardPopup({ boardId, onClose }) {
     }
   };
 
+  const handleChangeRole = (userId, newRole) => {
+    // Chưa có API nên chỉ toast
+    toast.info(`Changed role of user ${userId} to ${newRole}`);
+    // Sau này sẽ gọi API PATCH để update role thật
+  };
+
   return (
     <Wrapper>
       <Header>
@@ -61,7 +67,7 @@ export default function ShareBoardPopup({ boardId, onClose }) {
           <SmallBtn>Copy link</SmallBtn>
           <SmallBtn>Delete link</SmallBtn>
         </Right>
-        <ChangePermsBtn>Change permissions ▾</ChangePermsBtn>
+
       </LinkSection>
 
       <Tabs>
@@ -251,4 +257,13 @@ const EmptyState = styled.div`
   color: #626f86;
   padding: 16px;
   text-align: center;
+`;
+const SelectRole = styled.select`
+  margin-left: auto;
+  background: #f4f5f7;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
 `;
