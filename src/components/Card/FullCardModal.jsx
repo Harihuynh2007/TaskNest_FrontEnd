@@ -6,6 +6,8 @@ import { HiOutlineUserAdd } from 'react-icons/hi';
 import { MdChecklist } from 'react-icons/md';
 import { IoCloseOutline } from 'react-icons/io5';
 import { IoChevronDown } from 'react-icons/io5';
+import { HiOutlineMenuAlt2 } from 'react-icons/hi';
+
 import axios from '../../api/axiosClient';
 
 
@@ -17,6 +19,9 @@ export default function FullCardModal({ card, onClose,onCardUpdate  }) {
   const [isComplete, setIsComplete] = useState(false);
   const overlayRef = useRef();
   const modalRef = useRef();
+
+  const [isEditingDesc, setIsEditingDesc] = useState(false);
+  const [tempDesc, setTempDesc] = useState(description);
 
 
   const handleAddComment = () => {
@@ -57,6 +62,27 @@ export default function FullCardModal({ card, onClose,onCardUpdate  }) {
       handleTitleSave();
     }
   };
+
+  const handleSaveDescription  = async () => {
+    if (tempDesc === description) {
+      setIsEditingDesc(false);
+      return;
+    }
+
+    try {
+      await axios.patch(`/cards/${card.id}/`, { description: tempDesc });
+      setDescription(tempDesc);
+      setIsEditingDesc(false);
+    } catch (err) {
+      console.error('❌ Failed to save description:', err);
+    }
+  };
+
+  const handleCancelDescription  = () => {
+    setTempDesc(description);
+    setIsEditingDesc(false);
+  };
+
 
   useEffect(() => {
     if (card) {
@@ -108,38 +134,63 @@ export default function FullCardModal({ card, onClose,onCardUpdate  }) {
 
         <ContentBody>
           <MainColumn>
-            <TopCardRow>
-              <CompleteCheckbox
-                type="checkbox"
-                checked={isComplete}
-                onChange={handleToggleComplete}
-                aria-label={`Mark this card complete (${title})`}
-              />
-              <EditableTitle
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                onKeyDown={handleTitleKeyDown}
-                onBlur={handleTitleSave}
-                placeholder="Card title"
-              />
-            </TopCardRow>
+            <TitleSection>
+              <TitleCheckboxWrapper>
+                <CompleteCheckbox
+                  type="checkbox"
+                  checked={isComplete}
+                  onChange={handleToggleComplete}
+                  aria-label={`Mark this card complete (${title})`}
+                />
+              </TitleCheckboxWrapper>
+              <TitleContent>
+                <EditableTitle
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onKeyDown={handleTitleKeyDown}
+                  onBlur={handleTitleSave}
+                  placeholder="Card title"
+                />
+              </TitleContent>
+            </TitleSection>
 
-            <ActionsRow>
-              <ActionButton><span>+ Add</span></ActionButton>
-              <ActionButton><BiLabel /> Labels</ActionButton>
-              <ActionButton><BsClock /> Dates</ActionButton>
-              <ActionButton><MdChecklist /> Checklist</ActionButton>
-              <ActionButton><HiOutlineUserAdd /> Members</ActionButton>
-            </ActionsRow>
+            <ActionSectionGrid>
+              <EmptyIconSpace />
+              <ActionSectionBody>
+                <ActionButton><span>+ Add</span></ActionButton>
+                <ActionButton><BiLabel /> Labels</ActionButton>
+                <ActionButton><BsClock /> Dates</ActionButton>
+                <ActionButton><MdChecklist /> Checklist</ActionButton>
+                <ActionButton><HiOutlineUserAdd /> Members</ActionButton>
+              </ActionSectionBody>
+            </ActionSectionGrid>
 
-            <Section>
-              <SectionLabel>Description</SectionLabel>
-              <DescriptionBox
-                placeholder="Add a more detailed description..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </Section>
+            <DescriptionSection>
+              <DescriptionIconWrapper>
+                <HiOutlineMenuAlt2 size={20} />
+              </DescriptionIconWrapper>
+              <DescriptionContent>
+                <SectionHeading>Description</SectionHeading>
+                {isEditingDesc ? (
+                  <EditorBox>
+                    <Textarea
+                      value={tempDesc}
+                      onChange={(e) => setTempDesc(e.target.value)}
+                      placeholder="Write a description..."
+                    />
+                    <ButtonRow>
+                      <SaveBtn onClick={handleSaveDescription}>Save</SaveBtn>
+                      <CancelBtn onClick={handleCancelDescription}>Cancel</CancelBtn>
+                    </ButtonRow>
+                  </EditorBox>
+                ) : (
+                  <PreviewBox onClick={() => setIsEditingDesc(true)}>
+                    {description ? <p>{description}</p> : <em>Add a more detailed description...</em>}
+                  </PreviewBox>
+                )}
+              </DescriptionContent>
+            </DescriptionSection>
+
           </MainColumn>
 
           <Sidebar>
@@ -182,17 +233,49 @@ const Overlay = styled.div`
   z-index: 1000;
 `;
 
-const TopCardRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+const DescriptionSection = styled.section`
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  column-gap: 12px;
+  margin-bottom: 32px;
 `;
 
-const CompleteCheckbox = styled.input`
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
+const DescriptionIconWrapper = styled.div`
+  padding-top: 4px;
+  color: #44546f;
+`;
+
+const DescriptionContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const SectionHeading = styled.h3`
+  font-size: 14px;
+  font-weight: 600;
+  color: #172b4d;
+  margin: 0;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+`;
+
+const TitleSection = styled.section`
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  column-gap: 12px;
+  padding: 24px 20px 16px;
+  margin-bottom: 32px;
+`;
+
+const TitleCheckboxWrapper = styled.div`
+  padding-top: 4px;
+`;
+
+const TitleContent = styled.div`
+  display: flex;
+  align-items: center;
 `;
 
 const EditableTitle = styled.input`
@@ -201,12 +284,14 @@ const EditableTitle = styled.input`
   border: none;
   outline: none;
   background: transparent;
-  flex: 1;
-  padding: 4px 0;
-  border-bottom: 1px solid transparent;
-  &:focus {
-    border-bottom: 1px solid #ccc;
-  }
+  width: 100%;
+`;
+
+const CompleteCheckbox = styled.input`
+  width: 20px;
+  height: 20px;
+  accent-color: #61bd4f;
+  cursor: pointer;
 `;
 
 const ModalContainer = styled.div`
@@ -293,12 +378,19 @@ const Sidebar = styled.div`
   border-left: 1px solid #dfe1e6;
 `;
 
-const ActionsRow = styled.div`
+const ActionSectionGrid = styled.section`
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  column-gap: 12px;
+  margin-bottom: 32px;
+`;
+
+const ActionSectionBody = styled.div`
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 20px;
 `;
+const EmptyIconSpace = styled.div``;
 
 const ActionButton = styled.button`
   display: flex;
@@ -324,15 +416,6 @@ const SectionLabel = styled.h4`
   margin-bottom: 8px;
 `;
 
-const DescriptionBox = styled.textarea`
-  width: 100%;
-  min-height: 80px;
-  border: 1px solid #dfe1e6;
-  border-radius: 6px;
-  padding: 8px;
-  font-size: 14px;
-  resize: vertical;
-`;
 
 const CommentInput = styled.textarea`
   width: 100%;
@@ -367,4 +450,56 @@ const CloseBtn = styled.button`
   border: none;
   cursor: pointer;
   color: #172b4d;
+`;
+
+const PreviewBox = styled.div`
+  background: #f4f5f7;
+  border-radius: 6px;
+  padding: 12px;
+  min-height: 40px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #172b4d;
+
+  &:hover {
+    background: #ebecf0;
+  }
+`;
+
+const EditorBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const Textarea = styled.textarea`
+  width: 100%;
+  min-height: 80px;
+  padding: 10px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #dfe1e6;
+  resize: vertical;
+`;
+
+const ButtonRow = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const SaveBtn = styled.button`
+  background: #0c66e4;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+`;
+
+const CancelBtn = styled.button`
+  background: transparent;
+  border: none;
+  color: #5e6c84;
+  font-weight: 500;
+  cursor: pointer;
 `;
