@@ -15,3 +15,6 @@ export const fetchBoardMembers = (boardId) =>
 
 export const fetchBoardLabels = (boardId) =>
   api.get(`/boards/${boardId}/labels/`); // G
+
+export const addMemberToBoard = (boardId, userId) =>
+  api.post(`/boards/${boardId}/add-member/`, { user_id: userId });

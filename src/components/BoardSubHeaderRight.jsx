@@ -4,7 +4,7 @@ import { FiUserPlus, FiZap, FiFilter, FiShare2, FiMoreHorizontal } from 'react-i
 import { FaStar } from 'react-icons/fa';
 import { GoOrganization } from 'react-icons/go';
 
-export default function BoardSubHeaderRight({ setShowFilter, filterButtonRef }) {
+export default function BoardSubHeaderRight({ setShowFilter, filterButtonRef,onOpenInvite }) {
   return (
     <Wrapper>
       <RightSpan>
@@ -20,7 +20,7 @@ export default function BoardSubHeaderRight({ setShowFilter, filterButtonRef }) 
         </IconButton>
         <IconButton title="Star board"><FaStar color="#e2b203" /></IconButton>
         <IconButton title="Workspace visible"><GoOrganization /></IconButton>
-        <ActionButton><FiShare2 /> Share</ActionButton>
+        <ActionButton onClick={onOpenInvite}><FiShare2 /> Share</ActionButton>
         <IconButton title="More"><FiMoreHorizontal /></IconButton>
       </RightSpan>
     </Wrapper>

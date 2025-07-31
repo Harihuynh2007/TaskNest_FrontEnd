@@ -2,8 +2,9 @@ import React from 'react';
 import styled from 'styled-components';
 import BoardSubHeaderLeft from './BoardSubHeaderLeft';
 import BoardSubHeaderRight from './BoardSubHeaderRight';
+import ShareBoardPopup from './member/ShareBoardPopup';
 
-export default function BoardSubHeader({ boardName = 'Untitled Board', setShowFilter, filterButtonRef }) {
+export default function BoardSubHeader({ boardName = 'Untitled Board', setShowFilter, filterButtonRef, onOpenInvite }) {
   return (
     <HeaderContainer>
       <InnerWrapper>
@@ -12,7 +13,10 @@ export default function BoardSubHeader({ boardName = 'Untitled Board', setShowFi
         </LeftSpan>
 
         <RightSpan>
-          <BoardSubHeaderRight setShowFilter={setShowFilter} filterButtonRef={filterButtonRef} />
+          <BoardSubHeaderRight 
+          setShowFilter={setShowFilter} 
+          filterButtonRef={filterButtonRef}
+          onOpenInvite={onOpenInvite} />
         </RightSpan>
       </InnerWrapper>
     </HeaderContainer>

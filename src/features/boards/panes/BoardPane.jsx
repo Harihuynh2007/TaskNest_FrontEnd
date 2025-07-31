@@ -13,6 +13,8 @@ import { fetchBoardMembers, fetchBoardLabels } from '../../../api/boardApi';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+import ShareBoardPopup from '../../../components/member/ShareBoardPopup';
+
 
 dayjs.extend(isoWeek);
 dayjs.extend(isSameOrBefore);
@@ -41,6 +43,8 @@ export default function BoardPane({ background, boardId, lists, setLists }) {
   const [labels, setLabels] = useState([]);
   const [popupPos, setPopupPos] = useState({ top: 0, left: 0 });
   const filterButtonRef = useRef(null);
+
+  const [showInvitePopup, setShowInvitePopup] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -171,6 +175,8 @@ export default function BoardPane({ background, boardId, lists, setLists }) {
         boardName="My Board"
         setShowFilter={setShowFilter}
         filterButtonRef={filterButtonRef} // Truyền ref cho nút lọc
+        onOpenInvite={() => setShowInvitePopup(true)}
+
       />
       {editPopup && <DarkOverlay />}
       {selectedCard && 
@@ -322,6 +328,14 @@ export default function BoardPane({ background, boardId, lists, setLists }) {
           toggleLabelFilter={toggleLabelFilter}
         />
       )}
+
+      {showInvitePopup && (
+        <>
+          <Overlay onClick={() => setShowInvitePopup(false)} />
+          <ShareBoardPopup boardId={boardId} onClose={() => setShowInvitePopup(false)} />
+        </>
+      )}
+
     </Wrapper>
   );
 }
@@ -329,6 +343,14 @@ export default function BoardPane({ background, boardId, lists, setLists }) {
 // (Styled components giữ nguyên như trước)
 const Wrapper = styled.div`background: ${(props) => props.background}; height: 100%; overflow: auto;`;
 const DarkOverlay = styled.div`position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); z-index: 998;`;
+
+const Overlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 998;
+`;
+
 
 const BoardContent = styled.div`
   display: flex;
