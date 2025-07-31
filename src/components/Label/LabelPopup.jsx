@@ -2,12 +2,11 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { FaPen } from 'react-icons/fa';
 import { IoMdCheckmark } from 'react-icons/io';
-import LabelEditView from './LabelEditView';
-import LabelCreateView from './LabelCreateView';
+
 
 const DEFAULT_LABELS = [
   { id: 'green', color: '#61bd4f', name: '' },
-  { id: 'yellow', color: '#f2d600', name: '' },
+  { id: 'yellow', color: '#20201bff', name: '' },
   { id: 'orange', color: '#ff9f1a', name: '' },
   { id: 'red', color: '#eb5a46', name: '' },
   { id: 'purple', color: '#c377e0', name: '' },
@@ -129,40 +128,7 @@ export default function LabelPopup({
         </>
       )}
 
-      {mode === 'create' && (
-        <LabelCreateView
-          newLabel={newLabel}
-          onBack={() => handleModeChange('list')}
-          onClose={onClose}
-          onChangeTitle={(name) => setNewLabel({ ...newLabel, name })}
-          onSelectColor={(color) => setNewLabel({ ...newLabel, color })}
-          onCreate={() => {
-            console.log('Creating label:', newLabel);
-            onCreateLabel(newLabel);
-            handleModeChange('list');
-          }}
-        />
-      )}
-
-      {mode === 'edit' && editingLabel && (
-        <LabelEditView
-          label={editingLabel}
-          onBack={() => handleModeChange('list')}
-          onClose={onClose}
-          onChangeTitle={(name) => setEditingLabel({ ...editingLabel, name })}
-          onSelectColor={(color) => setEditingLabel({ ...editingLabel, color })}
-          onRemoveColor={() => setEditingLabel({ ...editingLabel, color: '' })}
-          onSave={() => {
-            console.log('Saving label:', editingLabel);
-            onEditLabel(editingLabel);
-            handleModeChange('list');
-          }}
-          onDelete={() => {
-            console.log('Deleting label:', editingLabel.id);
-            handleModeChange('list');
-          }}
-        />
-      )}
+      
     </Wrapper>
   );
 }

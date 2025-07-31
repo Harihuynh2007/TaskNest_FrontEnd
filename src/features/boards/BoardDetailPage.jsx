@@ -9,11 +9,10 @@ import BoardPane from './panes/BoardPane';
 import dayjs from 'dayjs';
 
 import BottomFloatingNav from './BottomFloatingNav';
-import FullCardModal from '../../components/FullCardModal';
-import CardEditPopup from './CardEditPopup';
+import FullCardModal from '../../components/Card/FullCardModal.jsx';
+
 import { getBoard } from '../../api/boardApi.js';
 import { DragDropContext } from '@hello-pangea/dnd';
-import { v4 as uuidv4 } from 'uuid';
 
 import { fetchInboxCards, updateCard, createCard } from '../../api/cardApi';
 
@@ -30,7 +29,6 @@ export default function BoardDetailPage() {
     { id: 2, title: 'Doing', cards: [] },
     { id: 3, title: 'Done', cards: [] },
   ]);
-  const [archived, setArchived] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [showInput, setShowInput] = useState(false);
   const [editPopup, setEditPopup] = useState(null);

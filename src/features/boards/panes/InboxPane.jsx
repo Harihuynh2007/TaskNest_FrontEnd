@@ -3,9 +3,9 @@ import styled from 'styled-components';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 
 import InboxSubHeader from '../../../components/InboxSubHeader';
-import CardEditPopup from '../CardEditPopup';
-import FullCardModal from '../../../components/FullCardModal';
-import CardItem from '../../../components/CardItem';
+import CardEditPopup from '../../../components/Card/CardEditPopup';
+import FullCardModal from '../../../components/Card/FullCardModal';
+import CardItem from '../../../components/Card/CardItem';
 import FeedbackPopup from '../../../components/FeedbackPopup';
 import FilterPopup from '../../../components/filter/FilterPopup';
 

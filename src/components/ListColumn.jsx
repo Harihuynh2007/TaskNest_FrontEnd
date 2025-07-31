@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
-import CardItem from './CardItem';
+import CardItem from './Card/CardItem';
 
 function ListColumn({
   list,

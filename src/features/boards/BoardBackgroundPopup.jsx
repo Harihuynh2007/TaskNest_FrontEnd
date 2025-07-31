@@ -30,7 +30,7 @@ export default function BoardBackgroundPopup({ onClose, onSelectBackground }) {
 
       <Section>
         <Label>
-          Photos <a href="#">View more</a>
+          Photos <LinkButton type="button">View more</LinkButton>
         </Label>
         <Grid>
           {photos.map((src, idx) => (
@@ -43,8 +43,8 @@ export default function BoardBackgroundPopup({ onClose, onSelectBackground }) {
 
       <Section>
         <Label>
-          Colors <a href="#">View more</a>
-        </Label>
+  Colors <LinkButton type="button">View more</LinkButton>
+</Label>
         <Grid>
           {gradients.map((color, idx) => (
             <ColorBox
@@ -131,4 +131,18 @@ const ColorBox = styled.div`
   aspect-ratio: 1/1;
   border-radius: 4px;
   cursor: pointer;
+`;
+
+const LinkButton = styled.button`
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  text-decoration: underline;
+  color: #5b6f8c;
+  cursor: pointer;
+
+  &:hover {
+    color: #2c3e50;
+  }
 `;

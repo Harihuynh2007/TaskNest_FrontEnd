@@ -1,11 +1,10 @@
-// ✅ BoardPane.jsx (hoàn chỉnh, đã fix drag card lưu position và tích hợp BoardFilterPopup)
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import BoardSubHeader from '../../../components/BoardSubHeader';
 import { FaPlus, FaTimes } from 'react-icons/fa';
 import ListColumn from '../../../components/ListColumn';
-import FullCardModal from '../../../components/FullCardModal';
-import CardEditPopup from '../CardEditPopup';
+import FullCardModal from '../../../components/Card/FullCardModal';
+import CardEditPopup from '../../../components/Card/CardEditPopup';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { createList, fetchLists, updateList } from '../../../api/listApi';
 import { createCard, fetchCards, updateCard } from '../../../api/cardApi';
@@ -328,12 +327,12 @@ export default function BoardPane({ background, boardId }) {
           <AddListButtons>
             <AddBtn type="submit">Add list</AddBtn>
             <AddFromBtn type="button">Add from ▾</AddFromBtn>
-            <CloseBtn type="button" onClick={() => setShowAddList(false)}>✕</CloseBtn>
+            <CloseBtn type="button" onClick={() => setShowAddList(false)}><FaTimes /></CloseBtn>
           </AddListButtons>
         </AddListForm>
       ) : (
         <AddListTrigger onClick={() => setShowAddList(true)}>
-          <AddIcon>＋</AddIcon> Add another list
+          <FaPlus /> Add another list
         </AddListTrigger>
       )}
 
@@ -421,11 +420,6 @@ const AddListTrigger = styled.button`
   }
 `;
 
-const AddIcon = styled.span`
-  font-size: 18px;
-  line-height: 1;
-  font-weight: bold;
-`;
 
 const AddListButtons = styled.div`
   display: flex;

@@ -2,12 +2,10 @@ import React, { useContext, useState, useEffect } from 'react';
 import { Button, Spinner } from 'react-bootstrap';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { fetchBoards } from '../../api/boardApi'; 
-import { useNavigate } from 'react-router-dom';
 
 import * as boardApi from '../../api/boardApi'; 
 import styled from 'styled-components';
 import BoardThemeDrawer from './BoardThemeDrawer';
-import { createWorkspace } from '../../api/workspaceApi';
 import { Link } from 'react-router-dom';
 
 export default function BoardsMainContent({ onCreateBoard }) {
@@ -16,7 +14,6 @@ export default function BoardsMainContent({ onCreateBoard }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showDrawer, setShowDrawer] = useState(false);
-  const navigate = useNavigate();
   const currentWs = workspaces.find(w => w.id === currentWorkspaceId) || {};
 
   useEffect(() => {
