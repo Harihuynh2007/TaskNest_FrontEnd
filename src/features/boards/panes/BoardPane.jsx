@@ -26,9 +26,9 @@ function getTextColor(bg) {
   return brightness > 150 ? '#172b4d' : 'white';
 }
 
-export default function BoardPane({ background, boardId }) {
+export default function BoardPane({ background, boardId, lists, setLists }) {
   const [, setCards] = useState([]);
-  const [lists, setLists] = useState([]);
+  
   const [showAddList, setShowAddList] = useState(false);
   const [newListTitle, setNewListTitle] = useState('');
   const [activeCardInput, setActiveCardInput] = useState(null);
@@ -110,45 +110,6 @@ export default function BoardPane({ background, boardId }) {
     }
   };
 
-  const onDragEnd = async (result) => {
-    const { source, destination, draggableId, type } = result;
-    if (!destination) return;
-    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
-
-    if (type === 'column') {
-      const newLists = [...lists];
-      const [moved] = newLists.splice(source.index, 1);
-      newLists.splice(destination.index, 0, moved);
-      setLists(newLists);
-      await Promise.all(
-        newLists.map((list, index) => updateList(list.id, { position: index }))
-      );
-      return;
-    }
-
-    const sourceListId = parseInt(source.droppableId);
-    const destListId = parseInt(destination.droppableId);
-    const cardId = parseInt(draggableId);
-
-    const newLists = [...lists];
-    const sourceList = newLists.find((l) => l.id === sourceListId);
-    const destList = newLists.find((l) => l.id === destListId);
-    if (!sourceList || !destList) return;
-
-    const cardIndex = sourceList.cards.findIndex((c) => c.id === cardId);
-    if (cardIndex === -1) return;
-
-    const [movedCard] = sourceList.cards.splice(cardIndex, 1);
-    destList.cards.splice(destination.index, 0, movedCard);
-    setLists(newLists);
-
-    await Promise.all(
-      destList.cards.map((card, index) =>
-        updateCard(card.id, { list: destListId, position: index })
-      )
-    );
-  };
-
   // Logic lọc cards
   const filteredLists = lists.map((list) => ({
     ...list,
@@ -224,7 +185,7 @@ export default function BoardPane({ background, boardId }) {
               card.id === updatedCard.id ? updatedCard : card
             ),
           }))
-        );
+        ); 
       }}
 
       />}
@@ -280,8 +241,6 @@ export default function BoardPane({ background, boardId }) {
           }}
         />
       )}
-
-      <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="all-columns" direction="horizontal" type="column">
           {(provided) => (
             <BoardContent {...provided.droppableProps} ref={provided.innerRef}>
@@ -330,7 +289,6 @@ export default function BoardPane({ background, boardId }) {
             </BoardContent>
           )}
         </Droppable>
-      </DragDropContext>
 
       {showAddList ? (
         <AddListForm onSubmit={handleAddList}>

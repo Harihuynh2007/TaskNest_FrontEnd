@@ -362,7 +362,11 @@ export default function BoardDetailPage() {
         />
       )}
       {activeTabs.includes('planner') && <PlannerPane background="#e4f0f6" />}
-      {activeTabs.includes('board') && <BoardPane background={background} boardId={numericBoardId} lists={lists} setLists={setLists} />}
+      {activeTabs.includes('board') && <BoardPane 
+      background={background} 
+      boardId={numericBoardId} 
+      lists={lists} 
+      setLists={setLists} />}
     </SplitContainer>
   );
 

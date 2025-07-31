@@ -35,7 +35,7 @@ function ListColumn({
       <Header style={{ color: textColor }}>{list.name}</Header>
 
       {/* ✅ Vùng thả cho các card */}
-      <Droppable droppableId={String(list.id)} type="card">
+      <Droppable droppableId={`list-${list.id}`} type="CARD">
         {(provided) => (
           <CardList ref={provided.innerRef} {...provided.droppableProps}>
             {hasCards &&
