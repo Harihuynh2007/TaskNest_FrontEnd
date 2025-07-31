@@ -11,6 +11,7 @@ import dayjs from 'dayjs';
 import BottomFloatingNav from './BottomFloatingNav';
 import FullCardModal from '../../components/Card/FullCardModal.jsx';
 
+import { updateList } from '../../api/listApi.js';
 import { getBoard } from '../../api/boardApi.js';
 import { DragDropContext } from '@hello-pangea/dnd';
 
@@ -100,7 +101,7 @@ export default function BoardDetailPage() {
 
 
   const onDragEnd = async (result) => {
-    const { source, destination } = result;
+    const { source, destination, draggableId, type } = result;
     if (!destination) return;
 
     const ensureCardStructure = (card) => ({
@@ -116,105 +117,180 @@ export default function BoardDetailPage() {
     });
 
     let movedCard;
+    let originalCards = [...cards]; // Lưu trạng thái ban đầu để rollback
+    let originalLists = [...lists]; // Lưu trạng thái ban đầu để rollback
 
-    // Reorder trong cùng 1 danh sách
-    if (source.droppableId === destination.droppableId) {
-      if (source.droppableId === 'inbox') {
-        const newCards = Array.from(cards);
-        [movedCard] = newCards.splice(source.index, 1);
-        newCards.splice(destination.index, 0, ensureCardStructure(movedCard));
-        setCards(newCards);
+    try {
+      if (type === 'column') {
+        // Reorder cột trong BoardPane
+        const newLists = [...lists];
+        const [moved] = newLists.splice(source.index, 1);
+        newLists.splice(destination.index, 0, moved);
+        setLists(newLists);
 
-        // ✅ Gửi PATCH cập nhật position
-        for (let i = 0; i < newCards.length; i++) {
-          if (newCards[i].position !== i) {
-            try {
-              await updateCard(newCards[i].id, { position: i });
-            } catch (err) {
-              console.error(`❌ Lỗi update position card ${newCards[i].id}`, err);
-            }
-          }
-        }
-      } else {
-        // xử lý re-order trong cùng 1 list (To Do / Doing / Done)
-        const listId = parseInt(source.droppableId.replace('list-', ''));
-        setLists((prev) => {
-          const listIndex = prev.findIndex((l) => l.id === listId);
-          if (listIndex === -1) return prev;
-          const newLists = [...prev];
-          const newCards = Array.from(newLists[listIndex].cards);
+        // Cập nhật position của các cột
+        await Promise.all(
+          newLists.map((list, index) => updateList(list.id, { position: index }))
+        );
+        return;
+      }
+
+      // Xử lý kéo thả thẻ
+      if (source.droppableId === destination.droppableId) {
+        if (source.droppableId === 'inbox') {
+          // Reorder trong Inbox
+          const newCards = [...cards];
+          [movedCard] = newCards.splice(source.index, 1);
+          newCards.splice(destination.index, 0, ensureCardStructure(movedCard));
+          setCards(newCards);
+
+          // Cập nhật position cho tất cả thẻ trong Inbox
+          await Promise.all(
+            newCards.map((card, index) =>
+              updateCard(card.id, { position: index })
+            )
+          );
+        } else {
+          // Reorder trong cùng một list
+          const listId = parseInt(source.droppableId.replace('list-', ''));
+          const newLists = [...lists];
+          const listIndex = newLists.findIndex((l) => l.id === listId);
+          if (listIndex === -1) return;
+
+          const newCards = [...newLists[listIndex].cards];
           [movedCard] = newCards.splice(source.index, 1);
           newCards.splice(destination.index, 0, ensureCardStructure(movedCard));
           newLists[listIndex] = { ...newLists[listIndex], cards: newCards };
-          return newLists;
-        });
-      }
-    } else {
-      // kéo từ Inbox → sang list
-      if (source.droppableId === 'inbox') {
-        const newCards = Array.from(cards);
-        [movedCard] = newCards.splice(source.index, 1);
-        setCards(newCards);
+          setLists(newLists);
 
-        const destListId = parseInt(destination.droppableId.replace('list-', ''));
-        const destList = lists.find((l) => l.id === destListId);
-        if (destList?.title === 'Done') movedCard.completed = true;
+          // Cập nhật position cho tất cả thẻ trong list
+          await Promise.all(
+            newCards.map((card, index) =>
+              updateCard(card.id, { list: listId, position: index })
+            )
+          );
+        }
+      } else {
+        const sourceListId = source.droppableId.startsWith('list-')
+          ? parseInt(source.droppableId.replace('list-', ''))
+          : null;
+        const destListId = destination.droppableId.startsWith('list-')
+          ? parseInt(destination.droppableId.replace('list-', ''))
+          : null;
 
-        setLists((prev) =>
-          prev.map((list) =>
-            list.id === destListId
-              ? {
-                  ...list,
-                  cards: [
-                    ...list.cards.slice(0, destination.index),
-                    ensureCardStructure(movedCard),
-                    ...list.cards.slice(destination.index),
-                  ],
-                }
-              : list
-          )
-        );
+        if (source.droppableId === 'inbox') {
+          // Kéo từ Inbox sang list
+          const newCards = [...cards];
+          [movedCard] = newCards.splice(source.index, 1);
+          setCards(newCards);
 
-        // ✅ Gửi update list và position
-        try {
+          const destList = lists.find((l) => l.id === destListId);
+          if (!destList) return;
+
+          const newLists = [...lists];
+          const destListIndex = newLists.findIndex((l) => l.id === destListId);
+          const newDestCards = [...newLists[destListIndex].cards];
+          newDestCards.splice(destination.index, 0, ensureCardStructure(movedCard));
+          newLists[destListIndex] = { ...newLists[destListIndex], cards: newDestCards };
+          setLists(newLists);
+
+          // Cập nhật list và position cho thẻ được kéo
           await updateCard(movedCard.id, {
             list: destListId,
             position: destination.index,
+            completed: destList.title === 'Done',
           });
-        } catch (err) {
-          console.error('❌ Lỗi update card khi chuyển list:', err);
-        }
-      } else {
-        // kéo từ list → sang Inbox
-        const sourceListId = parseInt(source.droppableId.replace('list-', ''));
-        setLists((prev) => {
-          const sourceListIndex = prev.findIndex((l) => l.id === sourceListId);
-          if (sourceListIndex === -1) return prev;
-          const newLists = [...prev];
-          const sourceCards = Array.from(newLists[sourceListIndex].cards);
+
+          // Cập nhật position cho tất cả thẻ trong danh sách đích
+          await Promise.all(
+            newDestCards.map((card, index) =>
+              updateCard(card.id, { list: destListId, position: index })
+            )
+          );
+
+          // Cập nhật position cho tất cả thẻ còn lại trong Inbox
+          await Promise.all(
+            newCards.map((card, index) =>
+              updateCard(card.id, { position: index })
+            )
+          );
+        } else if (destination.droppableId === 'inbox') {
+          // Kéo từ list sang Inbox
+          const newLists = [...lists];
+          const sourceListIndex = newLists.findIndex((l) => l.id === sourceListId);
+          if (sourceListIndex === -1) return;
+
+          const sourceCards = [...newLists[sourceListIndex].cards];
           [movedCard] = sourceCards.splice(source.index, 1);
-          if (newLists[sourceListIndex].title === 'Done') movedCard.completed = false;
-          newLists[sourceListIndex] = {
-            ...newLists[sourceListIndex],
-            cards: sourceCards,
-          };
-          return newLists;
-        });
+          newLists[sourceListIndex] = { ...newLists[sourceListIndex], cards: sourceCards };
+          setLists(newLists);
 
-        const newCards = Array.from(cards);
-        newCards.splice(destination.index, 0, ensureCardStructure(movedCard));
-        setCards(newCards);
+          const newCards = [...cards];
+          newCards.splice(destination.index, 0, ensureCardStructure(movedCard));
+          setCards(newCards);
 
-        // ✅ Gửi update list=null và position
-        try {
+          // Cập nhật list=null và position cho thẻ được kéo
           await updateCard(movedCard.id, {
             list: null,
             position: destination.index,
+            completed: false,
           });
-        } catch (err) {
-          console.error('❌ Lỗi update card khi kéo về inbox:', err);
+
+          // Cập nhật position cho tất cả thẻ trong Inbox
+          await Promise.all(
+            newCards.map((card, index) =>
+              updateCard(card.id, { position: index })
+            )
+          );
+
+          // Cập nhật position cho tất cả thẻ trong danh sách nguồn
+          await Promise.all(
+            sourceCards.map((card, index) =>
+              updateCard(card.id, { list: sourceListId, position: index })
+            )
+          );
+        } else {
+          // Kéo giữa các list trong BoardPane
+          const newLists = [...lists];
+          const sourceListIndex = newLists.findIndex((l) => l.id === sourceListId);
+          const destListIndex = newLists.findIndex((l) => l.id === destListId);
+          if (sourceListIndex === -1 || destListIndex === -1) return;
+
+          const sourceCards = [...newLists[sourceListIndex].cards];
+          const destCards = [...newLists[destListIndex].cards];
+          [movedCard] = sourceCards.splice(source.index, 1);
+          destCards.splice(destination.index, 0, ensureCardStructure(movedCard));
+          newLists[sourceListIndex] = { ...newLists[sourceListIndex], cards: sourceCards };
+          newLists[destListIndex] = { ...newLists[destListIndex], cards: destCards };
+          setLists(newLists);
+
+          // Cập nhật list và position cho thẻ được kéo
+          await updateCard(movedCard.id, {
+            list: destListId,
+            position: destination.index,
+            completed: newLists[destListIndex].title === 'Done',
+          });
+
+          // Cập nhật position cho tất cả thẻ trong danh sách đích
+          await Promise.all(
+            destCards.map((card, index) =>
+              updateCard(card.id, { list: destListId, position: index })
+            )
+          );
+
+          // Cập nhật position cho tất cả thẻ trong danh sách nguồn
+          await Promise.all(
+            sourceCards.map((card, index) =>
+              updateCard(card.id, { list: sourceListId, position: index })
+            )
+          );
         }
       }
+    } catch (err) {
+      console.error('❌ Lỗi kéo thả:', err);
+      // Rollback trạng thái
+      setCards(originalCards);
+      setLists(originalLists);
     }
   };
 
