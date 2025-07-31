@@ -27,6 +27,7 @@ function getTextColor(bg) {
 }
 
 export default function BoardPane({ background, boardId }) {
+  const [, setCards] = useState([]);
   const [lists, setLists] = useState([]);
   const [showAddList, setShowAddList] = useState(false);
   const [newListTitle, setNewListTitle] = useState('');
@@ -211,7 +212,22 @@ export default function BoardPane({ background, boardId }) {
         filterButtonRef={filterButtonRef} // Truyền ref cho nút lọc
       />
       {editPopup && <DarkOverlay />}
-      {selectedCard && <FullCardModal card={selectedCard} onClose={() => setSelectedCard(null)} />}
+      {selectedCard && 
+      <FullCardModal 
+      card={selectedCard} 
+      onClose={() => setSelectedCard(null)}
+      onCardUpdate={(updatedCard) => {
+        setLists((prevLists) =>
+          prevLists.map((list) => ({
+            ...list,
+            cards: list.cards.map((card) =>
+              card.id === updatedCard.id ? updatedCard : card
+            ),
+          }))
+        );
+      }}
+
+      />}
       
       {editPopup && (
         <CardEditPopup

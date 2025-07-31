@@ -98,7 +98,18 @@ export default function InboxPane({
       {editPopup && <DarkOverlay />}
       <InnerContent>
         {selectedCard && (
-          <FullCardModal card={selectedCard} onClose={() => setSelectedCard(null)} />
+          <FullCardModal
+            card={selectedCard}
+            onClose={() => setSelectedCard(null)}
+            onCardUpdate={(updatedCard) => {
+              setCards((prev) =>
+                prev.map((card) =>
+                  card.id === updatedCard.id ? updatedCard : card
+                )
+              );
+            }}
+          />
+
         )}
 
         {showFeedback && <FeedbackPopup onClose={() => setShowFeedback(false)} />}

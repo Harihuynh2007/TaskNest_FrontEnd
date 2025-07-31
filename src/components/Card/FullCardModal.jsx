@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { BiLabel } from 'react-icons/bi';
 import { BsClock } from 'react-icons/bs';
@@ -6,12 +6,18 @@ import { HiOutlineUserAdd } from 'react-icons/hi';
 import { MdChecklist } from 'react-icons/md';
 import { IoCloseOutline } from 'react-icons/io5';
 import { IoChevronDown } from 'react-icons/io5';
+import axios from '../../api/axiosClient';
 
-export default function FullCardModal({ card, onClose }) {
+
+export default function FullCardModal({ card, onClose,onCardUpdate  }) {
   const [title, setTitle] = useState(card.name || card.title || '');
   const [description, setDescription] = useState(card.description || '');
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
+  const [isComplete, setIsComplete] = useState(false);
+  const overlayRef = useRef();
+  const modalRef = useRef();
+
 
   const handleAddComment = () => {
     if (newComment.trim()) {
@@ -19,14 +25,68 @@ export default function FullCardModal({ card, onClose }) {
       setNewComment('');
     }
   };
+
+  const handleToggleComplete = async () => {
+    const updated = !isComplete;
+    setIsComplete(updated);
+    try {
+      await axios.patch(`/cards/${card.id}/`, { completed: updated });
+    } catch (err) {
+      console.error('Failed to update card completion:', err);
+    }
+  };
+
+  const handleTitleSave = async () => {
+    if (!title || title === card.name) return;
+
+    // ✅ Gọi hàm callback trước để UI đổi tên ngay
+    if (onCardUpdate) {
+      onCardUpdate({ ...card, name: title });
+    }
+
+    try {
+      await axios.patch(`/cards/${card.id}/`, { name:title });
+    } catch (err) {
+      console.error('Failed to save card title:', err);
+    }
+  };
+
+  const handleTitleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleTitleSave();
+    }
+  };
+
   useEffect(() => {
-    setTitle(card.name || card.title || '');
+    if (card) {
+      setTitle(card.name || card.title || '');
+      setDescription(card.description || '');
+      setIsComplete(!!card.completed); // đảm bảo đúng trạng thái ban đầu
+    }
   }, [card]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      const clickedOverlay = overlayRef.current?.contains(e.target);
+      const clickedInsideModal = modalRef.current?.contains(e.target);
+
+      if (clickedOverlay && !clickedInsideModal) {
+        handleTitleSave();
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [title]);
 
 
   return (
-    <Overlay>
-      <ModalContainer>
+    <Overlay  ref={overlayRef}>
+      <ModalContainer ref={modalRef}>
         <HeaderBar>
           <HeaderLeft>
             <TitleButton aria-label="Open card menu">
@@ -48,6 +108,22 @@ export default function FullCardModal({ card, onClose }) {
 
         <ContentBody>
           <MainColumn>
+            <TopCardRow>
+              <CompleteCheckbox
+                type="checkbox"
+                checked={isComplete}
+                onChange={handleToggleComplete}
+                aria-label={`Mark this card complete (${title})`}
+              />
+              <EditableTitle
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                onKeyDown={handleTitleKeyDown}
+                onBlur={handleTitleSave}
+                placeholder="Card title"
+              />
+            </TopCardRow>
+
             <ActionsRow>
               <ActionButton><span>+ Add</span></ActionButton>
               <ActionButton><BiLabel /> Labels</ActionButton>
@@ -104,6 +180,33 @@ const Overlay = styled.div`
   align-items: flex-start;
   padding-top: 48px;
   z-index: 1000;
+`;
+
+const TopCardRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+`;
+
+const CompleteCheckbox = styled.input`
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+`;
+
+const EditableTitle = styled.input`
+  font-size: 20px;
+  font-weight: 600;
+  border: none;
+  outline: none;
+  background: transparent;
+  flex: 1;
+  padding: 4px 0;
+  border-bottom: 1px solid transparent;
+  &:focus {
+    border-bottom: 1px solid #ccc;
+  }
 `;
 
 const ModalContainer = styled.div`
