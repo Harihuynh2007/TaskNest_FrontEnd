@@ -15,6 +15,7 @@ export default function ShareBoardPopup({ boardId, onClose }) {
   const [search, setSearch] = useState('');
   const [role, setRole] = useState('member');
   const [activeTab, setActiveTab] = useState('members');
+  const [linkJoinRole, setLinkJoinRole] = useState('member'); // or 'observer'
 
   useEffect(() => {
     mockFetchUsers().then((res) => setUsers(res.data));
