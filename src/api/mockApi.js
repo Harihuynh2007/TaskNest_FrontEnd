@@ -1,9 +1,9 @@
-let MOCK_MEMBERS = [
+const MOCK_MEMBERS = [
   { id: 1, username: 'admin', email: 'admin@example.com', is_you: true, role: 'Admin' },
   { id: 2, username: 'user1', email: 'user1@example.com', is_you: false, role: 'Member' },
 ];
 
-let MOCK_USERS = [
+const MOCK_USERS = [
   { id: 1, username: 'admin', email: 'admin@example.com' },
   { id: 2, username: 'user1', email: 'user1@example.com' },
   { id: 3, username: 'user2', email: 'user2@example.com' },

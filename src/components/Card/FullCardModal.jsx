@@ -8,7 +8,7 @@ import { IoCloseOutline } from 'react-icons/io5';
 import { IoChevronDown } from 'react-icons/io5';
 import { HiOutlineMenuAlt2 } from 'react-icons/hi';
 
-import axios from '../../api/axiosClient';
+import axios from '../../api/apiClient';
 
 
 export default function FullCardModal({ card, onClose,onCardUpdate  }) {

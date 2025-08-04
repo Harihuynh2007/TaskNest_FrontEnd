@@ -2,7 +2,7 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { login as authLogin, logout as authLogout, register as authRegister } from '../api/authApi';
 import { fetchWorkspaces } from '../api/workspaceApi';
-import api from '../api/axiosClient'; 
+import api from '../api/apiClient'; 
 
 export const AuthContext = createContext();
 
@@ -13,7 +13,7 @@ export function AuthProvider({ children }) {
 
   const fetchUserDetails = useCallback(async () => {
     try {
-      const res = await api.get('/auth/me/');  // ✅ dùng axios thay vì fetch
+      const res = await api.get('/auth/me/'); 
       const data = res.data;
       setUser({
         email: data.email || data.username,

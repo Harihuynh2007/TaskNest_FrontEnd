@@ -1,17 +1,16 @@
-// src/api/cardApi.js
-import api from './axiosClient';
+import api from './apiClient';
 
 export const fetchCards = (listId) =>
   api.get(`/lists/${listId}/cards/`);
 
 export const fetchInboxCards = () =>
-  api.get(`/cards/`); // cần backend filter nếu quá nhiều card toàn hệ thống
+  api.get(`/cards/`);
 
 export const createCard = (listId, data) => {
   if (listId !== null) {
     return api.post(`/lists/${listId}/cards/`, data);
   } else {
-    return api.post(`/cards/`, data); // API mới cho card không thuộc list
+    return api.post(`/cards/`, data);
   }
 };
 
