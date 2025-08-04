@@ -31,7 +31,8 @@ authApi.interceptors.request.use((config) => {
  */
 export async function login(email, password) {
   const res = await authApi.post('/login/', {
-    username: email, 
+    email,
+    username: email,  
     password,
   });
 
@@ -63,6 +64,7 @@ export async function login(email, password) {
 export async function register(email, password) {
   const res = await authApi.post('/register/', {
     email,
+    username: email,  
     password,
   });
 

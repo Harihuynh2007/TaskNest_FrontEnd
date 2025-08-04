@@ -2,6 +2,7 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { login as authLogin, logout as authLogout, register as authRegister } from '../api/authApi';
 import { fetchWorkspaces } from '../api/workspaceApi';
+import api from '../api/axiosClient'; 
 
 export const AuthContext = createContext();
 
@@ -12,13 +13,8 @@ export function AuthProvider({ children }) {
 
   const fetchUserDetails = useCallback(async () => {
     try {
-      const res = await fetch('http://localhost:8000/api/auth/me/', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      if (!res.ok) throw new Error('Failed to fetch user details');
-      const data = await res.json();
+      const res = await api.get('/auth/me/');  // ✅ dùng axios thay vì fetch
+      const data = res.data;
       setUser({
         email: data.email || data.username,
         name: data.name || data.username,
@@ -63,29 +59,32 @@ export function AuthProvider({ children }) {
   }, [fetchUserDetails, preloadWorkspaces]);
 
   const signup = useCallback(async (email, password) => {
-  const res = await authRegister(email, password);
-  const access = res.data.access;
-  const refresh = res.data.refresh;
-  localStorage.setItem('token', access);
-  localStorage.setItem('refresh_token', refresh);
-  await fetchUserDetails();
-  await preloadWorkspaces();
-  return res;
-}, [fetchUserDetails, preloadWorkspaces]);
+    const res = await authRegister(email, password);
+    const access = res.data.access;
+    const refresh = res.data.refresh;
+    localStorage.setItem('token', access);
+    localStorage.setItem('refresh_token', refresh);
 
-  const logout = useCallback(() => {
-    return authLogout()
-      .then(() => {
-        localStorage.removeItem('token');
-        setUser(null);
-        setWorkspaces([]);
-      })
-      .catch(error => {
-        console.error('Logout error:', error);
-        localStorage.removeItem('token');
-        setUser(null);
-      });
-  }, []);
+    api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
+
+    await fetchUserDetails();
+    await preloadWorkspaces();
+    return res;
+  }, [fetchUserDetails, preloadWorkspaces]);
+
+    const logout = useCallback(() => {
+      return authLogout()
+        .then(() => {
+          localStorage.removeItem('token');
+          setUser(null);
+          setWorkspaces([]);
+        })
+        .catch(error => {
+          console.error('Logout error:', error);
+          localStorage.removeItem('token');
+          setUser(null);
+        });
+    }, []);
 
   return (
     <AuthContext.Provider value={{
