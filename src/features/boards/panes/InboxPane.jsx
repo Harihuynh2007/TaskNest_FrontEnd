@@ -8,6 +8,7 @@ import FullCardModal from '../../../components/Card/FullCardModal';
 import CardItem from '../../../components/Card/CardItem';
 import FeedbackPopup from '../../../components/FeedbackPopup';
 import FilterPopup from '../../../components/filter/FilterPopup';
+import { useSimpleFilter } from '../../../components/hook/useSimpleFilter'; // hoặc đúng path bạn đang dùng
 
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
@@ -35,7 +36,14 @@ export default function InboxPane({
 }) {
   const [showFeedback, setShowFeedback] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
-  const [filter, setFilter] = useState({ keyword: '', status: 'all', due: 'all',created: 'all', });
+  const {
+    filter,
+    updateKeyword,
+    handleSingleSelectChange,
+    resetFilter,
+    isActive
+  } = useSimpleFilter();
+
   const [popupPos, setPopupPos] = useState({ top: 0, left: 0 });
 
   const today = dayjs();
@@ -116,9 +124,10 @@ export default function InboxPane({
         {showFilter && (
           <FilterPopup
             filter={filter}
-            setFilter={setFilter}
             onClose={() => setShowFilter(false)}
             position={popupPos}
+            updateKeyword={updateKeyword}
+            handleSingleSelectChange={handleSingleSelectChange}
             
           />
         )}

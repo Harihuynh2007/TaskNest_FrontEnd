@@ -14,7 +14,7 @@ import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import ShareBoardPopup from '../../../components/member/ShareBoardPopup';
-
+import { useFilter } from '../../../components/hook/useFilter';
 
 dayjs.extend(isoWeek);
 dayjs.extend(isSameOrBefore);
@@ -38,7 +38,14 @@ export default function BoardPane({ background, boardId, lists, setLists }) {
   const [editPopup, setEditPopup] = useState(null);
   const [selectedCard, setSelectedCard] = useState(null);
   const [showFilter, setShowFilter] = useState(false);
-  const [filter, setFilter] = useState({ keyword: '', status: 'all', due: 'all', members: [], labels: [] });
+  const {
+    filter,
+    updateKeyword,
+    toggleArrayItem,
+    handleSingleSelectChange,
+    resetFilter,
+  } = useFilter();
+
   const [members, setMembers] = useState([]);
   const [labels, setLabels] = useState([]);
   const [popupPos, setPopupPos] = useState({ top: 0, left: 0 });
@@ -150,24 +157,6 @@ export default function BoardPane({ background, boardId, lists, setLists }) {
   }, [showFilter]);
 
   const textColor = getTextColor(background);
-
-  const toggleMemberFilter = (memberId) => {
-    setFilter((prev) => {
-      const newMembers = prev.members.includes(memberId)
-        ? prev.members.filter((id) => id !== memberId)
-        : [...prev.members, memberId];
-      return { ...prev, members: newMembers };
-    });
-  };
-
-  const toggleLabelFilter = (labelId) => {
-    setFilter((prev) => {
-      const newLabels = prev.labels.includes(labelId)
-        ? prev.labels.filter((id) => id !== labelId)
-        : [...prev.labels, labelId];
-      return { ...prev, labels: newLabels };
-    });
-  };
 
   return (
     <Wrapper background={background}>
@@ -319,14 +308,15 @@ export default function BoardPane({ background, boardId, lists, setLists }) {
       {showFilter && (
         <BoardFilterPopup
           filter={filter}
-          setFilter={setFilter}
           onClose={() => setShowFilter(false)}
           position={popupPos}
           members={members}
-          toggleMemberFilter={toggleMemberFilter}
           labels={labels}
-          toggleLabelFilter={toggleLabelFilter}
+          updateKeyword={updateKeyword}
+          toggleArrayItem={toggleArrayItem}
+          handleSingleSelectChange={handleSingleSelectChange}
         />
+
       )}
 
       {showInvitePopup && (
