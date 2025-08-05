@@ -12,3 +12,4 @@ export const GlobalStyle = createGlobalStyle`
     opacity: 1 !important;
   }
 `;
+
