@@ -6,7 +6,7 @@ export default function WithHeaderOnlyLayout({ children }) {
   return (
     <>
       <Header />
-      <div style={{ paddingTop: 16 }}>{children}</div>
+      <div className="pt-3">{children}</div>
     </>
   );
 }
