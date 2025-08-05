@@ -87,7 +87,10 @@ export default function BoardFilterPopup({
           <SectionLabel>Card status</SectionLabel>
           <CheckboxGroup>
             {statusOptions.map(option => (
-              <CheckboxItem key={option.value}>
+              <CheckboxItem 
+              key={option.value}
+              $checked={filter.status === option.value}
+              >
                 <input
                   type="checkbox"
                   checked={filter.status === option.value}
@@ -104,7 +107,10 @@ export default function BoardFilterPopup({
           <SectionLabel>Due date</SectionLabel>
           <CheckboxGroup>
             {dueOptions.map(option => (
-              <CheckboxItem key={option.value}>
+              <CheckboxItem 
+                key={option.value}
+                $checked={filter.status === option.value}
+                >
                   <input
                       type="checkbox"
                       checked={filter.due === option.value}
@@ -126,7 +132,6 @@ export default function BoardFilterPopup({
                     label={label}
                     checked={filter.labels.includes(label.id)}
                     onToggle={() => toggleArrayItem('labels', label.id)}
-                    
                 />
                 ))}
             </CheckboxGroup>
