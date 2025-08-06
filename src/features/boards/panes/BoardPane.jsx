@@ -6,8 +6,10 @@ import ListColumn from '../../../components/ListColumn';
 import FullCardModal from '../../../components/Card/FullCardModal';
 import CardEditPopup from '../../../components/Card/CardEditPopup';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+
 import { createList, fetchLists, updateList } from '../../../api/listApi';
-import { createCard, fetchCards, updateCard } from '../../../api/cardApi';
+import { createCardInList, fetchCardsByList, updateCard } from '../../../api/cardApi';
+
 import BoardFilterPopup from '../../../components/filter/BoardFilterPopup'; 
 import { fetchBoardMembers, fetchBoardLabels } from '../../../api/boardApi'; 
 import dayjs from 'dayjs';
@@ -58,12 +60,14 @@ export default function BoardPane({ background, boardId, lists, setLists }) {
       try {
         // Fetch lists and cards
         const resLists = await fetchLists(boardId);
-        const listsWithCards = await Promise.all(
-          resLists.data.map(async (list) => {
-            const resCards = await fetchCards(list.id);
-            return { ...list, cards: Array.isArray(resCards.data) ? resCards.data : [] };
-          })
-        );
+        const fetchedLists = resLists.data || [];
+        const cardPromises = fetchedLists.map(list => fetchCardsByList(list.id));
+        const cardResponses = await Promise.all(cardPromises);
+        const listsWithCards = fetchedLists.map((list, index) => ({
+          ...list,
+          cards: Array.isArray(cardResponses[index].data) ? cardResponses[index].data : []
+        }));
+
         setLists(listsWithCards);
 
         // Fetch members and labels
@@ -76,7 +80,7 @@ export default function BoardPane({ background, boardId, lists, setLists }) {
       }
     };
     if (boardId) loadData();
-  }, [boardId]);
+  }, [boardId, setLists]);
 
   const handleAddList = async (e) => {
     e.preventDefault();
@@ -100,14 +104,16 @@ export default function BoardPane({ background, boardId, lists, setLists }) {
     const text = cardInputs[listId]?.trim();
     if (!text) return;
     const targetList = lists.find((l) => l.id === listId);
+
     try {
-      const res = await createCard(listId, {
+      const res = await createCardInList(listId, {
         name: text,
         status: 'doing',
         background: '',
         visibility: 'private',
         position: targetList?.cards?.length || 0,
       });
+
       const newCard = res.data;
       setLists((prev) =>
         prev.map((list) =>
