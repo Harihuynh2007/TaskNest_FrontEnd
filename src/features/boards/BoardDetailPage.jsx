@@ -64,17 +64,41 @@ export default function BoardDetailPage() {
   }, [boardId]);
 
 
-  useEffect(() => {
-    const socket = new WebSocket('ws://127.0.0.1:8000/ws/boards/' + boardId + '/');
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'card_update') {
-        setCards(data.cards || []);
-        setLists(data.lists || []);
-      }
-    };
-    return () => socket.close();
-  }, [boardId]);
+  // useEffect(() => {
+//   console.log('Attempting to connect to WebSocket for board:', boardId);
+//   if (!boardId) return; // Add a guard clause
+
+//   const socket = new WebSocket('ws://127.0.0.1:8000/ws/boards/' + boardId + '/');
+  
+//   socket.onopen = () => {
+//     console.log('WebSocket connection established.');
+//   };
+
+//   socket.onmessage = (event) => {
+//     console.log('WebSocket message received:', event.data);
+//     const data = JSON.parse(event.data);
+//     if (data.type === 'card_update') {
+//       // Handle updates here
+//     }
+//   };
+
+//   socket.onerror = (error) => {
+//     console.error('WebSocket Error:', error);
+//   };
+
+//   socket.onclose = (event) => {
+//     if (event.wasClean) {
+//       console.log(`WebSocket closed cleanly, code=${event.code} reason=${event.reason}`);
+//     } else {
+//       console.error('WebSocket connection died');
+//     }
+//   };
+
+//   return () => {
+//     console.log('Closing WebSocket connection.');
+//     socket.close();
+//   };
+// }, [boardId]);
 
   const handleAddCard = async () => {
     const trimmedValue = inputValue.trim();
@@ -389,18 +413,18 @@ export default function BoardDetailPage() {
         <FullCardModal card={selectedCard} onClose={() => setSelectedCard(null)} />
       )}
 
-      <BoardWrapper background={background}>
+      <BoardWrapper $background={background}>
         <DragDropContext onDragEnd={onDragEnd}>
-          {renderPanes()}
+            {renderPanes()}
         </DragDropContext>
         <BottomFloatingNav activeTabs={activeTabs} toggleTab={toggleTab} activeCount={activeTabs.length} />
-      </BoardWrapper>
+    </BoardWrapper>
     </>
   );
 }
 
 const BoardWrapper = styled.div`
-  background: ${({ background }) => background};
+  background: ${({ $background }) => $background};
   height: 100vh;
   display: flex;
   flex-direction: column;

@@ -96,7 +96,7 @@ export default function InboxPane({
 
 
   return (
-    <PaneWrapper background={background}>
+    <PaneWrapper $background={background}> 
       <InboxSubHeader
           setShowFeedback={setShowFeedback}
           setShowFilter={setShowFilter}
@@ -212,7 +212,7 @@ export default function InboxPane({
 
 
 const PaneWrapper = styled.div`
-  background: ${({ background }) => background || '#e4f0f6'};
+  background: ${({ $background }) => $background || '#e4f0f6'};
   flex: 1;
   display: flex;
   flex-direction: column;

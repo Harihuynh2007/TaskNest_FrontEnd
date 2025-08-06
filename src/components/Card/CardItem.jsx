@@ -37,8 +37,8 @@ export default function CardItem({
       )}
       <CardContent>
         <CheckCircle
-          visible={hovered || card.completed}
-          completed={card.completed}
+          $visible={hovered || card.completed}
+          $completed={card.completed}
           onClick={(e) => {
             e.stopPropagation();
             onCheckClick(index);
@@ -56,12 +56,12 @@ export default function CardItem({
           )}
         </CheckCircle>
 
-        <CardText $hovered={hovered} completed={card.completed}>
+        <CardText $hovered={hovered} $completed={card.completed}>
           {card.name || card.title || '(Không tiêu đề)'}
         </CardText>
 
         <EditIcon
-          visible={hovered}
+          $visible={hovered}
           aria-label="Chỉnh sửa thẻ"
           onClick={(e) => {
             e.stopPropagation();
@@ -130,8 +130,8 @@ const CheckCircle = styled.button`
   padding: 0;
   border: none;
   background: none;
-  color: ${({ completed }) => (completed ? '#22A06B' : '#626F86')};
-  display: ${({ visible }) => (visible ? 'flex' : 'none')};
+  color: ${({ $completed }) => ($completed ? '#22A06B' : '#626F86')};
+  display: ${({ $visible }) => ($visible ? 'flex' : 'none')};
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -156,10 +156,10 @@ const CardText = styled.div`
   white-space: nowrap;
   color: #172b4d;
 
-  transform: ${({ $hovered, completed }) =>
-    !completed && $hovered ? 'translateX(4px)' : 'translateX(0)'};
+  transform: ${({ $hovered, $completed }) =>
+    !$completed && $hovered ? 'translateX(4px)' : 'translateX(0)'};
   transition: transform 0.3s ease, padding-left 0.2s ease;
-  ${({ completed }) => completed && 'text-decoration: line-through; opacity: 0.6;'}
+  ${({ $completed }) => $completed && 'text-decoration: line-through; opacity: 0.6;'}
   will-change: transform;
 `;
 
@@ -170,7 +170,7 @@ const EditIcon = styled.button`
   background: #f4f5f7;
   border-radius: 50%;
   border: none;
-  display: ${({ visible }) => (visible ? 'flex' : 'none')};
+  display: ${({ $visible }) => ($visible ? 'flex' : 'none')};
   align-items: center;
   justify-content: center;
   color: #172b4d;

@@ -7,7 +7,7 @@ export default function BottomFloatingNav({ activeTabs, toggleTab, activeCount }
     const isLastActive = isActive && activeCount === 1;
 
     return {
-      isActive,
+      $isActive: isActive,
       disabled: isLastActive,
       onClick: () => {
         if (!isLastActive) toggleTab(tabName);
@@ -62,9 +62,9 @@ const NavItem = styled.button`
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  color: ${({ isActive }) => (isActive ? '#28a745' : '#5e6c84')};
-  background: ${({ isActive }) => (isActive ? '#e6f0ff' : 'transparent')};
-  box-shadow: ${({ isActive }) => (isActive ? 'inset 0 -2px 0 #0c66e4' : 'none')};
+  color: ${({ $isActive }) => ($isActive ? '#28a745' : '#5e6c84')};
+  background: ${({ $isActive }) => ($isActive ? '#e6f0ff' : 'transparent')};
+  box-shadow: ${({ $isActive }) => ($isActive ? 'inset 0 -2px 0 #0c66e4' : 'none')};
   transition: 0.2s;
 
   &:hover {
