@@ -1,19 +1,21 @@
+// src/api/boardApi.js
 import api from './apiClient';
+import { workspaces, boards } from './apiRoutes';
 
 export const fetchBoards = (workspaceId) =>
-  api.get(`/workspaces/${workspaceId}/boards/`);
+  api.get(workspaces.boards(workspaceId));
 
 export const createBoard = (workspaceId, data) =>
-  api.post(`/workspaces/${workspaceId}/boards/`, data);
+  api.post(workspaces.boards(workspaceId), data);
 
 export const getBoard = (workspaceId, boardId) =>
-  api.get(`/workspaces/${workspaceId}/boards/${boardId}/`);
+  api.get(workspaces.boardDetail(workspaceId, boardId));
 
 export const fetchBoardMembers = (boardId) =>
-  api.get(`/boards/${boardId}/members/`);
+  api.get(boards.members(boardId));
 
 export const fetchBoardLabels = (boardId) =>
-  api.get(`/boards/${boardId}/labels/`);
+  api.get(boards.labels(boardId));
 
 export const addMemberToBoard = (boardId, userId) =>
-  api.post(`/boards/${boardId}/add-member/`, { user_id: userId });
+  api.post(boards.members(boardId), { user_id: userId });
