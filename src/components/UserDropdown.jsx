@@ -12,16 +12,19 @@ export default function UserDropdown({ user, logout }) {
 
   const menuItems = getUserMenuConfig({ user, logout, openModal });
 
+  // ✅ TẠO MỘT BIẾN CHO TÊN VIẾT TẮT ĐỂ DÙNG LẠI
+  const userInitial = user?.display_name?.charAt(0)?.toUpperCase() || 'U';
+
   return (
     <Dropdown>
       <Dropdown.Toggle as="div" style={{ cursor: 'pointer' }}>
         <Image
-          src={user.avatarUrl || 'https://via.placeholder.com/32'}
+          src={user?.avatar || `https://placehold.co/32x32/28a745/FFFFFF?text=${userInitial}`}
           roundedCircle
           width={32}
           height={32}
           style={{ marginLeft: '8px' }}
-          alt={user.email || 'User avatar'}
+          alt={user?.email || 'User avatar'}
         />
       </Dropdown.Toggle>
       <Dropdown.Menu align="end" className="custom-dropdown-menu">
