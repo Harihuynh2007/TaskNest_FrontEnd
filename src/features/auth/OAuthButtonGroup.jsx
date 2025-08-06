@@ -1,5 +1,5 @@
 // src/components/auth/OAuthButtonGroup.jsx
-import React from 'react';
+import React, { useContext } from 'react';
 import { Button } from 'react-bootstrap';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function OAuthButtonGroup() {
   const navigate = useNavigate();
+  const { loginWithGoogle } = useContext(AuthContext);
 
   const saveToLocal = (email, name, avatar) => {
     const newAcc = { email, name, avatar };
@@ -20,30 +21,15 @@ export default function OAuthButtonGroup() {
   };
 
   const handleGoogleSuccess = async (credentialResponse) => {
-    const token = credentialResponse.credential;
-    const decoded = jwtDecode(token);
-
     try {
-      const res = await fetch('http://localhost:8000/api/auth/google-login/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ token }) // ✅ sửa ở đây
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Google login failed');
-
-      localStorage.setItem("token", data.token);
-      saveToLocal(data.email, data.name || decoded.name, data.avatar || decoded.picture);
+      const googleToken = credentialResponse.credential;
+      await loginWithGoogle(googleToken); // ✅ Gọi đúng context
       navigate('/boards');
-      window.location.reload();
-      
     } catch (err) {
-      alert(err.message);
+      const errorMsg = err.response?.data?.error || 'Google login failed. Please try again.';
+      alert(errorMsg);
     }
   };
-
 
   const handleGitHubLogin = () => {
     alert('GitHub OAuth chưa tích hợp – bạn cần đăng ký app GitHub và thêm backend handler.');

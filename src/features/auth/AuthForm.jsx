@@ -49,7 +49,7 @@ export default function AuthForm({ mode = 'login' }) {
     }
     if (name === 'password') {
       if (!value) error = 'Password is required';
-      else if (value.length < 6) error = 'Password must be at least 6 characters';
+      else if (value.length < 8) error = 'Password must be at least 8 characters';
     }
     if (name === 'confirm' && !isLogin) {
       if (!value) error = 'Please confirm your password';
@@ -113,6 +113,32 @@ export default function AuthForm({ mode = 'login' }) {
         || 'Có lỗi rồi đại vương ơi. !!!';
       setErrMsg(msg);
       setShowErrModal(true);
+      console.error("API Error Response:", err.response); // Giữ lại để debug nếu cần
+      let errorMessage = "Có lỗi không xác định. Vui lòng thử lại.";
+      if (err.response && err.response.data) {
+
+        const errorData = err.response.data;
+        // Ví dụ: { "password": ["Mật khẩu phải có ít nhất 8 ký tự."], "email": ["Email này đã tồn tại."] }
+
+        // Chúng ta sẽ lấy tất cả các thông báo lỗi từ các trường và nối chúng lại
+        const errorMessages = Object.keys(errorData)
+          .map(fieldName => {
+            // errorData[fieldName] là một mảng các chuỗi lỗi
+            return errorData[fieldName].join(' '); 
+          })
+          .join(' \n'); // Nối các lỗi của các trường khác nhau bằng dấu xuống dòng
+
+        if (errorMessages) {
+          errorMessage = errorMessages;
+        }
+      } else if (err.request) {
+        // Lỗi mạng, không kết nối được tới server
+        errorMessage = "Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại đường truyền mạng.";
+      }
+
+      setErrMsg(errorMessage);
+      setShowErrModal(true);
+      // --- KẾT THÚC PHẦN XỬ LÝ LỖI ---
     }
     finally {
           setLoading(false);
