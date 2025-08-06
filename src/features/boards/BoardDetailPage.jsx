@@ -15,7 +15,7 @@ import { updateList } from '../../api/listApi.js';
 import { getBoard } from '../../api/boardApi.js';
 import { DragDropContext } from '@hello-pangea/dnd';
 
-import { fetchInboxCards, updateCard, createCard } from '../../api/cardApi';
+import { fetchInboxCards, updateCard, createInboxCard } from '../../api/cardApi'; 
 
 
 export default function BoardDetailPage() {
@@ -77,25 +77,35 @@ export default function BoardDetailPage() {
   }, [boardId]);
 
   const handleAddCard = async () => {
-    if (inputValue.trim() === '') return;
+    const trimmedValue = inputValue.trim();
+    if (trimmedValue === '') {
+      console.log("Input is empty, not creating card.");
+      return;
+    }
+
+    // Xây dựng payload một cách rõ ràng
+    const payload = {
+      name: trimmedValue,
+      position: cards.length, // Hoặc một logic tính position khác nếu bạn có
+    };
+
+    // Log payload trước khi gửi đi để debug
+    console.log("Preparing to create inbox card with payload:", payload);
 
     try {
-      const res = await createCard(null, {
-        name: inputValue,
-        status: 'doing',
-        background: '',
-        visibility: 'private',
-        description: '',
-        due_date: dayjs().toISOString(),
-        completed: false,
-        position: cards.length,  // ✅ GÁN POSITION CHUẨN!
-        
-      });
-
+      const res = await createInboxCard(payload);
+      
       setCards((prev) => [...prev, res.data]);
       setInputValue('');
+      setShowInput(false);
+
+    
     } catch (err) {
-      console.error('❌ Lỗi tạo card inbox:', err);
+      if (err.response) {
+        console.error('❌ Backend Error:', err.response.data);
+      } else {
+        console.error('❌ Network or other error:', err.message);
+      }
     }
   };
 
