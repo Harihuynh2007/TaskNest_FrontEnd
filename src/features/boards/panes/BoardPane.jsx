@@ -7,9 +7,10 @@ import FullCardModal from '../../../components/Card/FullCardModal';
 import CardEditPopup from '../../../components/Card/CardEditPopup';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
-import { createList, fetchLists, updateList } from '../../../api/listApi';
+import { createList, fetchLists, updateList, deleteList  } from '../../../api/listApi';
 import { createCardInList, fetchCardsByList, updateCard } from '../../../api/cardApi';
 
+import ConfirmationModal from '../../../components/Card/common/ConfirmationModal';
 import BoardFilterPopup from '../../../components/filter/BoardFilterPopup'; 
 import { fetchBoardMembers, fetchBoardLabels } from '../../../api/boardApi'; 
 import dayjs from 'dayjs';
@@ -17,6 +18,8 @@ import isoWeek from 'dayjs/plugin/isoWeek';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import ShareBoardPopup from '../../../components/member/ShareBoardPopup';
 import { useFilter } from '../../../components/hook/useFilter';
+import { WorkspaceContext } from '../../../contexts'; 
+import { useContext } from 'react';
 
 dayjs.extend(isoWeek);
 dayjs.extend(isSameOrBefore);
@@ -30,7 +33,7 @@ function getTextColor(bg) {
   return brightness > 150 ? '#172b4d' : 'white';
 }
 
-export default function BoardPane({ background, boardId, lists, setLists }) {
+export default function BoardPane({ background, boardId, lists, setLists, onListDeleted }) {
   const [, setCards] = useState([]);
   
   const [showAddList, setShowAddList] = useState(false);
@@ -274,6 +277,7 @@ export default function BoardPane({ background, boardId, lists, setLists }) {
                         activeCardInput={activeCardInput}
                         setActiveCardInput={setActiveCardInput}
                         onAddCard={handleAddCard}
+                        onListDeleted={onListDeleted}
                         onEditClick={(e, card, index) => {
                           const rect = e.currentTarget.getBoundingClientRect();
                           setEditPopup({ anchorRect: rect, index, text: card.name, card, listId: list.id });
