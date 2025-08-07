@@ -2,6 +2,8 @@ import React from 'react';
 import styled from 'styled-components';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 import CardItem from './Card/CardItem';
+import { Dropdown } from 'react-bootstrap';
+import { BsThreeDots } from 'react-icons/bs';
 
 function ListColumn({
   list,
@@ -15,6 +17,7 @@ function ListColumn({
   onEditClick,
   onCheckClick,
   onCardClick,
+  onListDeleted,
   hideEmptyCards = false,
 }) {
   const handleInputChange = (e) => {
@@ -32,7 +35,23 @@ function ListColumn({
 
   return (
     <Wrapper>
-      <Header style={{ color: textColor }}>{list.name}</Header>
+      <Header style={{ color: textColor }}>
+        <HeaderTitle>{list.name}</HeaderTitle>
+        <Dropdown>
+          <Dropdown.Toggle as={MenuButton} id={`dropdown-list-${list.id}`}>
+            <BsThreeDots />
+          </Dropdown.Toggle>
+          <Dropdown.Menu>
+            <Dropdown.Divider />
+            <Dropdown.Item 
+              className="text-danger" 
+              onClick={() => onListDeleted(list.id, list.name, list.cards)}
+            >
+              Delete this list...
+            </Dropdown.Item>
+          </Dropdown.Menu>
+        </Dropdown>
+      </Header>
 
       {/* ✅ Vùng thả cho các card */}
       <Droppable droppableId={`list-${list.id}`} type="CARD">
@@ -95,6 +114,49 @@ function ListColumn({
 export default React.memo(ListColumn);
 
 // 💅 Styled components
+const HeaderTitle = styled.h3`
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0;
+  padding: 4px 8px;
+  flex-grow: 1; /* Cho phép tiêu đề co giãn để chiếm không gian thừa */
+  /* Thêm các thuộc tính để xử lý nếu tên cột quá dài */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const MenuButton = styled.button`
+  background: transparent;
+  border: none;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: inherit; /* Kế thừa màu từ Header */
+  flex-shrink: 0; /* Ngăn nút bị co lại nếu tiêu đề quá dài */
+  
+  &:hover {
+    background: rgba(0,0,0,0.1);
+  }
+
+  background: transparent;
+  border: none;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: inherit; /* Kế thừa màu từ Header */
+  flex-shrink: 0; /* Ngăn nút bị co lại nếu tiêu đề quá dài */
+  
+  &:hover {
+    background: rgba(0,0,0,0.1);
+  }
+
+  /* Căn chỉnh lại icon */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
 const Wrapper = styled.div`
   min-width: 260px;
   background: rgba(255, 255, 255, 0.3);
@@ -105,9 +167,11 @@ const Wrapper = styled.div`
 `;
 
 const Header = styled.h3`
-  font-size: 16px;
-  font-weight: bold;
+  display: flex;              
+  justify-content: space-between; 
+  align-items: center;        
   margin-bottom: 12px;
+  color: ${({ textColor }) => textColor};
 `;
 
 const CardList = styled.ul`

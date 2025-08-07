@@ -10,8 +10,9 @@ import dayjs from 'dayjs';
 
 import BottomFloatingNav from './BottomFloatingNav';
 import FullCardModal from '../../components/Card/FullCardModal.jsx';
+import ConfirmationModal from '../../components/Card/common/ConfirmationModal.jsx';
 
-import { updateList } from '../../api/listApi.js';
+import { updateList, deleteList  } from '../../api/listApi.js';
 import { getBoard } from '../../api/boardApi.js';
 import { DragDropContext } from '@hello-pangea/dnd';
 
@@ -35,6 +36,35 @@ export default function BoardDetailPage() {
   const [editPopup, setEditPopup] = useState(null);
   const [selectedCard, setSelectedCard] = useState(null);
 
+  const [listToDelete, setListToDelete] = useState(null); // Sẽ lưu { id, name, cards }
+
+  const handleDeleteListRequest = (listId, listName, cardsInList) => {
+    setListToDelete({ id: listId, name: listName, cards: cardsInList });
+  };
+
+  // ✅ TẠO HÀM XÁC NHẬN XÓA
+  const handleConfirmDeleteList = async () => {
+    if (!listToDelete) return;
+
+    const { id: listIdToDelete, cards: cardsToMove } = listToDelete;
+
+    // B1: Optimistic UI
+    // Xóa cột khỏi `lists` state
+    setLists(prevLists => prevLists.filter(list => list.id !== listIdToDelete));
+    // Thêm các thẻ của cột đó vào `cards` (Inbox) state
+    setCards(prevCards => [...prevCards, ...cardsToMove]);
+
+    // B2: Đóng modal
+    setListToDelete(null);
+
+    // B3: Gọi API
+    try {
+      await deleteList(listIdToDelete);
+    } catch (err) {
+      console.error('❌ Failed to delete list:', err);
+      // TODO: Rollback state nếu API thất bại
+    }
+  };
   useEffect(() => {
     async function loadBoard() {
       if (!workspaceId || !boardId) return;
@@ -400,7 +430,9 @@ export default function BoardDetailPage() {
       background={background} 
       boardId={numericBoardId} 
       lists={lists} 
-      setLists={setLists} />}
+      setLists={setLists}
+      onListDeleted={handleDeleteListRequest} 
+       />}
     </SplitContainer>
   );
 
@@ -419,7 +451,21 @@ export default function BoardDetailPage() {
         </DragDropContext>
         <BottomFloatingNav activeTabs={activeTabs} toggleTab={toggleTab} activeCount={activeTabs.length} />
     </BoardWrapper>
-    </>
+
+    <ConfirmationModal
+        show={!!listToDelete}
+        onClose={() => setListToDelete(null)}
+        onConfirm={handleConfirmDeleteList}
+        title="Delete List?"
+        body={
+          listToDelete && `Are you sure you want to delete the list "${listToDelete.name}"? 
+          All ${listToDelete.cards.length} cards in this list will be moved to your Inbox.`
+        }
+        confirmText="Delete and Move Cards"
+        confirmVariant="danger" // Vẫn dùng màu đỏ vì đây là hành động lớn
+    />
+
+  </>
   );
 }
 
