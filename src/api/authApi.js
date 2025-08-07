@@ -25,3 +25,5 @@ export function switchAccount({ email }) {
     username: email,
   });
 }
+
+export const searchUsers = (query) => api.get(`/auth/users/search/?q=${query}`);
