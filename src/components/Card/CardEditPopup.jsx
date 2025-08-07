@@ -91,6 +91,7 @@ export default function CardEditPopup({
     console.log("Step 1: handleDeleteCard in popup triggered for card ID:", card.id);
     setShowDeleteConfirm(false);
     onClose();
+
     if (onCardDeleted) {
       console.log("Step 2: Calling onCardDeleted callback.");
       onCardDeleted(card.id);
@@ -124,6 +125,7 @@ export default function CardEditPopup({
         style={{
           top: anchorRect.bottom + window.scrollY + 8,
           left: Math.min(anchorRect.left + 6, window.innerWidth - 320),
+          visibility: showDeleteConfirm ? 'hidden' : 'visible',
         }}
       >
         <Form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
