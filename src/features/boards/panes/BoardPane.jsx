@@ -127,6 +127,16 @@ export default function BoardPane({ background, boardId, lists, setLists }) {
     }
   };
 
+  // ✅ BƯỚC 4.1: TẠO HÀM CALLBACK ĐỂ XÓA CARD KHỎI STATE
+  const handleCardDeleted = (deletedCardId) => {
+      setLists(prevLists => 
+          prevLists.map(list => ({
+              ...list,
+              cards: list.cards.filter(card => card.id !== deletedCardId)
+          }))
+      );
+  };
+
   // Logic lọc cards
   const filteredLists = lists.map((list) => ({
     ...list,
@@ -240,6 +250,8 @@ export default function BoardPane({ background, boardId, lists, setLists }) {
               console.error('❌ Failed to update card labels:', err);
             }
           }}
+
+          onCardDeleted={handleCardDeleted}
         />
       )}
         <Droppable droppableId="all-columns" direction="horizontal" type="column">

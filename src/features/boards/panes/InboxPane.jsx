@@ -44,6 +44,12 @@ export default function InboxPane({
     isActive
   } = useSimpleFilter();
 
+  const handleCardDeleted = (deletedCardId) => {
+    console.log("Step 2.5: Parent component received onCardDeleted with ID:", deletedCardId);
+    // Đơn giản là lọc ra card có ID đã bị xóa khỏi mảng `cards`
+    setCards((prevCards) => prevCards.filter((card) => card.id !== deletedCardId));
+  };
+
   const [popupPos, setPopupPos] = useState({ top: 0, left: 0 });
 
   const today = dayjs();
@@ -94,6 +100,7 @@ export default function InboxPane({
   }
 }, [showFilter]);
 
+  
 
   return (
     <PaneWrapper $background={background}> 
@@ -176,7 +183,7 @@ export default function InboxPane({
                       index={index}
                       isDragging={snapshot.isDragging}
                       onEditClick={(e, card, index, rect) => {
-                        setEditPopup({ index, text: card.name, anchorRect: rect });
+                        setEditPopup({ card, index, text: card.name, anchorRect: rect });
                       }}
                       onCheckClick={toggleComplete}
                       onCardClick={(card) => setSelectedCard(card)}
@@ -194,6 +201,7 @@ export default function InboxPane({
         {editPopup && (
           <CardEditPopup
             anchorRect={editPopup.anchorRect}
+            card={editPopup.card}
             cardText={editPopup.text}
             onChange={(val) => setEditPopup({ ...editPopup, text: val })}
             onSave={handleSaveCard}
@@ -203,6 +211,7 @@ export default function InboxPane({
               setSelectedCard(cards[editPopup.index]);
             }}
             isInboxMode={true}
+            onCardDeleted={handleCardDeleted}
           />
         )}
       </InnerContent>

@@ -4,7 +4,11 @@ import { BiLabel } from 'react-icons/bi';
 import { HiOutlineUserAdd } from 'react-icons/hi';
 import { BsCardText, BsClock, BsArrowsMove, BsFiles, BsLink45Deg, BsArchive } from 'react-icons/bs';
 import LabelPopup from '../../components/Label/LabelPopup';
+import ConfirmationModal from './common/ConfirmationModal';
+import Portal from './common/Portal';
+
 import { fetchBoardLabels } from '../../api/boardApi';
+import { deleteCard } from '../../api/cardApi';
 
 export default function CardEditPopup({
   anchorRect,
@@ -15,7 +19,9 @@ export default function CardEditPopup({
   onOpenFullCard,
   card,
   listId,
+  boardId,
   updateCardLabels,
+  onCardDeleted,
   isInboxMode = false,
 }) {
   const labelButtonRef = useRef();
@@ -27,7 +33,9 @@ export default function CardEditPopup({
   const [loadingLabels, setLoadingLabels] = useState(false);
   const [labelError, setLabelError] = useState(null);
   const [labelAnchorRect, setLabelAnchorRect] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  
   useEffect(() => {
     if (showLabelPopup && labelButtonRef.current) {
       requestAnimationFrame(() => {
@@ -38,20 +46,24 @@ export default function CardEditPopup({
   }, [showLabelPopup]);
 
   useEffect(() => {
-    const loadLabels = async () => {
-      setLoadingLabels(true);
-      try {
-        const res = await fetchBoardLabels(listId);
-        setLabels(res.data || []);
-      } catch (err) {
-        console.error('❌ Failed to fetch labels:', err);
-        setLabelError('Failed to load labels');
-      } finally {
-        setLoadingLabels(false);
-      }
-    };
-    loadLabels();
-  }, [listId]);
+    // Chỉ fetch labels nếu có boardId
+    if (boardId) {
+      const loadLabels = async () => {
+        setLoadingLabels(true);
+        try {
+          // ✅ Gọi API với boardId
+          const res = await fetchBoardLabels(boardId);
+          setLabels(res.data || []);
+        } catch (err) {
+          console.error('❌ Failed to fetch labels:', err);
+          setLabelError('Failed to load labels');
+        } finally {
+          setLoadingLabels(false);
+        }
+      };
+      loadLabels();
+    }
+  }, [boardId]); 
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -75,6 +87,25 @@ export default function CardEditPopup({
     onClose();
   };
 
+  const handleDeleteCard = async () => {
+    console.log("Step 1: handleDeleteCard in popup triggered for card ID:", card.id);
+    setShowDeleteConfirm(false);
+    onClose();
+    if (onCardDeleted) {
+      console.log("Step 2: Calling onCardDeleted callback.");
+      onCardDeleted(card.id);
+    } else {
+      console.log("Warning: onCardDeleted callback is not provided.");
+    }
+    try {
+      console.log("Step 3: Calling deleteCard API.");
+      await deleteCard(card.id);
+      console.log("Step 4: API call successful.");
+    } catch (err) {
+      console.error('❌ Failed to delete card:', err);
+    }
+  };
+
   const handleToggleLabel = (labelId) => {
     const newLabels = card.labels.includes(labelId)
       ? card.labels.filter((id) => id !== labelId)
@@ -82,8 +113,12 @@ export default function CardEditPopup({
     card.labels = newLabels;
   };
 
+  if (!card) {
+    return null;
+  }
+
   return (
-    <>
+    <Portal>
       <Dialog
         ref={popupRef}
         style={{
@@ -149,6 +184,10 @@ export default function CardEditPopup({
             <BsArchive />
             <span>Archive</span>
           </MenuItem>
+          <MenuItemDelete onClick={() => setShowDeleteConfirm(true)}>
+            <BsArchive />
+            <span>Delete Card</span>
+          </MenuItemDelete>
         </MenuList>
       </Dialog>
 
@@ -168,7 +207,18 @@ export default function CardEditPopup({
           labelError={labelError}
         />
       )}
-    </>
+
+      {/* ✅ BƯỚC 3.6: RENDER MODAL XÁC NHẬN */}
+      <ConfirmationModal
+        show={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteCard}
+        title="Delete Card?"
+        body={`Are you sure you want to permanently delete the card "${card.name}"? This action cannot be undone.`}
+        confirmText="Delete Card"
+        confirmVariant="danger"
+      />
+    </Portal>
   );
 }
 
@@ -239,5 +289,14 @@ const MenuItem = styled.li`
     width: 18px;
     height: 18px;
     flex-shrink: 0;
+  }
+`;
+
+const MenuItemDelete = styled(MenuItem)`
+  color: #c9372c; // Màu đỏ
+  
+  &:hover {
+    background-color: #ffebe6; // Màu đỏ nhạt khi hover
+    color: #ae2a19;
   }
 `;
