@@ -4,7 +4,7 @@ import BoardSubHeaderLeft from './BoardSubHeaderLeft';
 import BoardSubHeaderRight from './BoardSubHeaderRight';
 import ShareBoardPopup from './member/ShareBoardPopup';
 
-export default function BoardSubHeader({ boardName = 'Untitled Board', setShowFilter, filterButtonRef, onOpenInvite }) {
+export default function BoardSubHeader({ boardName = 'Untitled Board', setShowFilter, filterButtonRef, onOpenInvite,onCloseBoard  }) {
   return (
     <HeaderContainer>
       <InnerWrapper>
@@ -16,7 +16,10 @@ export default function BoardSubHeader({ boardName = 'Untitled Board', setShowFi
           <BoardSubHeaderRight 
           setShowFilter={setShowFilter} 
           filterButtonRef={filterButtonRef}
-          onOpenInvite={onOpenInvite} />
+          onOpenInvite={onOpenInvite}
+          onCloseBoard={onCloseBoard}
+           />
+          
         </RightSpan>
       </InnerWrapper>
     </HeaderContainer>

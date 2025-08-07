@@ -23,6 +23,7 @@ export const boards = {
   labels: (boardId) => `/boards/${boardId}/labels/`,
   // Quản lý thành viên của board
   members: (boardId) => `/boards/${boardId}/members/`,
+  closed: () => '/boards/closed/',
 };
 
 // List (Column) Routes

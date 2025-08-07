@@ -2,11 +2,14 @@ import React, { useContext, useState, useEffect } from 'react';
 import { Button, Spinner } from 'react-bootstrap';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { fetchBoards } from '../../api/boardApi'; 
+import { Link } from 'react-router-dom';
 
 import * as boardApi from '../../api/boardApi'; 
 import styled from 'styled-components';
 import BoardThemeDrawer from './BoardThemeDrawer';
-import { Link } from 'react-router-dom';
+
+
+import ClosedBoardsModal from './ClosedBoardsPage';
 
 export default function BoardsMainContent({ onCreateBoard }) {
   const { workspaces, currentWorkspaceId } = useContext(WorkspaceContext);
@@ -15,63 +18,65 @@ export default function BoardsMainContent({ onCreateBoard }) {
   const [error, setError] = useState(null);
   const [showDrawer, setShowDrawer] = useState(false);
   const currentWs = workspaces.find(w => w.id === currentWorkspaceId) || {};
+  const [showClosedModal, setShowClosedModal] = useState(false);
 
   useEffect(() => {
-    async function loadBoards() {
-      if (!currentWorkspaceId) return;
-      setLoading(true);
-      try {
-        const res = await fetchBoards(currentWorkspaceId);
-        setBoards(res.data || []);
-        setError(null);
-      } catch {
-        setError('Cannot load boards.');
-      } finally {
-        setLoading(false);
-      }
-    }
-    if (currentWorkspaceId){
-      loadBoards();
-    }
+    loadBoards();
   }, [currentWorkspaceId]);
+
 
   const handleCreateBoard = async (data) => {
     console.log('📍 currentWorkspaceId =', currentWorkspaceId);
     console.log('📤 Bắt đầu tạo board:', data);
 
-  if (!currentWorkspaceId) {
-  console.warn("⚠️ currentWorkspaceId null – không thể tạo board.");
-  return;
-  }
 
- // đường dẫn tùy bạn gọi từ đâu
-
-  try {
-    const res = await boardApi.createBoard(currentWorkspaceId, {
-      name: data.title,
-      visibility: data.visibility,
-      background: data.background,
-    });
-    console.log('✅ Board created:', res.data); 
-    // Cập nhật state boards trực tiếp mà không gọi lại API
-    setBoards(prevBoards => [...prevBoards, res.data]);
-    setShowDrawer(false);
-    //navigate(`/workspaces/${currentWorkspaceId}/boards/${res.data.id}/inbox`);
-  } catch (err) {
-    console.error('❌ Lỗi tạo board:', err);
-
-    if (err.response) {
-      console.error('📥 Lỗi từ API:', err.response.data);    
-      console.error('📥 Status code:', err.response.status);
-    } else if (err.request) {
-      console.error('📡 Không có phản hồi từ server:', err.request);
-    } else {
-      console.error('⚠️ Lỗi không xác định:', err.message);
+    if (!currentWorkspaceId) {
+    console.warn("⚠️ currentWorkspaceId null – không thể tạo board.");
+    return;
     }
-  }
-};
+    try {
+      const res = await boardApi.createBoard(currentWorkspaceId, {
+        name: data.title,
+        visibility: data.visibility,
+        background: data.background,
+      });
+      console.log('✅ Board created:', res.data); 
+      // Cập nhật state boards trực tiếp mà không gọi lại API
+      setBoards(prevBoards => [...prevBoards, res.data]);
+      setShowDrawer(false);
+      //navigate(`/workspaces/${currentWorkspaceId}/boards/${res.data.id}/inbox`);
+    } catch (err) {
+      console.error('❌ Lỗi tạo board:', err);
 
-  
+      if (err.response) {
+        console.error('📥 Lỗi từ API:', err.response.data);    
+        console.error('📥 Status code:', err.response.status);
+      } else if (err.request) {
+        console.error('📡 Không có phản hồi từ server:', err.request);
+      } else {
+        console.error('⚠️ Lỗi không xác định:', err.message);
+      }
+    }
+  };
+
+  const loadBoards = async () => {
+    if (!currentWorkspaceId) return;
+    setLoading(true);
+    try {
+      const res = await fetchBoards(currentWorkspaceId);
+      setBoards(res.data || []);
+    } catch {
+      setError('Cannot load boards.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBoardReopened = () => {
+    // Cách đơn giản nhất: Tải lại toàn bộ danh sách boards
+    loadBoards();
+  };
+
   return (
     <div className="p-4" style={{ width: '100%' }}>
       <div className="d-flex justify-content-between align-items-start">
@@ -100,6 +105,7 @@ export default function BoardsMainContent({ onCreateBoard }) {
             variant="light"
             className="mt-3"
             style={{ borderRadius: 4, fontWeight: 500 }}
+            onClick={() => setShowClosedModal(true)}
           >
             View all closed boards
           </Button>
@@ -141,6 +147,10 @@ export default function BoardsMainContent({ onCreateBoard }) {
           </BoardGrid>
         )}
       </div>
+      <ClosedBoardsModal 
+      show={showClosedModal} 
+      onClose={() => setShowClosedModal(false)}
+      onBoardReopened={handleBoardReopened} />
     </div>
   );
 }

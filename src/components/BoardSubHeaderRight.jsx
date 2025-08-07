@@ -3,8 +3,23 @@ import styled from 'styled-components';
 import { FiUserPlus, FiZap, FiFilter, FiShare2, FiMoreHorizontal } from 'react-icons/fi';
 import { FaStar } from 'react-icons/fa';
 import { GoOrganization } from 'react-icons/go';
+import { Dropdown } from 'react-bootstrap';
 
-export default function BoardSubHeaderRight({ setShowFilter, filterButtonRef,onOpenInvite }) {
+export default function BoardSubHeaderRight({ setShowFilter, filterButtonRef, onOpenInvite, onCloseBoard}) {
+
+  const CustomToggle = React.forwardRef(({ children, onClick }, ref) => (
+    <IconButton
+      ref={ref}
+      onClick={(e) => {
+        e.preventDefault();
+        onClick(e);
+      }}
+      title="More"
+    >
+      {children}
+    </IconButton>
+  ));
+
   return (
     <Wrapper>
       <RightSpan>
@@ -21,7 +36,24 @@ export default function BoardSubHeaderRight({ setShowFilter, filterButtonRef,onO
         <IconButton title="Star board"><FaStar color="#e2b203" /></IconButton>
         <IconButton title="Workspace visible"><GoOrganization /></IconButton>
         <ActionButton onClick={onOpenInvite}><FiShare2 /> Share</ActionButton>
-        <IconButton title="More"><FiMoreHorizontal /></IconButton>
+
+        <Dropdown>
+          <Dropdown.Toggle as={CustomToggle}>
+            <FiMoreHorizontal />
+          </Dropdown.Toggle>
+
+          <Dropdown.Menu align="end">
+            <Dropdown.Header>Board Actions</Dropdown.Header>
+            <Dropdown.Item>About this board</Dropdown.Item>
+            <Dropdown.Item>Activity</Dropdown.Item>
+            <Dropdown.Divider />
+
+            {/* ✅ NÚT QUAN TRỌNG NHẤT */}
+            <Dropdown.Item className="text-danger" onClick={onCloseBoard}>
+              Close board...
+            </Dropdown.Item>
+          </Dropdown.Menu>
+        </Dropdown>
       </RightSpan>
     </Wrapper>
   );

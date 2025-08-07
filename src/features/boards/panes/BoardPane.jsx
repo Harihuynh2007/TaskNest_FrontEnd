@@ -33,7 +33,7 @@ function getTextColor(bg) {
   return brightness > 150 ? '#172b4d' : 'white';
 }
 
-export default function BoardPane({ background, boardId, lists, setLists, onListDeleted }) {
+export default function BoardPane({ background, boardId, lists, setLists, onListDeleted, onCloseBoard  }) {
   const [, setCards] = useState([]);
   
   const [showAddList, setShowAddList] = useState(false);
@@ -184,6 +184,7 @@ export default function BoardPane({ background, boardId, lists, setLists, onList
         setShowFilter={setShowFilter}
         filterButtonRef={filterButtonRef} // Truyền ref cho nút lọc
         onOpenInvite={() => setShowInvitePopup(true)}
+        onCloseBoard={onCloseBoard}
 
       />
       {editPopup && <DarkOverlay />}

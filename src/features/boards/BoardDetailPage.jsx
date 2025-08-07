@@ -12,14 +12,16 @@ import BottomFloatingNav from './BottomFloatingNav';
 import FullCardModal from '../../components/Card/FullCardModal.jsx';
 import ConfirmationModal from '../../components/Card/common/ConfirmationModal.jsx';
 
+import { useNavigate } from 'react-router-dom';
 import { updateList, deleteList  } from '../../api/listApi.js';
-import { getBoard } from '../../api/boardApi.js';
+import { getBoard, updateBoard } from '../../api/boardApi.js';
 import { DragDropContext } from '@hello-pangea/dnd';
 
 import { fetchInboxCards, updateCard, createInboxCard } from '../../api/cardApi'; 
 
 
 export default function BoardDetailPage() {
+  const navigate = useNavigate();
   const { workspaceId, boardId } = useParams();
   const numericBoardId = parseInt(boardId);
   const [background, setBackground] = useState('#e4f0f6');
@@ -37,6 +39,25 @@ export default function BoardDetailPage() {
   const [selectedCard, setSelectedCard] = useState(null);
 
   const [listToDelete, setListToDelete] = useState(null); // Sẽ lưu { id, name, cards }
+
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false)
+
+  const handleConfirmCloseBoard = async () => {
+    setShowCloseConfirm(false);
+    
+    try {
+      // ✅ Gọi API `PATCH` để cập nhật is_closed = true
+      // Bạn cần tạo hàm này trong `boardApi.js`
+      // updateBoard = (workspaceId, boardId, data) => api.patch(...)
+      await updateBoard(workspaceId, boardId, { is_closed: true });
+
+      // ✅ Chuyển hướng người dùng về trang chủ hoặc trang boards
+      navigate('/boards'); 
+    } catch (err) {
+      console.error('❌ Failed to close board:', err);
+      // Hiển thị thông báo lỗi
+    }
+  };
 
   const handleDeleteListRequest = (listId, listName, cardsInList) => {
     setListToDelete({ id: listId, name: listName, cards: cardsInList });
@@ -65,6 +86,12 @@ export default function BoardDetailPage() {
       // TODO: Rollback state nếu API thất bại
     }
   };
+
+  const handleCloseBoardRequest = () => {
+        setShowCloseConfirm(true);
+    };
+
+
   useEffect(() => {
     async function loadBoard() {
       if (!workspaceId || !boardId) return;
@@ -432,6 +459,7 @@ export default function BoardDetailPage() {
       lists={lists} 
       setLists={setLists}
       onListDeleted={handleDeleteListRequest} 
+      onCloseBoard={handleCloseBoardRequest}
        />}
     </SplitContainer>
   );
@@ -464,6 +492,17 @@ export default function BoardDetailPage() {
         confirmText="Delete and Move Cards"
         confirmVariant="danger" // Vẫn dùng màu đỏ vì đây là hành động lớn
     />
+
+    {/* ✅ RENDER MODAL XÁC NHẬN ĐÓNG BẢNG */}
+      <ConfirmationModal
+        show={showCloseConfirm}
+        onClose={() => setShowCloseConfirm(false)}
+        onConfirm={handleConfirmCloseBoard}
+        title="Close Board?"
+        body="Are you sure you want to close this board? You can find and reopen closed boards later."
+        confirmText="Close"
+        confirmVariant="danger"
+      />
 
   </>
   );
