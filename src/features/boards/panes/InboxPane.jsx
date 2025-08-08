@@ -165,9 +165,12 @@ export default function InboxPane({
         )}
 
         <Droppable droppableId="inbox" type="CARD">
-          {(provided) => (
-            <CardList ref={provided.innerRef} {...provided.droppableProps}>
-
+          {(provided,snapshot) => (
+            <CardList 
+            ref={provided.innerRef} 
+            {...provided.droppableProps}
+            isDraggingOver={snapshot.isDraggingOver}
+            >
             {filteredCards.map((card, index) => (
               <Draggable key={card.id} draggableId={String(card.id)} index={index}>
                 {(provided, snapshot) => (
@@ -308,4 +311,14 @@ const CardList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
+
+  min-height: 48px;
+
+  padding: 8px;
+  border-radius: 8px;
+
+  /* Thêm hiệu ứng khi kéo vào để người dùng biết họ có thể thả ở đây */
+  transition: background-color 0.2s ease;
+  background-color: ${props => props.isDraggingOver ? 'rgba(0, 0, 0, 0.05)' : 'transparent'};
+
 `;

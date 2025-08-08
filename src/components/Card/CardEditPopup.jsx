@@ -34,7 +34,7 @@ export default function CardEditPopup({
   const [labelError, setLabelError] = useState(null);
   const [labelAnchorRect, setLabelAnchorRect] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
+  
   
   useEffect(() => {
     if (showLabelPopup && labelButtonRef.current) {
@@ -75,7 +75,7 @@ export default function CardEditPopup({
         onClose();
       }
     }
-    
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onClose,showDeleteConfirm]);
@@ -93,22 +93,21 @@ export default function CardEditPopup({
   };
 
   const handleDeleteCard = async () => {
-    console.log("Step 1: handleDeleteCard in popup triggered for card ID:", card.id);
-    setShowDeleteConfirm(false);
-    onClose();
+    setShowDeleteConfirm(false); // Hide confirmation modal first
 
-    if (onCardDeleted) {
-      console.log("Step 2: Calling onCardDeleted callback.");
-      onCardDeleted(card.id);
-    } else {
-      console.log("Warning: onCardDeleted callback is not provided.");
-    }
     try {
-      console.log("Step 3: Calling deleteCard API.");
+      // ✅ FIX: API call is now made BEFORE updating the UI (pessimistic update)
       await deleteCard(card.id);
-      console.log("Step 4: API call successful.");
+
+      // On successful deletion, update the UI and close the popup
+      if (onCardDeleted) {
+        onCardDeleted(card.id);
+      }
+      onClose();
     } catch (err) {
       console.error('❌ Failed to delete card:', err);
+      // Inform user of the failure
+      alert('Failed to delete the card. Please check your connection and try again.');
     }
   };
 
