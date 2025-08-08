@@ -67,13 +67,18 @@ export default function CardEditPopup({
 
   useEffect(() => {
     function handleClickOutside(e) {
+      if (showDeleteConfirm) {
+        return;
+      }
+
       if (popupRef.current && !popupRef.current.contains(e.target)) {
         onClose();
       }
     }
+    
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [onClose]);
+  }, [onClose,showDeleteConfirm]);
 
   useEffect(() => {
     textareaRef.current?.focus();
