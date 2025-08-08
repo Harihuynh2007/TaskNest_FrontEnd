@@ -7,7 +7,8 @@ import { BsThreeDots } from 'react-icons/bs';
 
 function ListColumn({
   list,
-  background,
+  $background, 
+  $textColor,
   textColor,
   cardInput,
   setCardInputs,
@@ -34,8 +35,8 @@ function ListColumn({
   const hasCards = Array.isArray(list.cards) && list.cards.length > 0;
 
   return (
-    <Wrapper>
-      <Header style={{ color: textColor }}>
+    <Wrapper $background={$background}>
+      <Header $textColor={$textColor}>
         <HeaderTitle>{list.name}</HeaderTitle>
         <Dropdown>
           <Dropdown.Toggle as={MenuButton} id={`dropdown-list-${list.id}`}>
@@ -114,7 +115,7 @@ function ListColumn({
 export default React.memo(ListColumn);
 
 // 💅 Styled components
-const HeaderTitle = styled.h3`
+const HeaderTitle = styled.div`
   font-size: 16px;
   font-weight: bold;
   margin: 0;
@@ -159,7 +160,7 @@ const MenuButton = styled.button`
 
 const Wrapper = styled.div`
   min-width: 260px;
-  background: rgba(255, 255, 255, 0.3);
+  background:  ${({ $background }) => $background || 'rgba(255, 255, 255, 0.3)'};
   border-radius: 8px;
   padding: 12px;
   display: flex;
@@ -171,7 +172,7 @@ const Header = styled.h3`
   justify-content: space-between; 
   align-items: center;        
   margin-bottom: 12px;
-  color: ${({ textColor }) => textColor};
+  color: ${({ $textColor }) => $textColor};
 `;
 
 const CardList = styled.ul`
