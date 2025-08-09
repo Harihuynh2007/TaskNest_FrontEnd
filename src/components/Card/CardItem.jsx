@@ -14,7 +14,6 @@ export default function CardItem({
   
   // ✅ Nếu đang kéo → xác định vùng hiện tại bằng draggingOver
   // ❌ Nếu không kéo → giữ nguyên chiều rộng (auto fit theo list/inbox layout)
-  // CardItem.jsx
   const cardStyle = useMemo(() => ({
     width: isDragging ? '240px' : '100%'
   }), [isDragging]); // ✅ Chỉ tính lại khi isDragging thay đổi
