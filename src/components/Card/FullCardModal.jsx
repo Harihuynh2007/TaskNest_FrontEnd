@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef,useCallback } from 'react';
 import styled from 'styled-components';
 import { BiLabel } from 'react-icons/bi';
 import { BsClock } from 'react-icons/bs';
@@ -97,22 +97,20 @@ const handleTitleSave = async () => {
     }
   }, [card]);
 
+  const handleClickOutside = useCallback((e) => {
+    const clickedOverlay = overlayRef.current?.contains(e.target);
+    const clickedInsideModal = modalRef.current?.contains(e.target);
+
+    if (clickedOverlay && !clickedInsideModal) {
+      handleTitleSave(); // Sử dụng ref hoặc state
+      onClose();
+    }
+  }, [onClose]); // ✅ Dependencies ổn định
+
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      const clickedOverlay = overlayRef.current?.contains(e.target);
-      const clickedInsideModal = modalRef.current?.contains(e.target);
-
-      if (clickedOverlay && !clickedInsideModal) {
-        handleTitleSave();
-        onClose();
-      }
-    };
-
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [title]);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [handleClickOutside]); // ✅ Function không thay đổi → không re-attach
 
 
   return (
