@@ -7,7 +7,7 @@ import { MdChecklist } from 'react-icons/md';
 import { IoCloseOutline } from 'react-icons/io5';
 import { IoChevronDown } from 'react-icons/io5';
 import { HiOutlineMenuAlt2 } from 'react-icons/hi';
-
+import toast from 'react-hot-toast';
 import axios from '../../api/apiClient';
 
 
@@ -41,20 +41,25 @@ export default function FullCardModal({ card, onClose,onCardUpdate  }) {
     }
   };
 
-  const handleTitleSave = async () => {
-    if (!title || title === card.name) return;
+  const [saveState, setSaveState] = useState({ saving: false, error: null });
 
-    // ✅ Gọi hàm callback trước để UI đổi tên ngay
-    if (onCardUpdate) {
-      onCardUpdate({ ...card, name: title });
-    }
-
-    try {
-      await axios.patch(`/cards/${card.id}/`, { name:title });
-    } catch (err) {
-      console.error('Failed to save card title:', err);
-    }
-  };
+const handleTitleSave = async () => {
+  if (!title || title === card.name) return;
+  
+  const originalTitle = card.name;
+  setSaveState({ saving: true, error: null });
+  
+  try {
+    // Optimistic update
+    onCardUpdate({ ...card, name: title });
+    await axios.patch(`/cards/${card.id}/`, { name: title });
+  } catch (err) {
+    // Rollback on error
+    onCardUpdate({ ...card, name: originalTitle });
+    setSaveState({ saving: false, error: err.message });
+    toast.error('Failed to save title');
+  }
+};
 
   const handleTitleKeyDown = (e) => {
     if (e.key === 'Enter') {
