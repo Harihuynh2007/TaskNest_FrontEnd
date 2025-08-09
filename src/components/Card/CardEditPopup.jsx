@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState,useCallback  } from 'react';
 import styled from 'styled-components';
 import { BiLabel } from 'react-icons/bi';
 import { HiOutlineUserAdd } from 'react-icons/hi';
@@ -112,12 +112,14 @@ export default function CardEditPopup({
     }
   };
 
-  const handleToggleLabel = (labelId) => {
-    const newLabels = card.labels.includes(labelId)
-      ? card.labels.filter((id) => id !== labelId)
-      : [...(card.labels || []), labelId];
-    card.labels = newLabels;
-  };
+  // Thay vì mutate trực tiếp
+  const handleToggleLabel = useCallback((labelId) => {
+    updateCardLabels(card.id, (prevLabels) => 
+      prevLabels.includes(labelId)
+        ? prevLabels.filter(id => id !== labelId)
+        : [...prevLabels, labelId]
+    );
+  }, [card.id, updateCardLabels]);
 
   if (!card) {
     return null;
