@@ -1,74 +1,73 @@
-<<<<<<< HEAD
-# Getting Started with Create React App
+# TaskNest Frontend Overview
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## 1. Tổng quan dự án
+**TaskNest** là một ứng dụng quản lý công việc dạng kanban, lấy cảm hứng từ **Trello**.
 
-## Available Scripts
+Frontend được xây dựng bằng:
+- **ReactJS** (SPA)
+- **react-router-dom** – Routing
+- **styled-components** + **Bootstrap** + CSS thuần – UI
+- **@hello-pangea/dnd** – Drag & drop cho list và card
+- **Context API** – State management (Auth, Workspace, Modal)
+- **Axios** – Kết nối backend (Django REST API)
+- **Google OAuth** – Đăng nhập Google
+- **Portal** – Render popup/modal
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## 2. Kiến trúc & Module
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 2.1. API Service Layer
+- `apiClient` – Cấu hình axios (token, refresh token, queue request khi refresh)
+- API module hóa theo resource:
+  - `authApi`
+  - `workspaceApi`
+  - `boardApi`
+  - `listApi`
+  - `cardApi`
+- `apiRoutes.js` – Centralize toàn bộ endpoint path
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### 2.2. Context
+- **AuthContext** – Quản lý xác thực, preload user & workspace
+- **WorkspaceContext** – Danh sách workspace, workspace hiện tại
+- **ModalContext** – Mở/đóng modal toàn app
 
-### `npm test`
+### 2.3. Layout & Routing
+- Layout:
+  - `WithHeaderOnlyLayout`
+  - `WithHeaderAndSidebarLayout`
+- Route guard:
+  - `PrivateRoute`
+  - `ProtectedRoute`
+- Header + Sidebar: Navigation chính (Boards, Templates, Workspace switcher)
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 2.4. Board / List / Card
+- `BoardPane` – Render list & card (drag-drop)
+- `ListColumn` – 1 list chứa nhiều `CardItem`
+- `CardItem` – Card ngắn, click mở `FullCardModal` hoặc `CardEditPopup`
+- `FullCardModal` – Chi tiết card
+- `CardEditPopup` – Menu edit nhanh card
+- API gọi trực tiếp trong component
 
-### `npm run build`
+### 2.5. Popup & Modal
+- `ShareBoardPopup`, `LabelPopup`, `BoardFilterPopup`, `FilterPopup`
+- Styles chung: `Popup.styles.js`
+- Hook filter:
+  - `useFilter`
+  - `useSimpleFilter`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 2.6. Filter & Label
+- Lọc card: keyword, member, label, status, due date, created date
+- UI item filter:
+  - `LabelFilterItem`
+  - `MemberFilterItem`
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-=======
-# TaskNest
->>>>>>> b7d5fa0c5b717a9d066c133abf7c7ed204662c17
+## 3. Điểm mạnh
+- **Kiến trúc module rõ ràng**: API, context, layout, UI tách file hợp lý
+- **Context API**: Tránh prop drilling, quản lý state tập trung
+- **Base API client chuyên nghiệp**: Refresh token, queue request
+- **UI component tái sử dụng**: Modal, popup, spinner, portal
+- **Tính năng Trello core gần đủ**: Board, list, card, drag-drop, filter, label, share, member
+- **Google OAuth**: Đăng nhập Google, đồng bộ backend
