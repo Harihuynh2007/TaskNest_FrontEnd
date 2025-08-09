@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useMemo } from 'react';
 import styled from 'styled-components';
 
 export default function CardItem({
@@ -15,13 +15,15 @@ export default function CardItem({
   // ✅ Nếu đang kéo → xác định vùng hiện tại bằng draggingOver
   // ❌ Nếu không kéo → giữ nguyên chiều rộng (auto fit theo list/inbox layout)
   // CardItem.jsx
-  const forceWidth = isDragging ? '240px' : 'auto'; 
+  const cardStyle = useMemo(() => ({
+    width: isDragging ? '240px' : '100%'
+  }), [isDragging]); // ✅ Chỉ tính lại khi isDragging thay đổi
 
   return (
     <CardWrapper
       className={`drag-preview-${draggingOver || 'none'}`}
       $isDragging={isDragging}
-      $forceWidth={forceWidth}
+      style={cardStyle}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => onCardClick(card)}
