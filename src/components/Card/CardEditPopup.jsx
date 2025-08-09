@@ -6,6 +6,7 @@ import { BsCardText, BsClock, BsArrowsMove, BsFiles, BsLink45Deg, BsArchive } fr
 import LabelPopup from '../../components/Label/LabelPopup';
 import ConfirmationModal from './common/ConfirmationModal';
 import Portal from './common/Portal';
+import { toast } from 'react-hot-toast';
 
 import { fetchBoardLabels } from '../../api/boardApi';
 import { deleteCard } from '../../api/cardApi';
@@ -98,7 +99,7 @@ export default function CardEditPopup({
     try {
       // ✅ FIX: API call is now made BEFORE updating the UI (pessimistic update)
       await deleteCard(card.id);
-
+      toast.success('Card deleted successfully');
       // On successful deletion, update the UI and close the popup
       if (onCardDeleted) {
         onCardDeleted(card.id);
@@ -107,7 +108,7 @@ export default function CardEditPopup({
     } catch (err) {
       console.error('❌ Failed to delete card:', err);
       // Inform user of the failure
-      alert('Failed to delete the card. Please check your connection and try again.');
+      toast.error('Failed to delete card. Please check connection and try again.');
     }
   };
 
@@ -208,7 +209,7 @@ export default function CardEditPopup({
             setShowLabelPopup(false);
             setLabelAnchorRect(null);
           }}
-          boardId={listId}
+          boardId={boardId}
           loadingLabels={loadingLabels}
           labelError={labelError}
         />
