@@ -1,11 +1,13 @@
-import React, { useState,useMemo } from 'react';
+import React, { useState,useMemo,useCallback  } from 'react';
 import styled from 'styled-components';
+
 
 export default function CardItem({
   card,
   index,
   isDragging,
   draggingOver,
+  onCardUpdate,
   onEditClick,
   onCheckClick,
   onCardClick = () => {},
@@ -42,7 +44,7 @@ export default function CardItem({
           $completed={card.completed}
           onClick={(e) => {
             e.stopPropagation();
-            onCheckClick(index);
+            onCheckClick(card.id);
           }}
           aria-label={card.completed ? 'Bỏ hoàn thành thẻ' : 'Đánh dấu thẻ hoàn thành'}
         >
