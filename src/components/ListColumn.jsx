@@ -56,57 +56,45 @@ function ListColumn({
 
       {/* ✅ Vùng thả cho các card */}
       <Droppable droppableId={`list-${list.id}`} type="CARD">
-        {(provided) => (
-          <CardList ref={provided.innerRef} {...provided.droppableProps}>
-            {hasCards &&
-              list.cards.map((card, index) => (
-                <li key={card.id}>
-                  <Draggable key={card.id} draggableId={String(card.id)} index={index}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        draggingOver={snapshot.isDraggingOver ? 1 : 0}
-                      >
-                        <CardItem
-                          draggingOver={snapshot.draggingOver}
-                          card={card}
-                          index={index}
-                          isDragging={snapshot.isDragging}
-                          onEditClick={(e) => onEditClick(e, card, index)}
-                          onCheckClick={() => onCheckClick(index)}
-                          onCardClick={onCardClick}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                </li>
-                  
-              ))}
-              {/* ✅ Thêm card mới */}
-              {isInputActive ? (
-                <li>
-                  <CardComposerForm onSubmit={handleAddCard}>
-                    <StyledTextarea
-                      value={cardInput}
-                      onChange={handleInputChange}
-                      placeholder="Enter a title or paste a link"
-                      autoFocus
-                    />
-                    <CardComposerActions>
-                      <AddCardButton type="submit">Add card</AddCardButton>
-                      <CancelButton type="button" onClick={() => setActiveCardInput(null)}>✕</CancelButton>
-                    </CardComposerActions>
-                  </CardComposerForm>
-                </li>
-            ) : (
-              <AddCardBtn onClick={() => setActiveCardInput(list.id)}>+ Add a card</AddCardBtn>
-            )}
+        {(provided, snapshot) => (
+          <CardList
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+            $isDraggingOver={snapshot.isDraggingOver} // dùng transient prop
+          >
+            {list.cards?.map((card, index) => {
+              const safeId = card?.id ?? `temp-${index}`;
+              return (
+                <Draggable
+                  key={`card-${safeId}`}
+                  draggableId={`card-${safeId}`}
+                  index={index}
+                >
+                  {(provided, snapshot) => (
+                    <li
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                    >
+                      <CardItem
+                        draggingOver={snapshot.draggingOver}
+                        card={card}
+                        index={index}
+                        isDragging={snapshot.isDragging}
+                        onEditClick={(e) => onEditClick(e, card, index)}
+                        onCheckClick={() => onCheckClick(card.id)}
+                        onCardClick={onCardClick}
+                      />
+                    </li>
+                  )}
+                </Draggable>
+              );
+            })}
             {provided.placeholder}
           </CardList>
         )}
       </Droppable>
+
 
     </Wrapper>
   );
@@ -183,8 +171,10 @@ const CardList = styled.ul`
   flex-direction: column;
   gap: 8px;
   min-height: 40px; // Ensure droppable area is visible even when empty
-  background: ${({ draggingOver }) =>
-    draggingOver ? 'rgba(12, 102, 228, 0.1)' : 'transparent'}; // Subtle highlight
+
+  background: ${({ $isDraggingOver }) =>
+    $isDraggingOver ? 'rgba(12, 102, 228, 0.1)' : 'transparent'};
+
   border-radius: 6px;
   transition: background 0.2s ease;
   width: 100%; // Ensure full width within container
