@@ -35,7 +35,7 @@ export default function CardEditPopup({
   const [labelError, setLabelError] = useState(null);
   const [labelAnchorRect, setLabelAnchorRect] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  
+  const [saveState, setSaveState] = useState({ saving: false, error: null });
   
   useEffect(() => {
     if (showLabelPopup && labelButtonRef.current) {
