@@ -397,19 +397,23 @@ export default function BoardDetailPage() {
     );
   };
 
-  const toggleComplete = async (index) => {
-    const updated = [...cards];
-    const card = updated[index];
-    const newCompleted = !card.completed;
+  const toggleComplete = async (cardId) => {
+    const next = [...cards];
+    const i = next.findIndex(c => c.id === cardId);
+    if (i === -1) return;
 
+    const newCompleted = !next[i].completed;
     try {
-      await updateCard(card.id, { completed: newCompleted });
-      updated[index].completed = newCompleted;
-      setCards(updated);
-    } catch (err) {
-      console.error('❌ Lỗi cập nhật completed:', err);
+      const res = await updateCard(cardId, { completed: newCompleted });
+      const updated = res?.data ?? res;
+      next[i] = updated;
+      setCards(next);
+    } catch (e) {
+      console.error('❌ Lỗi cập nhật completed:', e);
     }
   };
+
+
 
 
   const handleSaveCard = async () => {
