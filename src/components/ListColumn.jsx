@@ -91,10 +91,31 @@ function ListColumn({
               );
             })}
             {provided.placeholder}
+            {/* ✅ Thêm card mới */}
+            {isInputActive ? (
+              <li>
+                <CardComposerForm onSubmit={handleAddCard}>
+                  <StyledTextarea
+                    value={cardInput}
+                    onChange={handleInputChange}
+                    placeholder="Enter a title or paste a link"
+                    autoFocus
+                  />
+                  <CardComposerActions>
+                    <AddCardButton type="submit">Add card</AddCardButton>
+                    <CancelButton type="button" onClick={() => setActiveCardInput(null)}>✕</CancelButton>
+                  </CardComposerActions>
+                </CardComposerForm>
+              </li>
+            ) : (
+              <AddCardBtn onClick={() => setActiveCardInput(list.id)}>+ Add a card</AddCardBtn>
+            )}
+
           </CardList>
+          
         )}
       </Droppable>
-
+        
 
     </Wrapper>
   );
