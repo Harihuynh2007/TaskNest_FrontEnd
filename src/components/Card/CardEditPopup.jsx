@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState,useCallback  } from 'react';
 import styled from 'styled-components';
 import { BiLabel } from 'react-icons/bi';
 import { HiOutlineUserAdd } from 'react-icons/hi';
-import { BsCardText, BsClock, BsArrowsMove, BsFiles, BsLink45Deg, BsArchive } from 'react-icons/bs';
+import { BsCardText, BsClock, BsArrowsMove, BsFiles, BsLink45Deg, BsArchive, BsTextLeft  } from 'react-icons/bs';
 import LabelPopup from '../../components/Label/LabelPopup';
 import ConfirmationModal from './common/ConfirmationModal';
 import Portal from './common/Portal';
@@ -10,6 +10,8 @@ import { toast } from 'react-hot-toast';
 
 import { fetchBoardLabels } from '../../api/boardApi';
 import { deleteCard } from '../../api/cardApi';
+import { updateCardDescription } from '../../api/cardApi';
+
 
 export default function CardEditPopup({
   anchorRect,
@@ -24,6 +26,7 @@ export default function CardEditPopup({
   updateCardLabels,
   onCardDeleted,
   isInboxMode = false,
+  onCardUpdate,
 }) {
   const labelButtonRef = useRef();
   const popupRef = useRef();
@@ -37,6 +40,7 @@ export default function CardEditPopup({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [saveState, setSaveState] = useState({ saving: false, error: null });
   
+
   useEffect(() => {
     if (showLabelPopup && labelButtonRef.current) {
       requestAnimationFrame(() => {
@@ -125,6 +129,8 @@ export default function CardEditPopup({
     return null;
   }
 
+  
+
   return (
     <Portal>
       <Dialog
@@ -197,6 +203,7 @@ export default function CardEditPopup({
             <BsArchive />
             <span>Delete Card</span>
           </MenuItemDelete>
+          
         </MenuList>
       </Dialog>
 
@@ -216,6 +223,7 @@ export default function CardEditPopup({
           labelError={labelError}
         />
       )}
+
 
       {/* ✅ BƯỚC 3.6: RENDER MODAL XÁC NHẬN */}
       <ConfirmationModal
@@ -307,5 +315,111 @@ const MenuItemDelete = styled(MenuItem)`
   &:hover {
     background-color: #ffebe6; // Màu đỏ nhạt khi hover
     color: #ae2a19;
+  }
+`;
+
+// Styled Components cho Description Editor
+const DescriptionModal = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const DescriptionOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  background: rgba(9, 30, 66, 0.48);
+`;
+
+const DescriptionDialog = styled.div`
+  position: relative;
+  background: white;
+  border-radius: 8px;
+  width: 500px;
+  max-width: 90vw;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.2);
+`;
+
+const DescriptionHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #dfe1e6;
+  
+  h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #172b4d;
+  }
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #6b778c;
+  
+  &:hover {
+    color: #172b4d;
+  }
+`;
+
+const DescriptionBody = styled.div`
+  padding: 20px;
+`;
+
+const DescriptionTextarea = styled.textarea`
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  font-size: 14px;
+  border: 2px solid #dfe1e6;
+  border-radius: 6px;
+  resize: vertical;
+  font-family: inherit;
+  margin-bottom: 12px;
+  
+  &:focus {
+    outline: none;
+    border-color: #0c66e4;
+  }
+`;
+
+const DescriptionButtons = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const SaveDescButton = styled.button`
+  background: #0c66e4;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  
+  &:hover {
+    background: #026aa7;
+  }
+`;
+
+const CancelDescButton = styled.button`
+  background: none;
+  border: none;
+  color: #6b778c;
+  padding: 8px 16px;
+  cursor: pointer;
+  
+  &:hover {
+    color: #172b4d;
+    background: #f1f2f4;
+    border-radius: 4px;
   }
 `;
