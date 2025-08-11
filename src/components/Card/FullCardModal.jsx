@@ -552,7 +552,7 @@ const Textarea = styled.textarea`
   
   &:focus {
     outline: none;
-    border-color: #0c66e4;
+    border-color: #28a745 
   }
 `;
 
@@ -562,7 +562,7 @@ const ButtonRow = styled.div`
 `;
 
 const SaveBtn = styled.button`
-  background: #0c66e4;
+  background: #28a745;
   color: white;
   padding: 6px 12px;
   border: none;
