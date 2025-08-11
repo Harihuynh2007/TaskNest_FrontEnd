@@ -212,6 +212,14 @@ const AddCardBtn = styled.button`
   font-weight: 500;
   cursor: pointer;
   text-align: left;
+  padding: 6px 8px;
+  border-radius: 4px;
+  width: 100%;
+
+  &:hover {
+    background-color: rgba(9, 30, 66, 0.08); /* màu hover Trello */
+    color: #172b4d;
+  }
 `;
 
 
