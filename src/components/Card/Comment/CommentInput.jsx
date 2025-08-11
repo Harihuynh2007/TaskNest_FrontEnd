@@ -20,15 +20,8 @@ export default function CommentInput({
     setIsLoading(true);
     try {
       const newComment = await createComment(cardId, content.trim());
-      
-      // Tạo comment object với thông tin user hiện tại
-      const commentWithUser = {
-        ...newComment,
-        author: currentUser,
-        created_at: newComment.created_at ?? new Date().toISOString(),
-      };
-      
-      onCommentAdded(commentWithUser);
+      onCommentAdded(newComment);
+
       setContent('');
       setIsFocused(false);
       toast.success('Comment added');

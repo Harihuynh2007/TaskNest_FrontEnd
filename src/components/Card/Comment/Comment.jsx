@@ -99,7 +99,9 @@ export default function Comment({
       
       <CommentContent>
         <CommentHeader>
-          <AuthorName>{comment.author?.name || 'Unknown User'}</AuthorName>
+          <AuthorName>
+            {comment.author?.name || comment.author?.username || 'Unknown User'}
+            </AuthorName>
           <CommentTime>{formatTime(comment.created_at)}</CommentTime>
           
           {canEdit && (
