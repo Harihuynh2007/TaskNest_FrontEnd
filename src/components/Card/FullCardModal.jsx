@@ -53,8 +53,18 @@ export default function FullCardModal({
     }
   };
 
-  const handleCommentAdded = (newComment) => {
-    setComments(prev => [newComment, ...prev]);
+  const handleCommentAdded = (c) => {
+    setComments(prev => [c, ...prev]);
+  };
+
+  const handleCommentReplaced = (tempId, real) => {
+    setComments(prev =>
+      prev.map(c => (c.temp_id === tempId ? { ...real } : c))
+    );
+  };
+
+  const handleCommentRemove = (tempId) => {
+    setComments(prev => prev.filter(c => c.temp_id !== tempId));
   };
 
   const handleCommentUpdated = (commentId, updatedComment) => {
@@ -269,6 +279,8 @@ export default function FullCardModal({
                 onCommentAdded={handleCommentAdded}
                 currentUser={mockCurrentUser}
                 placeholder="Write a comment..."
+                onCommentReplaced={handleCommentReplaced}
+                onCommentRemove={handleCommentRemove}
               />
               
               <ActivityHeader>
@@ -284,8 +296,8 @@ export default function FullCardModal({
                 <CommentList>
                   {comments.map((comment) => (
                     <Comment
-                      key={comment.id}
-                      comment={comment}
+                      key={comment.id ?? comment.temp_id}
+                      comment = {comment}
                       onUpdate={handleCommentUpdated}
                       onDelete={handleCommentDeleted}
                       currentUserId={mockCurrentUser.id}

@@ -8,6 +8,8 @@ export default function CommentInput({
   cardId, 
   onCommentAdded, 
   currentUser,
+  onCommentReplaced,
+  onCommentRemove,
   placeholder = "Write a comment..." 
 }) {
   const [content, setContent] = useState('');
@@ -18,9 +20,27 @@ export default function CommentInput({
     if (!content.trim()) return;
 
     setIsLoading(true);
+    const tempId = `temp-${Date.now()}`;
+    const optimisticComment = {
+      id: null,              // chưa có id thật
+      temp_id: tempId,       // dùng để thay thế/rollback
+      card: cardId,
+      content: content.trim(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      author: {
+        id: currentUser?.id ?? null,
+        name: currentUser?.name || currentUser?.username || 'You',
+        username: currentUser?.username,
+        avatar: currentUser?.avatar || null
+      },
+    };
+   // Thêm ngay vào UI
+    onCommentAdded?.(optimisticComment);
     try {
-      const newComment = await createComment(cardId, content.trim());
-      onCommentAdded(newComment);
+      const real = await createComment(cardId, content.trim());
+
+      onCommentReplaced?.(tempId, real);
 
       setContent('');
       setIsFocused(false);
@@ -28,6 +48,7 @@ export default function CommentInput({
     } catch (error) {
       console.error('Failed to add comment:', error);
       toast.error('Failed to add comment');
+      onCommentRemove?.(tempId);
     } finally {
       setIsLoading(false);
     }
