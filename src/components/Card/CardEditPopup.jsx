@@ -129,7 +129,6 @@ export default function CardEditPopup({
     return null;
   }
 
-  
 
   return (
     <Portal>

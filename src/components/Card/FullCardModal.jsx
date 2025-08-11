@@ -316,7 +316,7 @@ export default function FullCardModal({
   );
 }
 
-// Styled components (giữ nguyên các style cũ và thêm mới)
+
 const Overlay = styled.div`
   position: fixed;
   inset: 0;
