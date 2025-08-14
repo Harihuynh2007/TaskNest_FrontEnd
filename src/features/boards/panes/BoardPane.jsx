@@ -132,7 +132,7 @@ export default function BoardPane({ background, boardId, lists, setLists, onList
     }
   };
 
-  // ✅ BƯỚC 4.1: TẠO HÀM CALLBACK ĐỂ XÓA CARD KHỎI STATE
+  // TẠO HÀM CALLBACK ĐỂ XÓA CARD KHỎI STATE
   const handleCardDeleted = (deletedCardId) => {
       setLists(prevLists => 
           prevLists.map(list => ({

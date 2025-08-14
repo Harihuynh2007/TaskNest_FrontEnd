@@ -65,7 +65,7 @@ export default function BoardDetailPage() {
     setListToDelete({ id: listId, name: listName, cards: cardsInList });
   };
 
-  // ✅ TẠO HÀM XÁC NHẬN XÓA
+  //  TẠO HÀM XÁC NHẬN XÓA
   const handleConfirmDeleteList = async () => {
     if (!listToDelete) return;
 

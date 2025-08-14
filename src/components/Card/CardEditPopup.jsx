@@ -98,13 +98,11 @@ export default function CardEditPopup({
   };
 
   const handleDeleteCard = async () => {
-    setShowDeleteConfirm(false); // Hide confirmation modal first
+    setShowDeleteConfirm(false); 
 
     try {
-      // ✅ FIX: API call is now made BEFORE updating the UI (pessimistic update)
       await deleteCard(card.id);
       toast.success('Card deleted successfully');
-      // On successful deletion, update the UI and close the popup
       if (onCardDeleted) {
         onCardDeleted(card.id);
       }
@@ -116,7 +114,7 @@ export default function CardEditPopup({
     }
   };
 
-  // Thay vì mutate trực tiếp
+  
   const handleToggleLabel = useCallback((labelId) => {
     updateCardLabels(card.id, (prevLabels) => 
       prevLabels.includes(labelId)
@@ -317,108 +315,3 @@ const MenuItemDelete = styled(MenuItem)`
   }
 `;
 
-// Styled Components cho Description Editor
-const DescriptionModal = styled.div`
-  position: fixed;
-  inset: 0;
-  z-index: 3000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const DescriptionOverlay = styled.div`
-  position: absolute;
-  inset: 0;
-  background: rgba(9, 30, 66, 0.48);
-`;
-
-const DescriptionDialog = styled.div`
-  position: relative;
-  background: white;
-  border-radius: 8px;
-  width: 500px;
-  max-width: 90vw;
-  box-shadow: 0 12px 24px rgba(0,0,0,0.2);
-`;
-
-const DescriptionHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid #dfe1e6;
-  
-  h3 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: #172b4d;
-  }
-`;
-
-const CloseButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  color: #6b778c;
-  
-  &:hover {
-    color: #172b4d;
-  }
-`;
-
-const DescriptionBody = styled.div`
-  padding: 20px;
-`;
-
-const DescriptionTextarea = styled.textarea`
-  width: 100%;
-  min-height: 120px;
-  padding: 12px;
-  font-size: 14px;
-  border: 2px solid #dfe1e6;
-  border-radius: 6px;
-  resize: vertical;
-  font-family: inherit;
-  margin-bottom: 12px;
-  
-  &:focus {
-    outline: none;
-    border-color: #0c66e4;
-  }
-`;
-
-const DescriptionButtons = styled.div`
-  display: flex;
-  gap: 8px;
-`;
-
-const SaveDescButton = styled.button`
-  background: #0c66e4;
-  color: white;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  font-weight: 500;
-  cursor: pointer;
-  
-  &:hover {
-    background: #026aa7;
-  }
-`;
-
-const CancelDescButton = styled.button`
-  background: none;
-  border: none;
-  color: #6b778c;
-  padding: 8px 16px;
-  cursor: pointer;
-  
-  &:hover {
-    color: #172b4d;
-    background: #f1f2f4;
-    border-radius: 4px;
-  }
-`;
