@@ -129,6 +129,7 @@ function ListColumn({
               );
             })}
             {provided.placeholder}
+            
             {/* ✅ Thêm card mới */}
             {isInputActive ? (
               <li>
