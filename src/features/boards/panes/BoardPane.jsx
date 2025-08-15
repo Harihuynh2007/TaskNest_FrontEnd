@@ -18,7 +18,6 @@ import isoWeek from 'dayjs/plugin/isoWeek';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import ShareBoardPopup from '../../../components/member/ShareBoardPopup';
 import { useFilter } from '../../../components/hook/useFilter';
-import { WorkspaceContext } from '../../../contexts'; 
 import { useContext } from 'react';
 
 import { toast } from 'react-hot-toast';

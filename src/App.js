@@ -37,7 +37,7 @@ function App() {
 
         {/* App routes with header */}
         <Route
-          path="/workspaces/:workspaceId/boards/:boardId"
+          path="/boards/:boardId"
           element={
             <PrivateRoute>
               <WithHeaderOnlyLayout>
@@ -47,7 +47,7 @@ function App() {
           }
         />
         <Route
-          path="/workspaces/:workspaceId/boards/:boardId/inbox"
+          path="/boards/:boardId/inbox"
           element={
             <PrivateRoute>
               <WithHeaderOnlyLayout>

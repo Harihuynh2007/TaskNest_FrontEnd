@@ -23,7 +23,7 @@ import { AuthContext } from '../../contexts/AuthContext.jsx';
 
 export default function BoardDetailPage() {
   const navigate = useNavigate();
-  const { workspaceId, boardId } = useParams();
+  const { boardId } = useParams();
   const { user: currentUser } = useContext(AuthContext);
   const numericBoardId = parseInt(boardId);
   const [background, setBackground] = useState('#e4f0f6');
@@ -51,7 +51,7 @@ export default function BoardDetailPage() {
       // ✅ Gọi API `PATCH` để cập nhật is_closed = true
       // Bạn cần tạo hàm này trong `boardApi.js`
       // updateBoard = (workspaceId, boardId, data) => api.patch(...)
-      await updateBoard(workspaceId, boardId, { is_closed: true });
+      await updateBoard(boardId, { is_closed: true });
 
       // ✅ Chuyển hướng người dùng về trang chủ hoặc trang boards
       navigate('/boards'); 
@@ -96,10 +96,10 @@ export default function BoardDetailPage() {
 
   useEffect(() => {
     async function loadBoard() {
-      if (!workspaceId || !boardId) return;
+      if (!boardId) return;
       setLoading(true);
       try {
-        const res = await getBoard(workspaceId, boardId);
+        const res = await getBoard(boardId);
         setBackground(res.data.background || '#e4f0f6');
       } catch (err) {
         console.error('Lỗi fetch board:', err);
@@ -108,7 +108,7 @@ export default function BoardDetailPage() {
       }
     }
     loadBoard();
-  }, [workspaceId, boardId]);
+  }, [boardId]);
 
   useEffect(() => {
     const loadInboxCards = async () => {
