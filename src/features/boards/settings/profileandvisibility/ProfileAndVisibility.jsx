@@ -300,7 +300,7 @@ export default function ProfileAndVisibility() {
   const navigate = useNavigate();
   
   const [form, setForm] = useState({
-    username_public: "",
+    display_name: "",
     bio: "",
     is_discoverable: true,
     show_boards_on_profile: false,
@@ -314,7 +314,7 @@ export default function ProfileAndVisibility() {
 
   useEffect(() => {
     // Load profile từ backend
-    axiosClient.get("/accounts/me/profile/").then(({ data }) => {
+    axiosClient.get("/auth/me/profile/").then(({ data }) => {
       setForm(prev => ({ ...prev, ...data }));
     }).catch(err => {
       console.error("Error loading profile:", err);
@@ -343,19 +343,19 @@ export default function ProfileAndVisibility() {
     setSaving(true);
     try {
       const fd = new FormData();
-      fd.append("username_public", form.username_public || "");
+      fd.append("display_name", form.display_name || "");
       fd.append("bio", form.bio || "");
       fd.append("is_discoverable", form.is_discoverable);
       fd.append("show_boards_on_profile", form.show_boards_on_profile);
       if (avatarFile) fd.append("avatar", avatarFile);
       if (bannerFile) fd.append("banner", bannerFile);
 
-      await axiosClient.patch("/accounts/me/profile/", fd, {
+      await axiosClient.patch("/auth/me/profile/", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
       // Refresh data after save
-      const { data } = await axiosClient.get("/accounts/me/profile/");
+      const { data } = await axiosClient.get("/auth/me/profile/");
       setForm(prev => ({ ...prev, ...data }));
       
       // Reset file inputs
@@ -448,8 +448,8 @@ export default function ProfileAndVisibility() {
                   <Label>Username *</Label>
                   <Input
                     type="text"
-                    value={form.username_public}
-                    onChange={(e) => handleInputChange('username_public', e.target.value)}
+                    value={form.display_name}
+                    onChange={(e) => handleInputChange('display_name', e.target.value)}
                     placeholder="Enter your username"
                   />
                 </FormGroup>
