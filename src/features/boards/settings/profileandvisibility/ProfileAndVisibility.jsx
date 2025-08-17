@@ -415,8 +415,8 @@ export default function ProfileAndVisibility() {
             <CardContent>
               <AvatarSection>
                 <Avatar>
-                  {form.avatar_url ? (
-                    <img src={form.avatar_url} alt="Profile" />
+                  {form.avatar ? (
+                    <img src={form.avatar} alt="Profile" />
                   ) : (
                     <AvatarInitial>
                       {form.username_public ? form.username_public.charAt(0).toUpperCase() : 'U'}
