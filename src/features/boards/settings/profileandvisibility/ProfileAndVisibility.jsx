@@ -315,7 +315,16 @@ export default function ProfileAndVisibility() {
   useEffect(() => {
     // Load profile từ backend
     axiosClient.get("/auth/me/profile/").then(({ data }) => {
-      setForm(prev => ({ ...prev, ...data }));
+      console.log("Loaded profile data:", data);
+      setForm(prev => ({ 
+        ...prev, 
+        display_name: data.display_name || "",
+        bio: data.bio || "",
+        is_discoverable: Boolean(data.is_discoverable),
+        show_boards_on_profile: Boolean(data.show_boards_on_profile),
+        avatar_url: data.avatar_url || "",
+        banner_url: data.banner_url || "",
+      }));
     }).catch(err => {
       console.error("Error loading profile:", err);
     });
@@ -329,6 +338,9 @@ export default function ProfileAndVisibility() {
     const file = e.target.files[0];
     if (file) {
       setAvatarFile(file);
+      // Preview immediately
+      const previewUrl = URL.createObjectURL(file);
+      setForm(prev => ({ ...prev, avatar_url: previewUrl }));
     }
   };
 
@@ -336,6 +348,9 @@ export default function ProfileAndVisibility() {
     const file = e.target.files[0];
     if (file) {
       setBannerFile(file);
+      // Preview immediately
+      const previewUrl = URL.createObjectURL(file);
+      setForm(prev => ({ ...prev, banner_url: previewUrl }));
     }
   };
 
@@ -343,31 +358,59 @@ export default function ProfileAndVisibility() {
     setSaving(true);
     try {
       const fd = new FormData();
-      fd.append("display_name", form.display_name || "");
-      fd.append("bio", form.bio || "");
-      fd.append("is_discoverable", form.is_discoverable);
-      fd.append("show_boards_on_profile", form.show_boards_on_profile);
+
+      // Text
+      fd.append("display_name", String(form.display_name || ""));
+      fd.append("bio", String(form.bio || ""));
+
+      // Booleans -> string 'true'/'false'
+      fd.append("is_discoverable", form.is_discoverable ? "true" : "false");
+      fd.append("show_boards_on_profile", form.show_boards_on_profile ? "true" : "false");
+
+      // Files
       if (avatarFile) fd.append("avatar", avatarFile);
       if (bannerFile) fd.append("banner", bannerFile);
 
-      await axiosClient.patch("/auth/me/profile/", fd, {
+      // Debug
+      console.log("FormData contents:");
+      for (let [k, v] of fd.entries()) console.log(k, v);
+
+      const res = await axiosClient.patch("/auth/me/profile/", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      // Refresh data after save
-      const { data } = await axiosClient.get("/auth/me/profile/");
-      setForm(prev => ({ ...prev, ...data }));
-      
-      // Reset file inputs
+      // Cập nhật form theo response
+      setForm((prev) => ({
+        ...prev,
+        ...res.data,
+        avatar_url: res.data.avatar_url || prev.avatar_url,
+        banner_url: res.data.banner_url || prev.banner_url,
+      }));
+
       setAvatarFile(null);
       setBannerFile(null);
-      
+
+      // Đồng bộ về Header/Subheader: refetch /auth/me
+      try {
+        const me = await axiosClient.get("/auth/me");
+        // Nếu bạn có setter trong AuthContext, hãy gọi ở đây, ví dụ:
+        // setUser(me.data);
+        // Nếu chưa có, tạm bắn event để nơi khác lắng nghe và tự reload:
+        window.dispatchEvent(new Event("auth:user-updated"));
+      } catch (e) {
+        console.warn("Could not refresh /auth/me after profile save", e);
+      }
     } catch (error) {
       console.error("Error saving profile:", error);
+      console.error("Error response:", error.response?.data);
+      alert(
+        "Error saving profile: " + (error.response?.data?.error || error.message)
+      );
     } finally {
       setSaving(false);
     }
   };
+
 
   return (
     <Container>
@@ -415,11 +458,11 @@ export default function ProfileAndVisibility() {
             <CardContent>
               <AvatarSection>
                 <Avatar>
-                  {form.avatar ? (
-                    <img src={form.avatar} alt="Profile" />
+                  {form.avatar_url ? (
+                    <img src={form.avatar_url} alt="Profile" />
                   ) : (
                     <AvatarInitial>
-                      {form.username_public ? form.username_public.charAt(0).toUpperCase() : 'U'}
+                      {form.display_name ? form.display_name.charAt(0).toUpperCase() : 'U'}
                     </AvatarInitial>
                   )}
                 </Avatar>
@@ -445,12 +488,12 @@ export default function ProfileAndVisibility() {
             <CardContent>
               <FormRow single>
                 <FormGroup>
-                  <Label>Username *</Label>
+                  <Label>Display Name *</Label>
                   <Input
                     type="text"
                     value={form.display_name}
                     onChange={(e) => handleInputChange('display_name', e.target.value)}
-                    placeholder="Enter your username"
+                    placeholder="Enter your display name"
                   />
                 </FormGroup>
               </FormRow>
@@ -459,7 +502,7 @@ export default function ProfileAndVisibility() {
                 <FormGroup>
                   <Label>Bio</Label>
                   <Textarea
-                    value={form.bio || ""}
+                    value={form.bio}
                     onChange={(e) => handleInputChange('bio', e.target.value)}
                     placeholder="Tell people a bit about yourself..."
                   />
@@ -482,7 +525,7 @@ export default function ProfileAndVisibility() {
                 <CheckboxItem>
                   <input 
                     type="checkbox" 
-                    checked={!!form.is_discoverable}
+                    checked={form.is_discoverable}
                     onChange={(e) => handleInputChange('is_discoverable', e.target.checked)}
                   />
                   Make my profile public
@@ -490,7 +533,7 @@ export default function ProfileAndVisibility() {
                 <CheckboxItem>
                   <input 
                     type="checkbox"
-                    checked={!!form.show_boards_on_profile}
+                    checked={form.show_boards_on_profile}
                     onChange={(e) => handleInputChange('show_boards_on_profile', e.target.checked)}
                   />
                   Show my boards on my public profile

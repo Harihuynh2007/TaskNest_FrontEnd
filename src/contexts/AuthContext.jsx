@@ -13,14 +13,14 @@ export function AuthProvider({ children }) {
 
   const fetchUserDetails = useCallback(async () => {
     try {
-      const res = await api.get('/auth/me/'); 
-      const data = res.data;
-      setUser({
+      
+      const { data } = await api.get('/auth/me/');
+        setUser({
         id: data.id,
         email: data.email,
         username: data.username,
-        avatar: data.avatar, // Lấy avatar từ API
         role: data.role || 'user',
+        profile: data.profile, 
       });
     } catch (err) {
       console.error('Failed to fetch user:', err);
@@ -44,12 +44,29 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      fetchUserDetails().then(preloadWorkspaces);
+      Promise.all([fetchUserDetails(), preloadWorkspaces()]).finally(() => {
+        setLoading(false);
+      });
     } else {
       setLoading(false);
     }
   }, [fetchUserDetails, preloadWorkspaces]);
 
+  // Lắng nghe sự kiện cập nhật profile từ các trang khác
+  useEffect(() => {
+    const handleUserUpdate = () => {
+      console.log("AuthContext: Received 'auth:user-updated' event. Refetching user details...");
+      fetchUserDetails(); // Gọi lại hàm fetch user để lấy dữ liệu mới nhất
+    };
+
+    window.addEventListener('auth:user-updated', handleUserUpdate);
+
+    // Dọn dẹp listener khi component unmount
+    return () => {
+      window.removeEventListener('auth:user-updated', handleUserUpdate);
+    };
+  }, [fetchUserDetails]);
+  
   const login = useCallback(async (email, password) => {
     const res = await authLogin(email, password);
     const { token: access, refresh } = res.data;
@@ -76,11 +93,11 @@ export function AuthProvider({ children }) {
     
     // Cập nhật user state trực tiếp từ response để UI nhanh hơn
     setUser({
-        id: userData.id,
-        email: userData.email,
-        username: userData.username,
-        avatar: userData.avatar,
-        role: userData.role,
+      id: userData.id,
+      email: userData.email,
+      username: userData.username,
+      role: userData.role,
+      profile: userData.profile, // BE google-login trả kèm user -> có profile lồng bên trong
     });
     
     await preloadWorkspaces(); // Tải workspace

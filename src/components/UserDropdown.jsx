@@ -6,27 +6,45 @@ import { AuthContext } from '../contexts/AuthContext';
 import { getUserMenuConfig } from '../features/boards/userMenuConfig';
 import '../styles/App.css';
 
-export default function UserDropdown({ user, logout }) {
-  const { user: authUser } = useContext(AuthContext);
+export default function UserDropdown({ logout }) {
+  const { user } = useContext(AuthContext);
   const { openModal } = useContext(ModalContext);
 
   const menuItems = getUserMenuConfig({ user, logout, openModal });
 
   // ✅ TẠO MỘT BIẾN CHO TÊN VIẾT TẮT ĐỂ DÙNG LẠI
-  const userInitial = user?.display_name?.charAt(0)?.toUpperCase() || 'U';
+  const p = user?.profile;
+  const userInitial =
+  p?.initials ||
+  p?.display_name?.charAt(0)?.toUpperCase() ||
+  (user?.email ? user.email.charAt(0).toUpperCase() : 'U');
+
+
+   const displayName =
+    p?.display_name || p?.display_name_computed || user?.email || 'User';
+
+   const avatarSrc =
+    p?.avatar_url ||
+    p?.avatar_thumbnail_url ||
+    `https://placehold.co/32x32/28a745/FFFFFF?text=${encodeURIComponent(userInitial)}`;
 
   return (
     <Dropdown>
       <Dropdown.Toggle as="div" style={{ cursor: 'pointer' }}>
         <Image
-          src={user?.avatar || `https://placehold.co/32x32/28a745/FFFFFF?text=${userInitial}`}
+          src={avatarSrc}
           roundedCircle
           width={32}
           height={32}
-          style={{ marginLeft: '8px' }}
-          alt={user?.email || 'User avatar'}
+          alt={displayName}
+          style={{ marginLeft: 8, objectFit: "cover" }}
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = `https://placehold.co/32x32/28a745/FFFFFF?text=${encodeURIComponent(userInitial)}`;
+          }}
         />
       </Dropdown.Toggle>
+
       <Dropdown.Menu align="end" className="custom-dropdown-menu">
         {menuItems.map((item, idx) => {
           if (item.section) {

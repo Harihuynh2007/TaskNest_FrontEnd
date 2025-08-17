@@ -1,11 +1,17 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import styled from 'styled-components';
 import { FiUserPlus, FiZap, FiFilter, FiShare2, FiMoreHorizontal } from 'react-icons/fi';
 import { FaStar } from 'react-icons/fa';
 import { GoOrganization } from 'react-icons/go';
 import { Dropdown } from 'react-bootstrap';
+import { AuthContext } from '../contexts/AuthContext';
 
-export default function BoardSubHeaderRight({ setShowFilter, filterButtonRef, onOpenInvite, onCloseBoard}) {
+export default function BoardSubHeaderRight({ 
+  setShowFilter, 
+  filterButtonRef, 
+  onOpenInvite, 
+  onCloseBoard
+}) {
 
   const CustomToggle = React.forwardRef(({ children, onClick }, ref) => (
     <IconButton
@@ -20,10 +26,26 @@ export default function BoardSubHeaderRight({ setShowFilter, filterButtonRef, on
     </IconButton>
   ));
 
+  const { user } = useContext(AuthContext);
+
+  const p = user?.profile;
+
+  const initials =
+    p?.initials ||
+    p?.display_name?.charAt(0)?.toUpperCase() ||
+    (user?.email ? user.email.charAt(0).toUpperCase() : "U");
+
+  const avatarSrc =
+    p?.avatar_thumbnail_url ||
+    p?.avatar_url ||
+    `https://placehold.co/28x28/28a745/FFFFFF?text=${encodeURIComponent(initials)}`;
+
+  const displayName = p?.display_name || p?.display_name_computed || user?.email || 'User';
+
   return (
     <Wrapper>
       <RightSpan>
-        <Avatar title="Hải Huỳnh" src="https://i.imgur.com/4ZQZ4Zl.png" />
+        <Avatar title={displayName} alt={displayName} src={avatarSrc} />
         <ActionButton><FiZap /> Power-Ups</ActionButton>
         <IconButton title="Automation"><FiZap /></IconButton>
         <IconButton
