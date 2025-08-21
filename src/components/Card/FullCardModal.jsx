@@ -14,6 +14,19 @@ import axios from '../../api/apiClient';
 import Comment from './Comment/Comment';
 import CommentInput from './Comment/CommentInput';
 import { getCardComments, updateCardDescription } from '../../api/cardApi';
+import {
+  getCardChecklists,
+  createChecklist,
+  updateChecklist,
+  deleteChecklist,
+  createChecklistItem,
+  updateChecklistItem,
+  deleteChecklistItem,
+  toggleChecklistItem
+} from '../../api/checklistApi';
+
+import CheckListPopup from '../ChecklistCard/CheckListPopup';
+import ChecklistSection from '../ChecklistCard/ChecklistSection';
 
 export default function FullCardModal({ 
   card, 
@@ -25,14 +38,186 @@ export default function FullCardModal({
   const [description, setDescription] = useState(card.description || '');
   const [comments, setComments] = useState([]);
   const [isComplete, setIsComplete] = useState(false);
+  const [showChecklistPopup, setShowChecklistPopup] = useState(false);
+  const [checklistAnchor, setChecklistAnchor] = useState(null);
   const overlayRef = useRef();
   const modalRef = useRef();
+  const checklistPopupRef = useRef();    
 
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [tempDesc, setTempDesc] = useState(description);
   const [loadingComments, setLoadingComments] = useState(false);
   const [saveState, setSaveState] = useState({ saving: false, error: null });
 
+  const [localCard, setLocalCard] = useState({
+    ...card,
+    checklists: card.checklists || []
+  });
+
+  useEffect(() => {
+    setLocalCard(prev => ({ ...prev, ...card, checklists: card.checklists || prev.checklists || [] }));
+  }, [card]);
+
+  const setCardAndBubble = (updater) => {
+    setLocalCard(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      onCardUpdate?.(next);
+      return next;
+    });
+  };
+
+  // Nếu card ban đầu chưa có checklists, load 1 lần
+  useEffect(() => {
+    if (!card.checklists || card.checklists.length === 0) {
+      (async () => {
+        try {
+          const data = await getCardChecklists(card.id);
+          setCardAndBubble(prev => ({ ...prev, checklists: data }));
+        } catch (e) {
+          console.error('fetch checklists failed', e);
+        }
+      })();
+    }
+  }, [card.id]);
+
+  // Tạo checklist từ popup
+  const handleCreateChecklist = async ({ title }) => {
+    try {
+      const newCL = await createChecklist(card.id, { title });  
+      setCardAndBubble(prev => ({
+        ...prev,
+        checklists: [...(prev.checklists || []), { ...newCL, items: newCL.items || [] }]
+      }));
+    } catch (e) {
+      console.error('create checklist failed', e.response?.data || e);
+    }
+  };
+
+  // 2) Đổi tên checklist
+  const handleChecklistTitle = async (clId, newTitle) => {
+    const backup = localCard;
+    setCardAndBubble(prev => ({
+      ...prev,
+      checklists: (prev.checklists || []).map(cl => cl.id === clId ? { ...cl, title: newTitle } : cl)
+    }));
+    try {
+      await updateChecklist(clId, { title: newTitle });
+    } catch (e) {
+      console.error('update checklist title failed', e);
+      setLocalCard(backup); onCardUpdate?.(backup);
+    }
+  };
+
+  // 3) Thêm item
+  const handleAddItem = async (clId, text) => {
+    const name = (text || "").trim();
+    if (!name) return;
+
+    const tempId = `tmp_${Date.now()}`;
+    const optimistic = { id: tempId, text: name, completed: false };
+
+    setCardAndBubble(prev => ({
+      ...prev,
+      checklists: prev.checklists.map(cl => 
+        cl.id === clId ? { ...cl, items: [...(cl.items || []), optimistic] } : cl)
+    }));
+
+    try {
+      const real = await createChecklistItem(clId, { text: name });
+      setCardAndBubble(prev => ({
+        ...prev,
+        checklists: prev.checklists.map(cl => {
+          if (cl.id !== clId) return cl;
+          return { ...cl, items: (cl.items || []).map(it => it.id === tempId ? real : it) };
+        })
+      }));
+    } catch (e) {
+      console.error('create item failed', e.response?.data || e);
+      setCardAndBubble(prev => ({
+        ...prev,
+        checklists: prev.checklists.map(cl => 
+          cl.id === clId 
+          ? { ...cl, items: (cl.items || []).filter(it => it.id !== tempId) } 
+          : cl)
+      }));
+    }
+  };
+
+  // 5) Xoá item
+  const handleDeleteItem = async (clId, itemId) => {
+    const backup = localCard;
+    setCardAndBubble(prev => ({
+      ...prev,
+      checklists: prev.checklists.map(cl => cl.id === clId ? { ...cl, items: (cl.items || []).filter(it => it.id !== itemId) } : cl)
+    }));
+    try {
+      await deleteChecklistItem(itemId);
+    } catch (e) {
+      console.error('delete item failed', e);
+      setLocalCard(backup); onCardUpdate?.(backup);
+    }
+  };
+
+  // Toggle trạng thái item (completed true/false)
+  const handleToggleItem = async (clId, itemId) => {
+    const current = localCard.checklists
+      .find(c => c.id === clId)?.items
+      ?.find(i => i.id === itemId);
+    if (!current) return;
+
+    const newCompleted = !current.completed;
+
+    // Optimistic update
+    setCardAndBubble(prev => ({
+      ...prev,
+      checklists: prev.checklists.map(cl =>
+        cl.id === clId
+          ? {
+              ...cl,
+              items: cl.items.map(it =>
+                it.id === itemId ? { ...it, completed: newCompleted } : it
+              ),
+            }
+          : cl
+      ),
+    }));
+
+    try {
+      await toggleChecklistItem(itemId, newCompleted); // gọi API ở checklistApi.js
+    } catch (e) {
+      console.error("toggle item failed", e);
+      // Rollback khi lỗi
+      setCardAndBubble(prev => ({
+        ...prev,
+        checklists: prev.checklists.map(cl =>
+          cl.id === clId
+            ? {
+                ...cl,
+                items: cl.items.map(it =>
+                  it.id === itemId ? { ...it, completed: !newCompleted } : it
+                ),
+              }
+            : cl
+        ),
+      }));
+    }
+  };
+
+  const handleDeleteChecklist = async (clId) => {
+    const backup = localCard;
+    // optimistic remove
+    setCardAndBubble(prev => ({
+      ...prev,
+      checklists: (prev.checklists || []).filter(cl => cl.id !== clId),
+    }));
+    try {
+      await deleteChecklist(clId);
+    } catch (e) {
+      console.error("delete checklist failed", e.response?.data || e);
+      // rollback
+      setLocalCard(backup); onCardUpdate?.(backup);
+    }
+  };
   // Load comments khi modal mở
   useEffect(() => {
     if (card?.id) {
@@ -156,9 +341,10 @@ export default function FullCardModal({
   const handleClickOutside = useCallback((e) => {
     const clickedOverlay = overlayRef.current?.contains(e.target);
     const clickedInsideModal = modalRef.current?.contains(e.target);
+    const clickedInsideChecklist = checklistPopupRef.current?.contains?.(e.target);
 
-    if (clickedOverlay && !clickedInsideModal) {
-      handleTitleSave();
+    if (clickedOverlay && !clickedInsideModal && !clickedInsideChecklist) {
+      // handleTitleSave(); // nếu muốn auto-save tiêu đề giống cũ
       onClose();
     }
   }, [onClose]);
@@ -176,156 +362,189 @@ export default function FullCardModal({
   };
 
   return (
-    <Overlay ref={overlayRef}>
-      <ModalContainer ref={modalRef}>
-        <HeaderBar>
-          <HeaderLeft>
-            <TitleButton aria-label="Open card menu">
-              <CardTitle>{title}</CardTitle>
-              <DropIcon aria-hidden="true">
-                <IoChevronDown size={20} />
-              </DropIcon>
-            </TitleButton>
-          </HeaderLeft>
-          <HeaderRight>
-            <IconBtn title="Feedback" aria-label="Feedback">📢</IconBtn>
-            <IconBtn title="Cover" aria-label="Cover">🖼️</IconBtn>
-            <IconBtn title="Actions" aria-label="Actions">⋯</IconBtn>
-            <CloseBtn onClick={onClose} aria-label="Close">
-              <IoCloseOutline size={24} />
-            </CloseBtn>
-          </HeaderRight>
-        </HeaderBar>
+  <Overlay ref={overlayRef}>
+    <ModalContainer ref={modalRef}>
+      <HeaderBar>
+        <HeaderLeft>
+          <TitleButton aria-label="Open card menu">
+            <CardTitle>{title}</CardTitle>
+            <DropIcon aria-hidden="true">
+              <IoChevronDown size={20} />
+            </DropIcon>
+          </TitleButton>
+        </HeaderLeft>
+        <HeaderRight>
+          <IconBtn title="Feedback" aria-label="Feedback">📢</IconBtn>
+          <IconBtn title="Cover" aria-label="Cover">🖼️</IconBtn>
+          <IconBtn title="Actions" aria-label="Actions">⋯</IconBtn>
+          <CloseBtn onClick={onClose} aria-label="Close">
+            <IoCloseOutline size={24} />
+          </CloseBtn>
+        </HeaderRight>
+      </HeaderBar>
 
-        <ContentBody>
-          <MainColumn>
-            <TitleSection>
-              <TitleCheckboxWrapper>
-                <CompleteCheckbox
-                  type="checkbox"
-                  checked={isComplete}
-                  onChange={handleToggleComplete}
-                  aria-label={`Mark this card complete (${title})`}
-                />
-              </TitleCheckboxWrapper>
-              <TitleContent>
-                <EditableTitle
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  onKeyDown={handleTitleKeyDown}
-                  onBlur={handleTitleSave}
-                  placeholder="Card title"
-                />
-              </TitleContent>
-            </TitleSection>
-
-            <ActionSectionGrid>
-              <EmptyIconSpace />
-              <ActionSectionBody>
-                <ActionButton><span>+ Add</span></ActionButton>
-                <ActionButton><BiLabel /> Labels</ActionButton>
-                <ActionButton><BsClock /> Dates</ActionButton>
-                <ActionButton><MdChecklist /> Checklist</ActionButton>
-                <ActionButton><HiOutlineUserAdd /> Members</ActionButton>
-              </ActionSectionBody>
-            </ActionSectionGrid>
-
-            <DescriptionSection>
-              <DescriptionIconWrapper>
-                <HiOutlineMenuAlt2 size={20} />
-              </DescriptionIconWrapper>
-              <DescriptionContent>
-                <SectionHeading>Description</SectionHeading>
-                {isEditingDesc ? (
-                  <EditorBox>
-                    <Textarea
-                      value={tempDesc}
-                      onChange={(e) => setTempDesc(e.target.value)}
-                      placeholder="Add a more detailed description..."
-                      disabled={saveState.saving}
-                    />
-                    <ButtonRow>
-                      <SaveBtn 
-                        onClick={handleSaveDescription}
-                        disabled={saveState.saving}
-                      >
-                        {saveState.saving ? 'Saving...' : 'Save'}
-                      </SaveBtn>
-                      <CancelBtn 
-                        onClick={handleCancelDescription}
-                        disabled={saveState.saving}
-                      >
-                        Cancel
-                      </CancelBtn>
-                    </ButtonRow>
-                  </EditorBox>
-                ) : (
-                  <PreviewBox onClick={() => setIsEditingDesc(true)}>
-                    {description ? 
-                      <DescriptionText>{description}</DescriptionText> : 
-                      <PlaceholderText>Add a more detailed description...</PlaceholderText>
-                    }
-                  </PreviewBox>
-                )}
-              </DescriptionContent>
-            </DescriptionSection>
-          </MainColumn>
-
-          <Sidebar>
-            <Section>
-              <SectionLabel>Add a comment</SectionLabel>
-              <CommentInput
-                cardId={card.id}
-                onCommentAdded={handleCommentAdded}
-                currentUser={mockCurrentUser}
-                placeholder="Write a comment..."
-                onCommentReplaced={handleCommentReplaced}
-                onCommentRemove={handleCommentRemove}
+      <ContentBody>
+        <MainColumn>
+          <TitleSection>
+            <TitleCheckboxWrapper>
+              <CompleteCheckbox
+                type="checkbox"
+                checked={isComplete}
+                onChange={handleToggleComplete}
+                aria-label={`Mark this card complete (${title})`}
               />
-              
-              <ActivityHeader>
-                <SectionLabel>Activity</SectionLabel>
-                {comments.length > 0 && (
-                  <ShowDetailsButton>Show details</ShowDetailsButton>
-                )}
-              </ActivityHeader>
-              
-              {loadingComments ? (
-                <LoadingText>Loading comments...</LoadingText>
+            </TitleCheckboxWrapper>
+            <TitleContent>
+              <EditableTitle
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                onKeyDown={handleTitleKeyDown}
+                onBlur={handleTitleSave}
+                placeholder="Card title"
+              />
+            </TitleContent>
+          </TitleSection>
+
+          <ActionSectionGrid>
+            <EmptyIconSpace />
+            <ActionSectionBody>
+              <ActionButton><span>+ Add</span></ActionButton>
+              <ActionButton><BiLabel /> Labels</ActionButton>
+              <ActionButton><BsClock /> Dates</ActionButton>
+              <ActionButton
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setChecklistAnchor(rect);         // ✅ lưu anchorRect của nút
+                  setShowChecklistPopup(true);
+                }}
+              >
+                <MdChecklist /> Checklist
+              </ActionButton>
+              <ActionButton><HiOutlineUserAdd /> Members</ActionButton>
+            </ActionSectionBody>
+          </ActionSectionGrid>
+
+          <DescriptionSection>
+            <DescriptionIconWrapper>
+              <HiOutlineMenuAlt2 size={20} />
+            </DescriptionIconWrapper>
+            <DescriptionContent>
+              <SectionHeading>Description</SectionHeading>
+              {isEditingDesc ? (
+                <EditorBox>
+                  <Textarea
+                    value={tempDesc}
+                    onChange={(e) => setTempDesc(e.target.value)}
+                    placeholder="Add a more detailed description..."
+                    disabled={saveState.saving}
+                  />
+                  <ButtonRow>
+                    <SaveBtn 
+                      onClick={handleSaveDescription}
+                      disabled={saveState.saving}
+                    >
+                      {saveState.saving ? 'Saving...' : 'Save'}
+                    </SaveBtn>
+                    <CancelBtn 
+                      onClick={handleCancelDescription}
+                      disabled={saveState.saving}
+                    >
+                      Cancel
+                    </CancelBtn>
+                  </ButtonRow>
+                </EditorBox>
               ) : (
-                <CommentList>
-                  {comments.map((comment) => (
-                    <Comment
-                      key={comment.id ?? comment.temp_id}
-                      comment = {comment}
-                      onUpdate={handleCommentUpdated}
-                      onDelete={handleCommentDeleted}
-                      currentUserId={mockCurrentUser.id}
-                    />
-                  ))}
-                  
-                  {/* Activity item mẫu */}
-                  <ActivityItem>
-                    <ActivityAvatar>H</ActivityAvatar>
-                    <ActivityContent>
-                      <ActivityText>
-                        <strong>Hải Huỳnh</strong> added this card to <strong>Inbox</strong>
-                      </ActivityText>
-                      <ActivityTime>Jul 27, 2025, 12:42 PM</ActivityTime>
-                    </ActivityContent>
-                  </ActivityItem>
-                  
-                  {comments.length === 0 && !loadingComments && (
-                    <EmptyState>No comments yet. Be the first to comment!</EmptyState>
-                  )}
-                </CommentList>
+                <PreviewBox onClick={() => setIsEditingDesc(true)}>
+                  {description ? 
+                    <DescriptionText>{description}</DescriptionText> : 
+                    <PlaceholderText>Add a more detailed description...</PlaceholderText>
+                  }
+                </PreviewBox>
               )}
-            </Section>
-          </Sidebar>
-        </ContentBody>
-      </ModalContainer>
-    </Overlay>
-  );
+            </DescriptionContent>
+          </DescriptionSection>
+
+          {(localCard.checklists || []).map(cl => (
+            <ChecklistSection
+              key={cl.id}
+              checklist={cl}
+              onChangeTitle={handleChecklistTitle}
+              onAddItem={handleAddItem}
+              onToggleItem={handleToggleItem}
+              onDeleteItem={handleDeleteItem}
+              onDeleteChecklist={handleDeleteChecklist}
+            />
+          ))}
+
+        </MainColumn>
+
+        <Sidebar>
+          <Section>
+            <SectionLabel>Add a comment</SectionLabel>
+            <CommentInput
+              cardId={card.id}
+              onCommentAdded={handleCommentAdded}
+              currentUser={mockCurrentUser}
+              placeholder="Write a comment..."
+              onCommentReplaced={handleCommentReplaced}
+              onCommentRemove={handleCommentRemove}
+            />
+            
+            <ActivityHeader>
+              <SectionLabel>Activity</SectionLabel>
+              {comments.length > 0 && (
+                <ShowDetailsButton>Show details</ShowDetailsButton>
+              )}
+            </ActivityHeader>
+            
+            {loadingComments ? (
+              <LoadingText>Loading comments...</LoadingText>
+            ) : (
+              <CommentList>
+                {comments.map((comment) => (
+                  <Comment
+                    key={comment.id ?? comment.temp_id}
+                    comment={comment}
+                    onUpdate={handleCommentUpdated}
+                    onDelete={handleCommentDeleted}
+                    currentUserId={mockCurrentUser.id}
+                  />
+                ))}
+
+                {/* Activity item mẫu */}
+                <ActivityItem>
+                  <ActivityAvatar>H</ActivityAvatar>
+                  <ActivityContent>
+                    <ActivityText>
+                      <strong>Hải Huỳnh</strong> added this card to <strong>Inbox</strong>
+                    </ActivityText>
+                    <ActivityTime>Jul 27, 2025, 12:42 PM</ActivityTime>
+                  </ActivityContent>
+                </ActivityItem>
+
+                {comments.length === 0 && !loadingComments && (
+                  <EmptyState>No comments yet. Be the first to comment!</EmptyState>
+                )}
+              </CommentList>
+            )}
+          </Section>
+        </Sidebar>
+      </ContentBody>
+    </ModalContainer>
+
+    {showChecklistPopup && (
+      <CheckListPopup
+        ref={checklistPopupRef}
+        anchorRect={checklistAnchor}
+        onClose={() => setShowChecklistPopup(false)}
+        onSubmit={handleCreateChecklist}            // ✅ dùng handler đã thêm
+        existingChecklists={localCard.checklists || []}
+      />
+    )}
+    
+  </Overlay>
+);
+
 }
 
 
