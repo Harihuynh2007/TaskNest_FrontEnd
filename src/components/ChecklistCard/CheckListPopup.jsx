@@ -19,8 +19,8 @@ const CheckListPopup = forwardRef(function CheckListPopup(
 
   const stylePos = useMemo(() => {
     if (!anchorRect) return {};
-    const popupWidth = 304;   // đúng bằng CSS width
-    const popupHeight = 200;  // ước lượng ~, chỉ để quyết định flip; không cần quá chính xác
+    const popupWidth = 304;   
+    const popupHeight = 200;  
     const gap = 8;
     
 
