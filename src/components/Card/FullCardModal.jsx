@@ -9,10 +9,17 @@ import { IoChevronDown } from 'react-icons/io5';
 import { HiOutlineMenuAlt2 } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import axios from '../../api/apiClient';
+import api from '../../api/apiClient'; 
+
+import * as cardApi from '../../api/cardApi'; // ✅ Fixed import
 
 // Import new components
 import Comment from './Comment/Comment';
 import CommentInput from './Comment/CommentInput';
+
+import AttachmentPopup from '../Attachment/AttachmentPopup';
+import AttachmentItem from '../Attachment/AttachmentItem';
+
 import { getCardComments, updateCardDescription } from '../../api/cardApi';
 import {
   getCardChecklists,
@@ -27,6 +34,7 @@ import {
 
 import CheckListPopup from '../ChecklistCard/CheckListPopup';
 import ChecklistSection from '../ChecklistCard/ChecklistSection';
+import { Button } from 'react-bootstrap';
 
 export default function FullCardModal({ 
   card, 
@@ -40,6 +48,7 @@ export default function FullCardModal({
   const [isComplete, setIsComplete] = useState(false);
   const [showChecklistPopup, setShowChecklistPopup] = useState(false);
   const [checklistAnchor, setChecklistAnchor] = useState(null);
+  const [attachmentAnchor, setAttachmentAnchor] = useState(null); // ✅ Added missing state
   const overlayRef = useRef();
   const modalRef = useRef();
   const checklistPopupRef = useRef();    
@@ -49,14 +58,39 @@ export default function FullCardModal({
   const [loadingComments, setLoadingComments] = useState(false);
   const [saveState, setSaveState] = useState({ saving: false, error: null });
 
+  const [showAttachmentPopup, setShowAttachmentPopup] = useState(false);
+  const [attachments, setAttachments] = useState([]);
+
+
+  const fetchAttachments = async () => {
+    try {
+      const res = await cardApi.getCardAttachments(card.id);
+      setAttachments(res);
+      setCardAndBubble(prev => ({
+        ...prev,
+        attachments: res
+      }));
+    } catch (err) {
+      console.error('Failed to load attachments:', err);
+    }
+  };
+
   const [localCard, setLocalCard] = useState({
     ...card,
-    checklists: card.checklists || []
+    checklists: card.checklists || [],
+    attachments: card.attachments || []
   });
 
   useEffect(() => {
     setLocalCard(prev => ({ ...prev, ...card, checklists: card.checklists || prev.checklists || [] }));
   }, [card]);
+
+  // ✅ Load attachments when modal opens
+  useEffect(() => {
+    if (card?.id) {
+      fetchAttachments();
+    }
+  }, [card?.id]);
 
   const setCardAndBubble = (updater) => {
     setLocalCard(prev => {
@@ -338,6 +372,83 @@ export default function FullCardModal({
     }
   }, [card]);
 
+  // ✅ Attachment handlers
+  const handleAttachmentAdded = (attachment) => {
+    setCardAndBubble((prev) => ({
+      ...prev,
+      attachments: [attachment, ...(prev.attachments || [])]
+    }));
+    // Also update local attachments state
+    setAttachments(prev => [attachment, ...prev]);
+  };
+
+  const handleSetCover = async (id) => {
+    try {
+      await cardApi.updateAttachment(id, { is_cover: true });
+      setCardAndBubble((prev) => ({
+        ...prev,
+        attachments: prev.attachments.map((att) => ({
+          ...att,
+          is_cover: att.id === id
+        }))
+      }));
+      setAttachments(prev => prev.map(att => ({
+        ...att,
+        is_cover: att.id === id
+      })));
+      toast.success('Cover set successfully');
+    } catch (err) {
+      console.error('Failed to set cover:', err);
+      toast.error('Failed to set cover');
+    }
+  };
+
+
+  const handleRemoveCover = async (id) => {
+    try {
+      await cardApi.updateAttachment(id, { is_cover: false });
+      setCardAndBubble((prev) => ({
+        ...prev,
+        attachments: prev.attachments.map((att) => ({
+          ...att,
+          is_cover: att.id === id ? false : att.is_cover
+        }))
+      }));
+      setAttachments(prev => prev.map(att => ({
+        ...att,
+        is_cover: att.id === id ? false : att.is_cover
+      })));
+      toast.success('Cover removed successfully');
+    } catch (err) {
+      console.error('Failed to remove cover:', err);
+      toast.error('Failed to remove cover');
+    }
+  };
+
+
+  const handleDeleteAttachment = async (id) => {
+    try {
+      await cardApi.deleteAttachment(id);
+      setCardAndBubble((prev) => ({
+        ...prev,
+        attachments: prev.attachments.filter((att) => att.id !== id)
+      }));
+      setAttachments(prev => prev.filter(att => att.id !== id));
+      toast.success('Attachment deleted successfully');
+    } catch (err) {
+      console.error('Failed to delete attachment:', err);
+      toast.error('Failed to delete attachment');
+    }
+  };
+
+  const handleOpenAttachmentPopup = () => {
+    setShowAttachmentPopup(true);
+  };
+
+  const handleCloseAttachmentPopup = () => {
+    setShowAttachmentPopup(false);
+  };
+
   const handleClickOutside = useCallback((e) => {
     const clickedOverlay = overlayRef.current?.contains(e.target);
     const clickedInsideModal = modalRef.current?.contains(e.target);
@@ -421,6 +532,16 @@ export default function FullCardModal({
                 <MdChecklist /> Checklist
               </ActionButton>
               <ActionButton><HiOutlineUserAdd /> Members</ActionButton>
+
+              <ActionButton
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setAttachmentAnchor(rect);
+                  setShowAttachmentPopup(true);
+                }}
+                >
+                📎 Attachment
+              </ActionButton>
             </ActionSectionBody>
           </ActionSectionGrid>
 
@@ -463,6 +584,26 @@ export default function FullCardModal({
               )}
             </DescriptionContent>
           </DescriptionSection>
+
+          {localCard.attachments?.length > 0 && (
+            <Section>
+              <SectionHeader>
+                <span>📎 Attachments</span>
+                <AddButton onClick={handleOpenAttachmentPopup}>Add</AddButton>
+              </SectionHeader>
+              <div>
+                {attachments.map((att) => (
+                  <AttachmentItem
+                    key={att.id}
+                    attachment={att}
+                    onSetCover={() => handleSetCover(att.id)}
+                    onRemoveCover={() => handleRemoveCover(att.id)}
+                    onDelete={() => handleDeleteAttachment(att.id)}
+                  />
+                ))}
+              </div>
+            </Section>
+          )}
 
           {(localCard.checklists || []).map(cl => (
             <ChecklistSection
@@ -540,6 +681,16 @@ export default function FullCardModal({
         onSubmit={handleCreateChecklist}            // ✅ dùng handler đã thêm
         existingChecklists={localCard.checklists || []}
       />
+    )}
+
+    {showAttachmentPopup && (
+      <PopupOverlay>
+        <AttachmentPopup
+          cardId={card.id}
+          onClose={() => setShowAttachmentPopup(false)}
+          onAttachmentAdded={handleAttachmentAdded}
+        />
+      </PopupOverlay>
     )}
     
   </Overlay>
@@ -908,3 +1059,42 @@ const ActivityTime = styled.div`
   font-size: 12px;
   color: #6b778c;
 `;
+
+const PopupOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+`;
+
+const SectionHeader = styled.div`
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #172b4d;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const AddButton = styled.button`
+  background: none;
+  border: none;
+  color: #42526e;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 3px;
+
+  &:hover {
+    background-color: #091e4214;
+    text-decoration: underline;
+  }
+`
+;
