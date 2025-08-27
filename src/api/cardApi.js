@@ -94,3 +94,41 @@ export async function updateCardDescription(cardId, description) {
   const { data } = await api.patch(`/cards/${cardId}/`, { description });
   return data;
 }
+
+
+// ----- Attachments -----
+export async function getCardAttachments(cardId) {
+  const res = await api.get(`/cards/${cardId}/attachments/`);
+  return res.data.results || res.data || [];
+}
+
+export async function createAttachmentFile(cardId, file, name) {
+  const form = new FormData();
+  form.append('attachment_type', 'file');
+  form.append('file', file);
+  if (name) form.append('name', name);
+  
+  const res = await api.post(`/cards/${cardId}/attachments/`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return res.data;
+}
+
+export async function createAttachmentLink(cardId, url, name) {
+  const form = new FormData();
+  form.append('attachment_type', 'link');
+  form.append('url', url);
+  if (name) form.append('name', name);
+  
+  const res = await api.post(`/cards/${cardId}/attachments/`, form);
+  return res.data;
+}
+
+export async function updateAttachment(attachmentId, data) {
+  const res = await api.patch(`/attachments/${attachmentId}/`, data);
+  return res.data;
+}
+
+export async function deleteAttachment(attachmentId) {
+  await api.delete(`/attachments/${attachmentId}/`);
+}
