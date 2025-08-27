@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { X } from 'lucide-react';
 import { createAttachmentFile, createAttachmentLink } from '../../api/cardApi';
 
-const TrelloAttachmentPopup = ({ cardId, onClose, onAttachmentAdded }) => {
+const AttachmentPopup = ({ cardId, onClose, onAttachmentAdded }) => {
   const [file, setFile] = useState(null);
   const [linkUrl, setLinkUrl] = useState('');
   const [displayText, setDisplayText] = useState('');
@@ -38,7 +38,7 @@ const TrelloAttachmentPopup = ({ cardId, onClose, onAttachmentAdded }) => {
   };
 
   return (
-    <PopupWrapper>
+    <PopupWrapper onMouseDown={(e) => e.stopPropagation()}>
       <PopupHeader>
         <Title>Attach</Title>
         <CloseButton onClick={onClose}><X size={18} /></CloseButton>
@@ -77,7 +77,7 @@ const TrelloAttachmentPopup = ({ cardId, onClose, onAttachmentAdded }) => {
   );
 };
 
-export default TrelloAttachmentPopup;
+export default AttachmentPopup;
 
 const PopupWrapper = styled.div`
   width: 400px;
