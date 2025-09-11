@@ -20,6 +20,8 @@ import CommentInput from './Comment/CommentInput';
 import AttachmentPopup from '../Attachment/AttachmentPopup';
 import AttachmentItem from '../Attachment/AttachmentItem';
 
+import ActivityList from './activity/ActivityList';
+
 import { getCardComments, updateCardDescription } from '../../api/cardApi';
 import {
   getCardChecklists,
@@ -653,16 +655,12 @@ export default function FullCardModal({
                 ))}
 
                 {/* Activity item mẫu */}
-                <ActivityItem>
-                  <ActivityAvatar>H</ActivityAvatar>
-                  <ActivityContent>
-                    <ActivityText>
-                      <strong>Hải Huỳnh</strong> added this card to <strong>Inbox</strong>
-                    </ActivityText>
-                    <ActivityTime>Jul 27, 2025, 12:42 PM</ActivityTime>
-                  </ActivityContent>
-                </ActivityItem>
-
+                <ActivityHeader>
+                  <SectionLabel>Activity</SectionLabel>
+                  {comments.length > 0 && <ShowDetailsButton>Show details</ShowDetailsButton>}
+                </ActivityHeader>
+                <ActivityList cardId={card.id} />
+                
                 {comments.length === 0 && !loadingComments && (
                   <EmptyState>No comments yet. Be the first to comment!</EmptyState>
                 )}
