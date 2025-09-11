@@ -648,7 +648,7 @@ export default function FullCardModal({
                   />
                 ))}
 
-                {/* Activity item mẫu */}
+                {/* Activity */}
                 <ActivityHeader>
                   <SectionLabel>Activity</SectionLabel>
                   {comments.length > 0 && <ShowDetailsButton>Show details</ShowDetailsButton>}

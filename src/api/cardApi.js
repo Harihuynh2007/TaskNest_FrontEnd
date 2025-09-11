@@ -133,6 +133,7 @@ export async function deleteAttachment(attachmentId) {
   await api.delete(`/attachments/${attachmentId}/`);
 }
 
-export const getCardActivity = (cardId, { limit = 30, offset = 0 } = {}) =>
-  api.get(`/cards/${cardId}/activities/`, { params: { limit, offset } })
-    .then(res => res.data);
+export const getCardActivity = async (cardId, params = {}) => {
+  const response = await api.get(`/cards/${cardId}/activities/`, { params });
+  return response.data;
+};
