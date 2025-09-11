@@ -633,12 +633,6 @@ export default function FullCardModal({
               onCommentRemove={handleCommentRemove}
             />
             
-            <ActivityHeader>
-              <SectionLabel>Activity</SectionLabel>
-              {comments.length > 0 && (
-                <ShowDetailsButton>Show details</ShowDetailsButton>
-              )}
-            </ActivityHeader>
             
             {loadingComments ? (
               <LoadingText>Loading comments...</LoadingText>

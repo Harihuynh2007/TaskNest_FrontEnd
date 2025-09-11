@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getCardActivity } from '../../api/cardApi';
+import { getCardActivity } from '../../../api/cardApi';
 
 function timeAgo(iso) {
   const d = new Date(iso);
@@ -17,11 +17,13 @@ function renderMessage(item) {
     case 'card_created': return `đã tạo thẻ “${m.title ?? ''}”`;
     case 'title_changed': return `đã đổi tiêu đề: “${m.from ?? ''}” → “${m.to ?? ''}”`;
     case 'description_changed': return `đã cập nhật mô tả`;
-    case 'moved_list': return `đã di chuyển thẻ (list ${m.from_list_id ?? ''} → ${m.to_list_id ?? ''})`;
+    case 'moved_list':
+      return `đã di chuyển thẻ từ “${m.from_list_name}” sang “${m.to_list_name}”`;
     case 'completed_toggled': return m.completed ? 'đã đánh dấu Hoàn thành' : 'đã bỏ đánh dấu Hoàn thành';
     case 'due_set': return `đã đặt hạn`;
     case 'due_cleared': return `đã gỡ hạn`;
-    case 'label_added': return `đã thêm label #${m.label_id}`;
+    case 'label_added':
+      return `đã thêm label “${m.label_name ?? m.label_id}”`;
     case 'label_removed': return `đã xoá label #${m.label_id}`;
     case 'comment_added': return `đã thêm bình luận`;
     case 'comment_deleted': return `đã xoá bình luận`;

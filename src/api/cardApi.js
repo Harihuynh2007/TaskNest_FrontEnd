@@ -134,5 +134,5 @@ export async function deleteAttachment(attachmentId) {
 }
 
 export const getCardActivity = (cardId, { limit = 30, offset = 0 } = {}) =>
-  api.get(`/cards/${cardId}/activity/`, { params: { limit, offset } })
+  api.get(`/cards/${cardId}/activities/`, { params: { limit, offset } })
     .then(res => res.data);
