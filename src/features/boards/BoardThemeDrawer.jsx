@@ -5,14 +5,14 @@ import styled from 'styled-components';
 import BoardBackgroundPopup from './BoardBackgroundPopup';
 
 const visibilityOptions = [
-  { key: 'private', label: 'Private', icon: <FaLock className="me-2" />, description: 'Only board members can see this board.' },
+  { key: 'private', label: 'Private', icon: <FaLock className="me-2" />, description: 'Only board members can see this board. Workspace admins can close the board or remove members.' },
   { key: 'workspace', label: 'Workspace', icon: <FaUsers className="me-2" />, description: 'All members of the workspace can see and edit this board.' },
-  { key: 'public', label: 'Public', icon: <FaGlobe className="me-2" />, description: 'Anyone on the internet can see this board.' }
+  { key: 'public', label: 'Public', icon: <FaGlobe className="me-2" />, description: 'Anyone on the internet can see this board. Only board members can edit.' }
 ];
 
 const colorOptions = ['rgb(168, 105, 193)', 'rgb(34, 140, 213)', '#00b8ff', '#f06292', '#0277bd'];
 
-export default function BoardThemeDrawer({ show, onClose, onCreate }) {
+export default function BoardThemeDrawer({ show, onClose, onCreate, isOwner = true }) {
   const [title, setTitle] = useState('');
   const [visibility, setVisibility] = useState('workspace');
   const [error, setError] = useState('');
@@ -48,6 +48,13 @@ export default function BoardThemeDrawer({ show, onClose, onCreate }) {
 
   if (!show) return null;
 
+  const handleVisibilityChange = (value) =>{
+    if(value === 'public'){
+      const ok = window.confirm("This board will be public. Are you sure?");
+      if(!ok) return;
+    }
+    setVisibility(value);
+  };
   return (
     <DrawerWrapper ref={drawerRef}>
       <Header>
@@ -96,7 +103,10 @@ export default function BoardThemeDrawer({ show, onClose, onCreate }) {
         <Form.Label><strong>Visibility</strong></Form.Label>
         <Form.Select
           value={visibility}
-          onChange={(e) => setVisibility(e.target.value)}
+          onChange={(e) =>  handleVisibilityChange(e.target.value)}
+          disabled={!isOwner}
+          aria-label= "Board visibility"
+          aria-describedby="visibility-description"
         >
           {visibilityOptions.map(opt => (
             <option key={opt.key} value={opt.key}>{opt.label}</option>
