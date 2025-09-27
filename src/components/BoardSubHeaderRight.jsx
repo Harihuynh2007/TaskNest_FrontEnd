@@ -10,7 +10,9 @@ export default function BoardSubHeaderRight({
   setShowFilter, 
   filterButtonRef, 
   onOpenInvite, 
-  onCloseBoard
+  onCloseBoard,
+  isStarred,
+  onToggleStar
 }) {
 
   const CustomToggle = React.forwardRef(({ children, onClick }, ref) => (
@@ -55,7 +57,14 @@ export default function BoardSubHeaderRight({
         >
           <FiFilter />
         </IconButton>
-        <IconButton title="Star board"><FaStar color="#e2b203" /></IconButton>
+        <IconButton 
+          title="Star board" 
+          onClick={onToggleStar}
+        >
+          <FaStar 
+            color={isStarred ? '#e2b203' : '#ffffff'} 
+          />
+        </IconButton>
         <IconButton title="Workspace visible"><GoOrganization /></IconButton>
         <ActionButton onClick={onOpenInvite}><FiShare2 /> Share</ActionButton>
 
