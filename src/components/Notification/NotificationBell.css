@@ -1,0 +1,122 @@
+.notification-bell {
+  position: relative;
+  display: inline-block;
+}
+
+.notification-bell .badge-notif {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--ds-background-danger-bold);
+  color: var(--ds-text-inverse);
+  border-radius: var(--ds-border-radius-circle);
+  padding: 2px 6px;
+  font: var(--ds-font-body-small);
+  line-height: 1;
+}
+
+/* Popup container */
+.notif-popover {
+  position: absolute;
+  right: 0;
+  top: 36px;
+  width: 432px;
+  max-height: 480px;
+  background: var(--ds-surface-overlay);
+  border-radius: var(--ds-border-radius-200);
+  box-shadow: var(--ds-shadow-overlay);
+  overflow: auto;
+  z-index: 2000;
+  color: var(--ds-text);
+  font: var(--ds-font-body);
+}
+
+/* Header */
+.notif-header {
+  padding: var(--ds-space-200);
+  border-bottom: 1px solid var(--ds-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notif-header h6 {
+  font: var(--ds-font-heading-small);
+  margin: 0;
+}
+
+/* List */
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-050);
+  padding: var(--ds-space-100);
+}
+
+/* Empty state */
+.notif-empty {
+  text-align: center;
+  padding: var(--ds-space-400) var(--ds-space-200);
+  color: var(--ds-text-subtle);
+  font: var(--ds-font-body);
+}
+
+.notif-empty img {
+  opacity: 0.7;
+  margin-bottom: var(--ds-space-150);
+}
+
+/* Item */
+.notif-item {
+  padding: var(--ds-space-150);
+  border-radius: var(--ds-border-radius-100);
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.notif-item.unread {
+  background: var(--ds-background-selected);
+}
+
+.notif-item.unread:hover {
+  background: var(--ds-background-selected-hovered);
+}
+
+.notif-item.read {
+  background: var(--ds-surface);
+}
+
+.notif-item.read:hover {
+  background: var(--ds-surface-overlay-hovered);
+}
+
+/* Body */
+.notif-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-title {
+  font-weight: var(--ds-font-weight-semibold);
+  font-size: 0.875rem;
+  margin-bottom: var(--ds-space-050);
+  color: var(--ds-text);
+}
+
+.notif-message {
+  font: var(--ds-font-body-small);
+  color: var(--ds-text-subtle);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Meta (time) */
+.notif-meta {
+  font: var(--ds-font-body-small);
+  color: var(--ds-text-subtlest);
+  white-space: nowrap;
+  margin-left: var(--ds-space-100);
+}
