@@ -18,6 +18,7 @@ import CreateDropdown from './CreateDropdown';
 import CreateWorkspaceModal from '../features/workspaces/CreateWorkspaceModal';
 import SwitchAccountsModal from '../features/auth/SwitchAccountsModal';
 import BoardThemeDrawer from '../features/boards/BoardThemeDrawer';
+import NotificationBell from './Notification/NotificationBell';
 
 export default function Header() {
   const { user, logout } = useContext(AuthContext);
@@ -133,7 +134,7 @@ export default function Header() {
 
             <Nav className="align-items-center">
               <AiOutlineGlobal size={20} style={{ marginLeft: '4px' }} />
-              <MdNotificationsNone size={20} style={{ marginLeft: '4px' }} />
+              <NotificationBell />
               <FiHelpCircle size={20} style={{ marginLeft: '4px' }} />
               {user && <UserDropdown user={user} logout={logout} />}
             </Nav>
