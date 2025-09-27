@@ -1,10 +1,18 @@
-import React from 'react';
+import React, {useState} from 'react';
 import styled from 'styled-components';
 import BoardSubHeaderLeft from './BoardSubHeaderLeft';
 import BoardSubHeaderRight from './BoardSubHeaderRight';
+
 import ShareBoardPopup from './member/ShareBoardPopup';
 
 export default function BoardSubHeader({ boardName = 'Untitled Board', setShowFilter, filterButtonRef, onOpenInvite,onCloseBoard  }) {
+  const [isStarred, setIsStarred] = useState(false);
+
+  const handleToggleStar = () => {
+    setIsStarred(prevIsStarred => !prevIsStarred);
+    console.log(isStarred? 'Bỏ đánh dấu sao' : 'Đã đánh dấu sao');
+  }
+  
   return (
     <HeaderContainer>
       <InnerWrapper>
@@ -18,6 +26,8 @@ export default function BoardSubHeader({ boardName = 'Untitled Board', setShowFi
           filterButtonRef={filterButtonRef}
           onOpenInvite={onOpenInvite}
           onCloseBoard={onCloseBoard}
+          isStarred={isStarred}
+          onToggleStar={handleToggleStar}
            />
           
         </RightSpan>
