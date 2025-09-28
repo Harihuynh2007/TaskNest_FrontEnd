@@ -11,8 +11,29 @@ export const auth = {
 // Workspace & Board Routes
 export const workspaces = {
   list: () => '/workspaces/', // GET, POST
+
+  // 1. Lấy chi tiết, cập nhật, hoặc xóa một workspace cụ thể
+  detail: (workspaceId) => `/workspaces/${workspaceId}/`, 
+
+  // 2. Lấy danh sách thành viên của một workspace
+  members: (workspaceId) => `/workspaces/${workspaceId}/members/`,
+
+  // 3. Mời thành viên mới vào workspace
+  inviteMember: (workspaceId) => `/workspaces/${workspaceId}/invite/`, // POST
+
+  // 4. Lấy danh sách boards của một workspace (bạn đã có)
   boards: (workspaceId) => `/workspaces/${workspaceId}/boards/`, // GET, POST
+
   boardDetail: (workspaceId, boardId) => `/workspaces/${workspaceId}/boards/${boardId}/`, // GET
+
+  // 5 . Share Links
+  shareLinks: (workspaceId) => `/workspaces/${workspaceId}/share-links/`,   
+  shareLinkDetail: (token) => `/workspaces/share-links/${token}/`,         
+  joinByLink: (token) => `/workspaces/join-by-link/${token}/`,  
+
+  // 6 . Invites accept/revoke 
+  inviteAccept: (token) => `/workspaces/invites/${token}/accept/`,          
+  inviteRevoke: (token) => `/workspaces/invites/${token}/revoke/`, 
 };
 
 // Board specific resources
