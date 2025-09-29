@@ -5,11 +5,10 @@ import { Col, ListGroup, Dropdown, Button } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { WorkspaceContext } from '../contexts/WorkspaceContext';
-// <-- SỬA LỖI 2: Thêm icon mũi tên và bỏ icon không dùng
 import { FaTrello, FaPlus, FaFileAlt, FaHome, FaUsers, FaCog, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import InviteWorkspaceModal from './InviteWorkspaceModal';
 
-// --- STYLED COMPONENTS ---
-// (Giữ nguyên từ file gốc của bạn)
+
 const StyledItem = styled(ListGroup.Item)`
   display: flex;
   align-items: center;
@@ -30,7 +29,6 @@ const StyledItem = styled(ListGroup.Item)`
   }
 `;
 
-// <-- SỬA LỖI 3: Thêm các styled components bị thiếu
 const WorkspaceHeader = styled.div`
   text-transform: uppercase;
   font-size: 0.75rem;
@@ -85,18 +83,18 @@ const SquareButton = styled(Button)`
   /* Giữ nguyên định nghĩa SquareButton của bạn */
 `;
 
-// --- COMPONENT CHÍNH ---
 export default function SiderBar() {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // <-- SỬA LỖI 1: Khởi tạo state
+  const [showInvite, setShowInvite] = useState(false);
+ 
   const [isWorkspaceMenuOpen, setWorkspaceMenuOpen] = useState(true);
 
   const { workspaces, currentWorkspaceId, setCurrentWorkspaceId, loadingWorkspaces } = useContext(WorkspaceContext);
   const currentWs = workspaces.find(w => w.id === currentWorkspaceId) || {};
 
-  // <-- SỬA LỖI 4: Sửa typo tên hàm
+
   const isWorkspacePathActive = (path) => {
     return location.pathname.startsWith(`/w/${currentWs.id}/${path}`);
   };
@@ -163,7 +161,12 @@ export default function SiderBar() {
           </WorkspaceNavItem>
           <WorkspaceNavItem $isActive={isWorkspacePathActive('members')} onClick={() => navigate(`/w/${currentWs.id}/members`)}>
             <FaUsers /> Members
-            <InviteButton aria-label="Invite Workspace members">
+            <InviteButton
+              aria-label="Invite Workspace members" 
+              className="invite-btn"
+              onClick={(e) => { e.stopPropagation(); setShowInvite(true); }}
+              title="Invite"
+            >
               <FaPlus size={12} />
             </InviteButton>
           </WorkspaceNavItem>
@@ -172,6 +175,7 @@ export default function SiderBar() {
           </WorkspaceNavItem>
         </ListGroup>
       )}
+
 
       {workspaces.length > 1 && (
         <Dropdown className="mt-2 mb-4">
@@ -191,6 +195,15 @@ export default function SiderBar() {
         </Dropdown>
       )}
       
+      {showInvite && currentWs?.id && (
+        <InviteWorkspaceModal
+          workspaceId={currentWs.id}
+          workspaceName={currentWs.name}
+          onClose={() => setShowInvite(false)}
+          onCreatedLink={() => {}}
+        />
+      )}
+
       {/* Premium promo card */}
       <div className="p-3 border rounded">
         <h6>Try TaskNest Premium</h6>
