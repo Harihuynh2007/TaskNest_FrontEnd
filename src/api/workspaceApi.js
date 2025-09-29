@@ -66,6 +66,5 @@ export const deleteShareLink = (token) =>
 export const joinWorkspaceByLink = (token) =>
   api.post(routes.joinByLink(token));
 
-// (tuỳ chọn) invites accept/revoke cho trang accept-invite
 export const acceptInvite = (token) => api.post(routes.inviteAccept(token));
 export const revokeInvite = (token) => api.post(routes.inviteRevoke(token));
