@@ -15,7 +15,6 @@ import { AiOutlineGlobal } from 'react-icons/ai';
 import AppsDropdown from './AppsDropdown';
 import UserDropdown from './UserDropdown';
 import CreateDropdown from './CreateDropdown';
-import CreateWorkspaceModal from '../features/workspaces/CreateWorkspaceModal';
 import SwitchAccountsModal from '../features/auth/SwitchAccountsModal';
 import BoardThemeDrawer from '../features/boards/BoardThemeDrawer';
 import NotificationBell from './Notification/NotificationBell';
@@ -142,12 +141,6 @@ export default function Header() {
         </Container>
       </Navbar>
 
-      {modals.createWorkspace?.open && (
-        <CreateWorkspaceModal
-          onCreate={modals.createWorkspace.props.onCreate}
-          onClose={() => closeModal('createWorkspace')}
-        />
-      )}
       {modals.switchAccounts?.open && (
         <SwitchAccountsModal
           onSwitch={modals.switchAccounts.props.onSwitch}
