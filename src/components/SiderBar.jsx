@@ -6,7 +6,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { WorkspaceContext } from '../contexts/WorkspaceContext';
 import { FaTrello, FaPlus, FaFileAlt, FaHome, FaUsers, FaCog, FaChevronDown, FaChevronUp } from 'react-icons/fa';
-import InviteWorkspaceModal from './InviteWorkspaceModal';
+import InviteWorkspaceModal from './Workspace/InviteWorkspaceModal';
 
 
 const StyledItem = styled(ListGroup.Item)`
