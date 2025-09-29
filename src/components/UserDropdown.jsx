@@ -3,7 +3,7 @@ import { Dropdown, Image } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { ModalContext } from '../contexts/ModalContext';
 import { AuthContext } from '../contexts/AuthContext';
-import { getUserMenuConfig } from '../features/boards/userMenuConfig';
+import { getUserMenuConfig } from './userMenuConfig';
 import '../styles/App.css';
 
 export default function UserDropdown({ logout }) {
