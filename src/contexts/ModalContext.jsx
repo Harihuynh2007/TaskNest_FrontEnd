@@ -1,5 +1,6 @@
 
 import React, { createContext, useState, useCallback } from 'react';
+import CreateWorkspaceModal from '../components/Workspace/CreateWorkspaceModal';
 
 export const ModalContext = createContext();
 
@@ -17,6 +18,18 @@ export function ModalProvider({ children }) {
   return (
     <ModalContext.Provider value={{ modals, openModal, closeModal }}>
       {children}
+
+      {modals.createWorkspace?.open && (
+        <CreateWorkspaceModal
+          {...modals.createWorkspace.props}
+          onClose={() => closeModal('createWorkspace')}
+          onContinue={({ name, type, description }) => {
+            // TODO: gọi API tạo workspace
+            console.log('Creating workspace:', name, type, description);
+            closeModal('createWorkspace');
+          }}
+        />
+      )}
     </ModalContext.Provider>
   );
 }
