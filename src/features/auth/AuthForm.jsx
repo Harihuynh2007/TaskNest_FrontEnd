@@ -114,11 +114,11 @@ export default function AuthForm({ mode = 'login' }) {
 
     try {
       if (isLogin) {
-        await login({ email, password });
+        await login(email, password);
         handleSaveAccount(email);
         navigate('/boards');
       } else {
-        await signup({ email, password });
+        await signup(email, password);
         navigate('/login?registered=true');
       }
     } catch (err) {

@@ -68,8 +68,8 @@ export function AuthProvider({ children }) {
   }, [fetchUserDetails]);
   
   const login = useCallback(async (email, password) => {
-    const res = await authLogin(email, password);
-    const { token: access, refresh } = res.data;
+    const data = await authLogin({ email, password });
+    const { token: access, refresh } = data;
 
     localStorage.setItem('token', access);
     localStorage.setItem('refresh_token', refresh);
@@ -78,7 +78,7 @@ export function AuthProvider({ children }) {
 
     await fetchUserDetails();      // 1. Fetch user
     await preloadWorkspaces();     // 2. Preload workspaces
-    return res;
+    return true;
   }, [fetchUserDetails, preloadWorkspaces]);
 
   const loginWithGoogle = useCallback(async (googleToken) => {
@@ -106,8 +106,8 @@ export function AuthProvider({ children }) {
 
   // -------------------SIGN UP----------------//
   const signup = useCallback(async (email, password) => {
-    const res = await authRegister(email, password);
-    const { token: access, refresh } = res.data;
+    const data = await authRegister({ email, password }); 
+    const { token: access, refresh } = data;
 
     localStorage.setItem('token', access);
     localStorage.setItem('refresh_token', refresh);
@@ -116,7 +116,7 @@ export function AuthProvider({ children }) {
 
     await fetchUserDetails();
     await preloadWorkspaces();
-    return res;
+    return true;
   }, [fetchUserDetails, preloadWorkspaces]);
 
   // -------------------LOG OUT----------------//
