@@ -35,6 +35,9 @@ export const addMemberToBoard = (boardId, userId, role = 'member') =>
     role: role 
   });
 
+export const inviteMemberByEmail = (boardId, email, role = 'member') =>
+  api.post(`/boards/${boardId}/invitations/`, { email, role }); 
+
 export const updateMemberRole = (boardId, userId, role) => 
   api.patch(boards.members(boardId), { 
     user_id: userId, 

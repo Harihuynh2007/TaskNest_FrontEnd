@@ -12,8 +12,11 @@ import {
   generateShareLink,
   deleteShareLink,
   getShareLink,
+  inviteMemberByEmail,
+
 } from '../../api/boardApi';
 import { searchUsers } from '../../api/authApi';
+const isValidEmail = (s) => /\S+@\S+\.\S+/.test(String(s || '').trim());
 
 // Constants
 const ROLES = {
@@ -21,6 +24,15 @@ const ROLES = {
   ADMIN: 'admin',
   EDITOR: 'editor',
   VIEWER: 'viewer',
+};
+
+const mapRoleForApi = (role) => {
+  switch (role) {
+    case ROLES.ADMIN: return 'admin';
+    case ROLES.VIEWER: return 'observer';
+    case ROLES.EDITOR:
+    default: return 'member';
+  }
 };
 
 const ROLE_LABELS = {
@@ -436,13 +448,16 @@ export default function ShareBoardPopup({ boardId, onClose, boardOwnerId }) {
 
   // Search users
   const { execute: performSearch } = useAsyncOperation(async (query) => {
-    if (query.length < 2) {
+    if (query.trim().length < 1) {
       dispatch({ type: 'SET_SEARCH_RESULTS', results: [] });
       return;
     }
 
-    const response = await searchUsers(query);
-    dispatch({ type: 'SET_SEARCH_RESULTS', results: response.data || [] });
+    const data = await searchUsers(query);
+    dispatch({ 
+      type: 'SET_SEARCH_RESULTS', 
+      results: Array.isArray(data) ? data : (data?.results || []),
+    });
   }, []);
 
   useEffect(() => {
@@ -492,6 +507,33 @@ export default function ShareBoardPopup({ boardId, onClose, boardOwnerId }) {
     dispatch({ type: 'UPDATE_MEMBER', userId, newRole });
     toast.success('Role updated successfully');
   }, [boardId]);
+
+  const handleShareClick = useCallback(async () => {
+    if (filteredSearchResults.length > 0) {
+      return handleInviteUser(filteredSearchResults[0]);
+    }
+    const email = state.searchQuery.trim();
+    if (isValidEmail(email)) {
+      dispatch({ type: 'SET_LOADING', loadingType: LOADING_STATES.MEMBER_ACTION, value: true });
+      clearError(ERROR_TYPES.MEMBER_ACTION);
+      try {
+        const res = await inviteMemberByEmail(boardId, email, mapRoleForApi(state.selectedRole));
+        if (res?.data?.token){
+          dispatch({ type: 'SET_INVITE_TOKEN', token: res.data.token });
+        }
+        
+        toast.success('Invitation email has been sent.');
+        dispatch({ type: 'CLEAR_SEARCH' });
+      } catch (error) {
+        handleError(error, ERROR_TYPES.MEMBER_ACTION);
+      } finally {
+        dispatch({ type: 'SET_LOADING', loadingType: LOADING_STATES.MEMBER_ACTION, value: false });
+      }
+      return;
+    }
+    toast.info('Hãy chọn 1 người từ gợi ý hoặc nhập email hợp lệ.');
+  }, [filteredSearchResults, state.searchQuery, state.selectedRole, boardId, clearError, handleError,handleInviteUser]);
+
 
   const handleRoleChange = useCallback(async (userId, newRole) => {
     dispatch({ type: 'SET_LOADING', loadingType: LOADING_STATES.MEMBER_ACTION, value: true });
@@ -622,11 +664,16 @@ export default function ShareBoardPopup({ boardId, onClose, boardOwnerId }) {
             <SearchSection>
               <SearchInputWrapper>
                 <SearchInput
-                  type="email"
+                  type="text"
                   placeholder="Email address or name"
                   value={state.searchQuery}
                   onChange={(e) => dispatch({ type: 'SET_SEARCH_QUERY', query: e.target.value })}
                   disabled={state.loading.memberAction}
+                  onKeyDown={(e) => {
+                    if(e.key=== 'Enter'){
+                      handleShareClick();
+                    }
+                  }}
                 />
                 <MemberRoleSelect
                   value={state.selectedRole}
@@ -637,9 +684,10 @@ export default function ShareBoardPopup({ boardId, onClose, boardOwnerId }) {
                   <option value={ROLES.EDITOR}>Member</option>
                   <option value={ROLES.VIEWER}>Observer</option>
                 </MemberRoleSelect>
+
                 <PrimaryButton 
-                  onClick={() => filteredSearchResults.length > 0 && handleInviteUser(filteredSearchResults[0])}
-                  disabled={!filteredSearchResults.length || state.loading.memberAction}
+                  onClick={handleShareClick}
+                  disabled={state.loading.memberAction}
                 >
                   {state.loading.memberAction ? (
                     <FaSpinner className="spin" size={12} />
@@ -652,7 +700,7 @@ export default function ShareBoardPopup({ boardId, onClose, boardOwnerId }) {
               {/* Search Results */}
               {(state.loading.search || filteredSearchResults.length > 0) && (
                 <SearchResultsList>
-                  {state.loading.search && (
+                  {!state.loading.search && filteredSearchResults.length === 0 && state.searchQuery.length >= 1 && (
                     <SearchLoadingItem>
                       <FaSpinner className="spin" size={16} />
                       <span>Searching...</span>
@@ -666,7 +714,7 @@ export default function ShareBoardPopup({ boardId, onClose, boardOwnerId }) {
                       onSelect={handleInviteUser}
                     />
                   ))}
-                  {!state.loading.search && filteredSearchResults.length === 0 && state.searchQuery.length >= 2 && (
+                  {!state.loading.search && filteredSearchResults.length === 0 && state.searchQuery.length >= 1 && (
                     <SearchLoadingItem>
                       No users found matching "{state.searchQuery}"
                     </SearchLoadingItem>
