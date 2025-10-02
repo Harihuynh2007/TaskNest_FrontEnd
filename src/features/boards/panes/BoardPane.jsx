@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef,useContext } from 'react';
 import styled from 'styled-components';
 import BoardSubHeader from '../../../components/BoardSubHeader';
 import { FaPlus, FaTimes } from 'react-icons/fa';
@@ -17,11 +17,12 @@ import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import ShareBoardPopup from '../../../components/member/ShareBoardPopup';
-import { useFilter } from '../../../components/hook/useFilter';
+import useTrelloFilter from '../../../components/hook/useTrelloFilter';
 import { WorkspaceContext } from '../../../contexts'; 
-import { useContext } from 'react';
+
 
 import { toast } from 'react-hot-toast';
+
 
 dayjs.extend(isoWeek);
 dayjs.extend(isSameOrBefore);
@@ -47,11 +48,13 @@ export default function BoardPane({ background, boardId, lists, setLists, onList
   const [showFilter, setShowFilter] = useState(false);
   const {
     filter,
-    updateKeyword,
+    setKeyword,
     toggleArrayItem,
-    handleSingleSelectChange,
-    resetFilter,
-  } = useFilter();
+    toggleStatusCheckbox,
+    toggleDueWithConstraint,
+    setDueRangeSingle,
+    resetFilter
+  } = useTrelloFilter();
 
   const [members, setMembers] = useState([]);
   const [labels, setLabels] = useState([]);
@@ -167,28 +170,56 @@ export default function BoardPane({ background, boardId, lists, setLists, onList
 
 
   // Logic lọc cards
+  const now = dayjs();
+
   const filteredLists = lists.map((list) => ({
     ...list,
     cards: list.cards.filter((card) => {
-      const matchKeyword = (card.name || '').toLowerCase().includes(filter.keyword.toLowerCase());
+      const name = (card.name || '').toLowerCase();
+      const kw = (filter.keyword || '').toLowerCase();
+      const matchKeyword = name.includes(kw);
+
+      // STATUS
+      const s = filter.status;
       const matchStatus =
-        filter.status === 'all' ||
-        (filter.status === 'completed' && card.completed) ||
-        (filter.status === 'incomplete' && !card.completed);
 
-      const matchDue =
-        filter.due === 'all' ||
-        (filter.due === 'none' && !card.due_date) ||
-        (filter.due === 'overdue' && card.due_date && dayjs(card.due_date).isBefore(dayjs(), 'day') && !card.completed) ||
-        (filter.due === 'today' && card.due_date && dayjs(card.due_date).isSame(dayjs(), 'day')) ||
-        (filter.due === 'week' && card.due_date && dayjs(card.due_date).isoWeek() === dayjs().isoWeek());
+       s === 'all' ||
+      (s === 'completed' && !!card.completed) ||
+       (s === 'incomplete' && !card.completed);
 
-      const matchMembers = filter.members.length === 0 || (card.assignee && filter.members.includes(card.assignee));
-      const matchLabels = filter.labels.length === 0 || (card.labels && filter.labels.some(label => card.labels.includes(label)));
+      // DUE
+      const due = card.due_date ? dayjs(card.due_date) : null;
+      const d = Array.isArray(filter.due) ? filter.due : [];
+      const checkDueKey = (key) => {
+        switch (key) {
+          case 'none':    return !due;
+          case 'overdue': return due && due.isBefore(now, 'day') && !card.completed;
+          case 'today':   return due && due.isSame(now, 'day');
+          case 'week':    return due && due.isoWeek() === now.isoWeek();
+          case 'month':   return due && due.isSame(now, 'month');
+          default:        return true;
+        }
+      };
+      
+      const matchDue = Array.isArray(d)
+        ? (d.length === 0 ? true : d.some(checkDueKey))
+        : checkDueKey(d);
+
+      // MEMBERS / LABELS (đã là mảng đúng chuẩn)
+      const matchMembers =
+        !Array.isArray(filter.members) || filter.members.length === 0
+          ? true
+          : (card.assignee && filter.members.includes(card.assignee));
+
+      const matchLabels =
+        !Array.isArray(filter.labels) || filter.labels.length === 0
+          ? true
+          : (Array.isArray(card.labels) && filter.labels.some(lb => card.labels.includes(lb)));
 
       return matchKeyword && matchStatus && matchDue && matchMembers && matchLabels;
     }),
   }));
+
 
   // Cập nhật vị trí popup lọc
   useEffect(() => {
@@ -348,9 +379,11 @@ export default function BoardPane({ background, boardId, lists, setLists, onList
           position={popupPos}
           members={members}
           labels={labels}
-          updateKeyword={updateKeyword}
-          toggleArrayItem={toggleArrayItem}
-          handleSingleSelectChange={handleSingleSelectChange}
+          setKeyword={setKeyword}
+          toggleArrayItem={toggleArrayItem}            // dùng cho members/labels
+          toggleStatusCheckbox={toggleStatusCheckbox}  // status: single
+          toggleDueWithConstraint={toggleDueWithConstraint} // 'none'|'overdue'
+          setDueRangeSingle={setDueRangeSingle} 
         />
 
       )}
