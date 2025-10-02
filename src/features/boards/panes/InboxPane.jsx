@@ -13,6 +13,9 @@ import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 
+import * as cardApi from '../../../api/cardApi';
+import { toast } from 'react-hot-toast';
+
 dayjs.extend(isoWeek);
 dayjs.extend(isSameOrBefore);
 
@@ -44,6 +47,25 @@ export default function InboxPane({
     resetFilter,
     setDueRangeSingle,
   } = useTrelloFilter();
+
+  const handleCheckClick = async (cardId, next) => {
+  // 1) Optimistic vào state đang render ở InboxPane
+    setCards(prev =>
+      prev.map(c => (c.id === cardId ? { ...c, completed: next } : c))
+    );
+
+    try {
+      // 2) Gọi API (hoặc gọi hàm toggleComplete của cha nếu bạn muốn giữ ở cha)
+      await cardApi.updateCard(cardId, { completed: next }); // PATCH /cards/:id/
+    } catch (err) {
+      // 3) Rollback khi lỗi
+      setCards(prev =>
+        prev.map(c => (c.id === cardId ? { ...c, completed: !next } : c))
+      );
+      toast?.error?.('Cập nhật trạng thái thất bại, đã hoàn tác.');
+      console.error(err);
+    }
+  };
 
   const handleCardDeleted = (deletedCardId) => {
     console.log("Step 2.5: Parent component received onCardDeleted with ID:", deletedCardId);
@@ -142,7 +164,6 @@ export default function InboxPane({
 }, [showFilter]);
 
   
-
   return (
     <PaneWrapper $background={background}> 
       <InboxSubHeader
@@ -231,7 +252,7 @@ export default function InboxPane({
                       onEditClick={(e, card, index, rect) => {
                         setEditPopup({ card, index, text: card.name, anchorRect: rect });
                       }}
-                      onCheckClick={toggleComplete} 
+                      onCheckClick={handleCheckClick} 
 
                       onCardClick={(card) => setSelectedCard(card)}
                     />
