@@ -67,6 +67,13 @@ export const cards = {
 
 // Label Routes
 export const labels = {
-    // Cập nhật/Xóa một label cụ thể
-    detail: (labelId) => `/labels/${labelId}/`,
+  // Cập nhật/Xóa một label cụ thể
+  detail: (labelId) => `/labels/${labelId}/`,
 };
+
+export const notifications = {
+  list :() => `/notifications/`,
+  detail : (id) => `/notifications/${id}`,
+  markAllRead:() => `/notifications/mark-all-read`,
+  unreadCount: () => `/notifications/unread-count/`,
+}
