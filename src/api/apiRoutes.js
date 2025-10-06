@@ -44,7 +44,10 @@ export const boards = {
   labels: (boardId) => `/boards/${boardId}/labels/`,
   // Quản lý thành viên của board
   members: (boardId) => `/boards/${boardId}/members/`,
-  closed: () => '/boards/closed/',
+  closed: () => '/boards/closed/', 
+
+  boardTransferOwnership: (wsId, bId) => `/workspaces/${wsId}/boards/${bId}/transfer-owner/`
+
 };
 
 // List (Column) Routes
@@ -67,6 +70,13 @@ export const cards = {
 
 // Label Routes
 export const labels = {
-    // Cập nhật/Xóa một label cụ thể
-    detail: (labelId) => `/labels/${labelId}/`,
+  // Cập nhật/Xóa một label cụ thể
+  detail: (labelId) => `/labels/${labelId}/`,
 };
+
+export const notifications = {
+  list :() => `/notifications/`,
+  detail : (id) => `/notifications/${id}`,
+  markAllRead:() => `/notifications/mark-all-read`,
+  unreadCount: () => `/notifications/unread-count/`,
+}

@@ -1,41 +1,41 @@
-// components/BoardFilterPopup.jsx (đã đồng bộ)
+// components/InboxFilterPopup.jsx (đã đồng bộ)
 import React from 'react';
-import LabelFilterItem from './LabelFilterItem';
-import MemberFilterItem from './MemberFilterItem';
 import {
   Wrapper, Header, Title, CloseBtn, Section, SectionLabel,
-  KeywordInput, SubText, CheckboxGroup, CheckboxItem
-} from '../../components/popups/Popup.styles';
+  KeywordInput, CheckboxGroup, CheckboxItem
+} from '../popups/Popup.styles';
 
-// Chuẩn hoá lại options
+const createdDateOptions = [
+  { value: 'week',   label: 'Created in the last week' },
+  { value: '2weeks', label: 'Created in the last two weeks' },
+  { value: 'month',  label: 'Created in the last month' },
+];
+
 const statusOptions = [
-  { label: 'Marked as complete', value: 'completed' },
+  { label: 'Marked as complete',     value: 'completed' },
   { label: 'Not marked as complete', value: 'incomplete' }
 ];
 
 const dueCheckboxes = [
   { label: 'No dates', value: 'none' },
-  { label: 'Overdue', value: 'overdue' }
+  { label: 'Overdue',  value: 'overdue' }
 ];
 
 const dueRanges = [
-  { label: 'Due in the next day', value: 'today' },
-  { label: 'Due in the next week', value: 'week' },
+  { label: 'Due in the next day',   value: 'today' },
+  { label: 'Due in the next week',  value: 'week' },
   { label: 'Due in the next month', value: 'month' }
 ];
 
-export default function BoardFilterPopup({
+export default function InboxFilterPopup({
   filter,
   onClose,
   position,
-  members = [],
-  labels = [],
-  // API từ hook hợp nhất
   setKeyword,
-  toggleArrayItem,          // members/labels
-  toggleStatusCheckbox,     // status single
-  toggleDueWithConstraint,  // 'none'/'overdue'
-  setDueRangeSingle         // range single
+  toggleArrayItem,          // for 'created'
+  toggleStatusCheckbox,
+  toggleDueWithConstraint,
+  setDueRangeSingle
 }) {
   const onToggleRange = (val) => {
     const isSelected = filter.due.includes(val);
@@ -51,26 +51,28 @@ export default function BoardFilterPopup({
 
       {/* Keyword */}
       <Section>
+        <SectionLabel>Keyword</SectionLabel>
         <KeywordInput
           type="text"
-          placeholder="Enter a keyword..."
+          placeholder="Enter keyword..."
           value={filter.keyword}
           onChange={(e) => setKeyword(e.target.value)}
         />
-        <SubText>Search cards, members, labels, and more.</SubText>
       </Section>
 
-      {/* Members */}
+      {/* Created (Inbox only) */}
       <Section>
-        <SectionLabel>Members</SectionLabel>
+        <SectionLabel>Card created</SectionLabel>
         <CheckboxGroup>
-          {members.map(m => (
-            <MemberFilterItem
-              key={m.id}
-              member={m}
-              checked={filter.members.includes(m.id)}
-              onToggle={() => toggleArrayItem('members', m.id)}
-            />
+          {createdDateOptions.map(opt => (
+            <CheckboxItem key={opt.value} $checked={filter.created.includes(opt.value)}>
+              <input
+                type="checkbox"
+                checked={filter.created.includes(opt.value)}
+                onChange={() => toggleArrayItem('created', opt.value)}
+              />
+              <span>{opt.label}</span>
+            </CheckboxItem>
           ))}
         </CheckboxGroup>
       </Section>
@@ -99,7 +101,6 @@ export default function BoardFilterPopup({
       <Section>
         <SectionLabel>Due date</SectionLabel>
         <CheckboxGroup>
-          {/* Checkbox group: none/overdue */}
           {dueCheckboxes.map(opt => (
             <CheckboxItem key={opt.value} $checked={filter.due.includes(opt.value)}>
               <input
@@ -110,7 +111,6 @@ export default function BoardFilterPopup({
               <span>{opt.label}</span>
             </CheckboxItem>
           ))}
-          {/* Single range: today/week/month */}
           {dueRanges.map(opt => (
             <CheckboxItem key={opt.value} $checked={filter.due.includes(opt.value)}>
               <input
@@ -120,21 +120,6 @@ export default function BoardFilterPopup({
               />
               <span>{opt.label}</span>
             </CheckboxItem>
-          ))}
-        </CheckboxGroup>
-      </Section>
-
-      {/* Labels */}
-      <Section>
-        <SectionLabel>Labels</SectionLabel>
-        <CheckboxGroup>
-          {labels.map(label => (
-            <LabelFilterItem
-              key={label.id}
-              label={label}
-              checked={filter.labels.includes(label.id)}
-              onToggle={() => toggleArrayItem('labels', label.id)}
-            />
           ))}
         </CheckboxGroup>
       </Section>

@@ -44,7 +44,8 @@ export default function CardItem({
           $completed={card.completed}
           onClick={(e) => {
             e.stopPropagation();
-            onCheckClick(card.id);
+            const next = !card.completed;     
+            onCheckClick(card.id, next);
           }}
           aria-label={card.completed ? 'Bỏ hoàn thành thẻ' : 'Đánh dấu thẻ hoàn thành'}
         >

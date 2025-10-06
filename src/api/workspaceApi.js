@@ -25,6 +25,9 @@ export const fetchWorkspaceDetails = (workspaceId) => api.get(routes.detail(work
  */
 export const updateWorkspace = (workspaceId, data) => api.patch(routes.detail(workspaceId), data);
 
+export const updateWorkspacePolicy = (workspaceId, policy) =>
+  api.patch(routes.detail(workspaceId), { board_creation_policy: policy });
+
 /**
  * Xóa một workspace.
  * @param {string} workspaceId - ID của workspace.

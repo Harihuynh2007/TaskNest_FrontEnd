@@ -29,6 +29,10 @@ export const getClosedBoards = () =>
 export const fetchBoardMembers = (boardId) =>
   api.get(boards.members(boardId));
 
+export const transferBoardOwnership = (workspaceId, boardId, newOwnerId) =>
+  api.post(`/workspaces/${workspaceId}/boards/${boardId}/transfer-owner/`, 
+    { new_owner_id: newOwnerId });
+    
 export const addMemberToBoard = (boardId, userId, role = 'member') =>
   api.post(boards.members(boardId), { 
     user_id: userId,

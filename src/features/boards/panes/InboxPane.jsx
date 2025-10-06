@@ -1,4 +1,4 @@
-import React, { useState, useRef,useEffect } from 'react';
+import React, { useState, useRef,useEffect,useMemo } from 'react';
 import styled from 'styled-components';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 
@@ -7,12 +7,14 @@ import CardEditPopup from '../../../components/Card/CardEditPopup';
 import FullCardModal from '../../../components/Card/FullCardModal';
 import CardItem from '../../../components/Card/CardItem';
 import FeedbackPopup from '../../../components/FeedbackPopup';
-import FilterPopup from '../../../components/filter/FilterPopup';
-import { useSimpleFilter } from '../../../components/hook/useSimpleFilter'; // hoặc đúng path bạn đang dùng
-
+import InboxFilterPopup from '../../../components/filter/InboxFilterPopup';
+import useTrelloFilter from '../../../components/hook/useTrelloFilter';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+
+import * as cardApi from '../../../api/cardApi';
+import { toast } from 'react-hot-toast';
 
 dayjs.extend(isoWeek);
 dayjs.extend(isSameOrBefore);
@@ -38,11 +40,32 @@ export default function InboxPane({
   const [showFilter, setShowFilter] = useState(false);
   const {
     filter,
-    updateKeyword,
-    handleSingleSelectChange,
+    setKeyword,
+    toggleArrayItem,
+    toggleStatusCheckbox,
+    toggleDueWithConstraint,
     resetFilter,
-    isActive
-  } = useSimpleFilter();
+    setDueRangeSingle,
+  } = useTrelloFilter();
+
+  const handleCheckClick = async (cardId, next) => {
+  // 1) Optimistic vào state đang render ở InboxPane
+    setCards(prev =>
+      prev.map(c => (c.id === cardId ? { ...c, completed: next } : c))
+    );
+
+    try {
+      // 2) Gọi API (hoặc gọi hàm toggleComplete của cha nếu bạn muốn giữ ở cha)
+      await cardApi.updateCard(cardId, { completed: next }); // PATCH /cards/:id/
+    } catch (err) {
+      // 3) Rollback khi lỗi
+      setCards(prev =>
+        prev.map(c => (c.id === cardId ? { ...c, completed: !next } : c))
+      );
+      toast?.error?.('Cập nhật trạng thái thất bại, đã hoàn tác.');
+      console.error(err);
+    }
+  };
 
   const handleCardDeleted = (deletedCardId) => {
     console.log("Step 2.5: Parent component received onCardDeleted with ID:", deletedCardId);
@@ -52,42 +75,82 @@ export default function InboxPane({
 
   const [popupPos, setPopupPos] = useState({ top: 0, left: 0 });
 
-  const today = dayjs();
-
   const filterButtonRef = useRef(null);
+  
+  // cards là mảng card gốc
   const filteredCards = cards.filter((card) => {
-    const matchKeyword = card.name.toLowerCase().includes(filter.keyword.toLowerCase());
+    const name = (card.name || '').toLowerCase();
+    const kw = (filter.keyword || '').toLowerCase();
+    const matchKeyword = name.includes(kw);
 
+    // ----- STATUS: single select -----
     const matchStatus =
       filter.status === 'all' ||
-      (filter.status === 'completed' && card.completed) ||
+      (filter.status === 'completed' && !!card.completed) ||
       (filter.status === 'incomplete' && !card.completed);
 
-      const due = card.due_date ? dayjs(card.due_date) : null;
+    // ----- DUE: multi checkbox (none/overdue) + single range (today/week/month) -----
+    const dueSel = Array.isArray(filter.due) ? filter.due : [];
+    const selectedNone = dueSel.includes('none');
+    const selectedOverdue = dueSel.includes('overdue');
+    const selectedRange = ['today', 'week', 'month'].find((v) =>
+      dueSel.includes(v)
+    );
 
-      const matchDue =
-        filter.due === 'overdue'
-          ? due && due.isBefore(today, 'day') && !card.completed
-          : filter.due === 'today'
-          ? due && due.isSame(today, 'day')
-          : filter.due === 'week'
-          ? due && due.isoWeek() === today.isoWeek()
-          : filter.due === 'none'
-          ? !due
-          : true;
+    const due = card.due_date ? dayjs(card.due_date) : null;
+    const today = dayjs();
 
+    const isNone = !due;
+    const isOverdue = due && due.isBefore(today, 'day') && !card.completed;
+    const inToday = due && due.isSame(today, 'day');
+    const inWeek = due && due.isoWeek() === today.isoWeek();
+    const inMonth =
+      due &&
+      due.month() === today.month() &&
+      due.year() === today.year();
+
+    const matchDue =
+      (!selectedNone && !selectedOverdue && !selectedRange)
+        ? true
+        : (selectedNone && isNone) ||
+          (selectedOverdue && isOverdue) ||
+          (!!selectedRange &&
+            ((selectedRange === 'today' && inToday) ||
+              (selectedRange === 'week' && inWeek) ||
+              (selectedRange === 'month' && inMonth)));
+
+    // ----- CREATED: multi-select ['week','2weeks','month'] -----
     const created = card.created_at ? dayjs(card.created_at) : null;
+    const createdSel = Array.isArray(filter.created) ? filter.created : [];
 
     const matchCreated =
-      filter.created === 'week'
-        ? created && created.isoWeek() === today.isoWeek()
-        : filter.created === '2weeks'
-        ? created && created.isAfter(today.subtract(14, 'day'))
-        : filter.created === 'month'
-        ? created && created.month() === today.month()
-        : true;
+      createdSel.length === 0
+        ? true
+        : createdSel.some((k) => {
+            switch (k) {
+              case 'week':
+                return (
+                  created &&
+                  created.isoWeek() === today.isoWeek() &&
+                  created.year() === today.year()
+                );
+              case '2weeks':
+                return created && created.isAfter(today.subtract(14, 'day'));
+              case 'month':
+                return (
+                  created &&
+                  created.month() === today.month() &&
+                  created.year() === today.year()
+                );
+              default:
+                return true;
+            }
+          });
+
+    // ✅ return để filter hoạt động
     return matchKeyword && matchStatus && matchDue && matchCreated;
   });
+
 
   
   useEffect(() => {
@@ -101,7 +164,6 @@ export default function InboxPane({
 }, [showFilter]);
 
   
-
   return (
     <PaneWrapper $background={background}> 
       <InboxSubHeader
@@ -129,13 +191,15 @@ export default function InboxPane({
 
         {showFeedback && <FeedbackPopup onClose={() => setShowFeedback(false)} />}
         {showFilter && (
-          <FilterPopup
+          <InboxFilterPopup
             filter={filter}
             onClose={() => setShowFilter(false)}
             position={popupPos}
-            updateKeyword={updateKeyword}
-            handleSingleSelectChange={handleSingleSelectChange}
-            
+            setKeyword={setKeyword}
+            toggleArrayItem={toggleArrayItem}
+            toggleStatusCheckbox={toggleStatusCheckbox}
+            toggleDueWithConstraint={toggleDueWithConstraint}
+            setDueRangeSingle={setDueRangeSingle}
           />
         )}
 
@@ -188,7 +252,7 @@ export default function InboxPane({
                       onEditClick={(e, card, index, rect) => {
                         setEditPopup({ card, index, text: card.name, anchorRect: rect });
                       }}
-                      onCheckClick={toggleComplete} 
+                      onCheckClick={handleCheckClick} 
 
                       onCardClick={(card) => setSelectedCard(card)}
                     />
