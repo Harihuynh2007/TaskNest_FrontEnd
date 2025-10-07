@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback,useMemo } from 'react';
 import styled from 'styled-components';
 import { BiLabel } from 'react-icons/bi';
 import { BsClock } from 'react-icons/bs';
@@ -69,6 +69,9 @@ export default function FullCardModal({
   const [addMenuAnchor, setAddMenuAnchor] = useState(null);
   const [showMembersPopup, setShowMembersPopup] = useState(false);
   const [membersAnchor, setMembersAnchor] = useState(null);
+
+  const [replyingTo, setReplyingTo] = useState(null); // { id, author } | null
+  const [activityRefreshTick, setActivityRefreshTick] = useState(0);
 
   const fetchAttachments = async () => {
     try {
@@ -280,34 +283,60 @@ export default function FullCardModal({
     }
   };
 
+  const handleReply = (parentId, author) => {
+    setReplyingTo({ id: parentId, author });
+  };
+  const handleCancelReply = () => setReplyingTo(null);
+
   const handleCommentAdded = (c) => {
     setComments(prev => [c, ...prev]);
   };
 
   const handleCommentReplaced = (tempId, real) => {
-    setComments(prev =>
-      prev.map(c => (c.temp_id === tempId ? { ...real } : c))
-    );
+    setComments(prev =>{
+      const next = prev.map((c) => (c.temp_id === tempId ? real : c));
+      next.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      return next;
+    });
+    setActivityRefreshTick(t => t + 1);
   };
+  
 
   const handleCommentRemove = (tempId) => {
     setComments(prev => prev.filter(c => c.temp_id !== tempId));
   };
 
-  const handleCommentUpdated = (commentId, updatedComment) => {
-    setComments(prev => 
-      prev.map(comment => 
-        comment.id === commentId 
-          ? { ...comment, ...updatedComment }
-          : comment
-      )
-    );
+  const handleCommentUpdated = (commentId, updated) => {
+    setComments((prev) => {
+      const next = prev.map((c) => (c.id === commentId ? { ...c, ...updated } : c));
+      return next;
+    });
+    setActivityRefreshTick(t => t + 1);
   };
 
   const handleCommentDeleted = (commentId) => {
     setComments(prev => prev.filter(comment => comment.id !== commentId));
   };
 
+  // roots: comment gốc (parent_id null/undefined)
+  const roots = useMemo(
+    () => comments.filter((c) => !c.parent_id),
+    [comments]
+  );
+  // map root_id -> replies[]
+  const childrenMap = useMemo(() => {
+    const map = {};
+    for (const c of comments) {
+      if (c.parent_id) {
+        (map[c.parent_id] ||= []).push(c);
+      }
+    }
+    // reply hiển thị từ cũ -> mới để đọc mạch lạc
+    Object.values(map).forEach((arr) =>
+      arr.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+    );
+    return map;
+  }, [comments]);
   const handleToggleComplete = async () => {
     const updated = !isComplete;
     setIsComplete(updated);
@@ -637,11 +666,21 @@ export default function FullCardModal({
             <SectionLabel>Add a comment</SectionLabel>
             <CommentInput
               cardId={card.id}
+              currentUser={currentUser}
+              // optimistic flow
               onCommentAdded={handleCommentAdded}
-              currentUser={mockCurrentUser}
-              placeholder="Write a comment..."
               onCommentReplaced={handleCommentReplaced}
               onCommentRemove={handleCommentRemove}
+              // reply state
+              parentId={replyingTo?.id || null}
+              replyingTo={replyingTo}
+              onCancelReply={() => setReplyingTo(null)}
+              // placeholder tuỳ biến khi đang reply
+              placeholder={
+                replyingTo
+                  ? `Trả lời @${replyingTo.author?.name || replyingTo.author?.username || 'user'}...`
+                  : 'Write a comment...'
+              }
             />
             
             
@@ -649,28 +688,36 @@ export default function FullCardModal({
               <LoadingText>Loading comments...</LoadingText>
             ) : (
               <CommentList>
-                {comments.map((comment) => (
-                  <Comment
-                    key={comment.id ?? comment.temp_id}
-                    comment={comment}
-                    onUpdate={handleCommentUpdated}
-                    onDelete={handleCommentDeleted}
-                    currentUserId={mockCurrentUser.id}
-                  />
+                {roots.map((root) => (
+                  <div key={root.id ?? root.temp_id}>
+                    <Comment
+                      comment={root}
+                      currentUserId={currentUser?.id}
+                      onUpdate={handleCommentUpdated}
+                      onDelete={handleCommentDeleted}
+                      // nút Reply ngay dưới comment gốc
+                      onReply={handleReply}
+                    />
+                    {(childrenMap[root.id] || []).map((rep) => (
+                      <ReplyRow key={rep.id ?? rep.temp_id}>
+                        <Comment
+                          comment={rep}
+                          currentUserId={currentUser?.id}
+                          onUpdate={handleCommentUpdated}
+                          onDelete={handleCommentDeleted}
+                          // cho phép reply vào gốc (một cấp): gọi onReply(root.id, author)
+                          onReply={(parentId, author) => setReplyingTo({ id: parentId, author })}
+                        />
+                      </ReplyRow>
+                    ))}
+                  </div>
                 ))}
-
-                {/* Activity */}
-                <ActivityHeader>
-                  <SectionLabel>Activity</SectionLabel>
-                  {comments.length > 0 && <ShowDetailsButton>Show details</ShowDetailsButton>}
-                </ActivityHeader>
-                <ActivityList cardId={card.id} />
-                
-                {comments.length === 0 && !loadingComments && (
-                  <EmptyState>No comments yet. Be the first to comment!</EmptyState>
-                )}
               </CommentList>
             )}
+          </Section>
+          <Section>
+            <SectionLabel>Activity</SectionLabel>
+            <ActivityList cardId={card.id} refreshKey={activityRefreshTick} />
           </Section>
         </Sidebar>
       </ContentBody>
@@ -681,7 +728,7 @@ export default function FullCardModal({
         ref={checklistPopupRef}
         anchorRect={checklistAnchor}
         onClose={() => setShowChecklistPopup(false)}
-        onSubmit={handleCreateChecklist}            // ✅ dùng handler đã thêm
+        onSubmit={handleCreateChecklist}            
         existingChecklists={localCard.checklists || []}
       />
     )}
@@ -728,8 +775,6 @@ export default function FullCardModal({
         }}
       />
     )}
-
-
 
   </Overlay>
 );
@@ -1136,3 +1181,8 @@ const AddButton = styled.button`
   }
 `
 ;
+
+const ReplyRow = styled.div`
+  margin-left: 32px;
+  margin-top: 8px;
+`;
