@@ -22,6 +22,8 @@ import AttachmentItem from '../Attachment/AttachmentItem';
 
 import ActivityList from './activity/ActivityList';
 
+import AddToCardMenu from './AddToCardMenu';
+
 import { getCardComments, updateCardDescription } from '../../api/cardApi';
 import {
   getCardChecklists,
@@ -31,7 +33,7 @@ import {
   createChecklistItem,
   updateChecklistItem,
   deleteChecklistItem,
-  toggleChecklistItem
+  toggleChecklistItem,
 } from '../../api/checklistApi';
 
 import CheckListPopup from '../ChecklistCard/CheckListPopup';
@@ -63,6 +65,10 @@ export default function FullCardModal({
   const [showAttachmentPopup, setShowAttachmentPopup] = useState(false);
   const [attachments, setAttachments] = useState([]);
 
+  const [showAddMenu, setShowAddMenu] = useState(false);
+  const [addMenuAnchor, setAddMenuAnchor] = useState(null);
+  const [showMembersPopup, setShowMembersPopup] = useState(false);
+  const [membersAnchor, setMembersAnchor] = useState(null);
 
   const fetchAttachments = async () => {
     try {
@@ -452,16 +458,12 @@ export default function FullCardModal({
   };
 
   const handleClickOutside = useCallback((e) => {
-    const clickedOverlay = overlayRef.current?.contains(e.target);
-    const clickedInsideModal = modalRef.current?.contains(e.target);
-    const clickedInsideChecklist = checklistPopupRef.current?.contains?.(e.target);
-
-    if (clickedOverlay && !clickedInsideModal && !clickedInsideChecklist) {
-      // handleTitleSave(); // nếu muốn auto-save tiêu đề giống cũ
-      onClose();
-    }
+   // Chỉ đóng khi click TRỰC TIẾP lên overlay (nền mờ)
+   if (e.target === overlayRef.current) {
+     onClose();
+   }
   }, [onClose]);
-
+  
   useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -521,7 +523,16 @@ export default function FullCardModal({
           <ActionSectionGrid>
             <EmptyIconSpace />
             <ActionSectionBody>
-              <ActionButton><span>+ Add</span></ActionButton>
+              <ActionButton
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setAddMenuAnchor(rect);
+                  setShowAddMenu((prev) => !prev);
+                }}
+              >
+                + Add
+              </ActionButton>
+
               <ActionButton><BiLabel /> Labels</ActionButton>
               <ActionButton><BsClock /> Dates</ActionButton>
               <ActionButton
@@ -685,6 +696,41 @@ export default function FullCardModal({
       </PopupOverlay>
     )}
     
+    {showAddMenu && addMenuAnchor && (
+      <AddToCardMenu
+        anchorRect={addMenuAnchor}
+        onClose={() => setShowAddMenu(false)}
+        onSelect={async (type) => {
+          setShowAddMenu(false);
+          switch (type) {
+            case 'checklist': {
+              setChecklistAnchor(addMenuAnchor);
+              setShowChecklistPopup(true);
+              break;
+            }
+            case 'members': {
+              setMembersAnchor(addMenuAnchor);
+              setShowMembersPopup(true);
+              break;
+            }
+            case 'attachment': {
+              setAttachmentAnchor(addMenuAnchor);
+              setShowAttachmentPopup(true);
+              break;
+            }
+            case 'custom_fields': {
+              toast('Custom fields coming soon');
+              break;
+            }
+            default:
+              break;
+          }
+        }}
+      />
+    )}
+
+
+
   </Overlay>
 );
 
