@@ -1,5 +1,5 @@
 // components/Comment/CommentInput.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { createComment } from '../../../api/cardApi';
 import toast from 'react-hot-toast';
@@ -7,44 +7,57 @@ import toast from 'react-hot-toast';
 export default function CommentInput({ 
   cardId, 
   onCommentAdded, 
-  currentUser,
-  onCommentReplaced,
+  onCommentReplaced, 
   onCommentRemove,
-  placeholder = "Write a comment..." 
+  currentUser,
+  placeholder = "Write a comment..." ,
+  replyingTo = null,
+  parentId = null,
+  onCancelReply
 }) {
   const [content, setContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const textareaRef = useRef(null);
+
+  useEffect(() => {
+    if (parentId && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [parentId]);
 
   const handleSubmit = async () => {
-    if (!content.trim()) return;
+    const text = content.trim();
+    if (!text) return;
 
     setIsLoading(true);
     const tempId = `temp-${Date.now()}`;
     const optimisticComment = {
-      id: null,              // chưa có id thật
-      temp_id: tempId,       // dùng để thay thế/rollback
+      id: null,
+      temp_id: tempId,
       card: cardId,
-      content: content.trim(),
+      content: text,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      parent_id: parentId || null,
       author: {
         id: currentUser?.id ?? null,
         name: currentUser?.name || currentUser?.username || 'You',
         username: currentUser?.username,
         avatar: currentUser?.avatar || null
-      },
+      }
     };
-   // Thêm ngay vào UI
-    onCommentAdded?.(optimisticComment);
-    try {
-      const real = await createComment(cardId, content.trim());
 
+    onCommentAdded?.(optimisticComment);
+
+    try {
+      const real = await createComment(cardId, content.trim(), parentId);
       onCommentReplaced?.(tempId, real);
 
       setContent('');
       setIsFocused(false);
       toast.success('Comment added');
+      if (onCancelReply) onCancelReply();
     } catch (error) {
       console.error('Failed to add comment:', error);
       toast.error('Failed to add comment');
@@ -55,19 +68,21 @@ export default function CommentInput({
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
       e.preventDefault();
       handleSubmit();
     }
     if (e.key === 'Escape') {
       setIsFocused(false);
       setContent('');
+      if (onCancelReply) onCancelReply();
     }
   };
 
   const handleCancel = () => {
     setContent('');
     setIsFocused(false);
+    if (onCancelReply) onCancelReply();
   };
 
   return (
@@ -81,12 +96,28 @@ export default function CommentInput({
       </Avatar>
       
       <InputContainer>
+        {replyingTo && (
+          <ReplyChip>
+            Đang trả lời <strong>@{replyingTo.author?.name || replyingTo.author?.username || 'user'}</strong>
+            {onCancelReply && (
+              <CancelReplyBtn type="button" onClick={onCancelReply}>
+                Cancel
+              </CancelReplyBtn>
+            )}
+          </ReplyChip>
+        )}
+
         <CommentTextarea
+          ref={textareaRef}
           value={content}
           onChange={(e) => setContent(e.target.value)}
           onFocus={() => setIsFocused(true)}
           onKeyDown={handleKeyDown}
-          placeholder={placeholder}
+          placeholder={
+            replyingTo
+              ? `Trả lời @${replyingTo.author?.name || replyingTo.author?.username || ''}...`
+              : placeholder
+          }
           disabled={isLoading}
           $focused={isFocused || content}
         />
@@ -111,6 +142,8 @@ export default function CommentInput({
     </CommentInputWrapper>
   );
 }
+
+// ========================= Styles =========================
 
 const CommentInputWrapper = styled.div`
   display: flex;
@@ -146,24 +179,49 @@ const InputContainer = styled.div`
   gap: 8px;
 `;
 
+const ReplyChip = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  background: #f1f2f4;
+  color: #44546f;
+  border-radius: 999px;
+  padding: 4px 10px;
+  width: fit-content;
+`;
+
+const CancelReplyBtn = styled.button`
+  background: none;
+  border: none;
+  color: #0c66e4;
+  cursor: pointer;
+  padding: 0;
+  font-size: 12px;
+  text-decoration: underline;
+  &:hover {
+    color: #0055cc;
+  }
+`;
+
 const CommentTextarea = styled.textarea`
   width: 100%;
-  min-height: ${props => props.$focused ? '80px' : '36px'};
+  min-height: ${(props) => (props.$focused ? '80px' : '36px')};
   padding: 8px 12px;
   font-size: 14px;
-  border: 1px solid ${props => props.$focused ? '#0c66e4' : '#dfe1e6'};
+  border: 1px solid ${(props) => (props.$focused ? '#0c66e4' : '#dfe1e6')};
   border-radius: 3px;
   resize: vertical;
   font-family: inherit;
   transition: all 0.2s ease;
-  background: ${props => props.$focused ? 'white' : '#fafbfc'};
-  
+  background: ${(props) => (props.$focused ? 'white' : '#fafbfc')};
+
   &:focus {
     outline: none;
-    border-color: #28a745 ;
+    border-color: #0c66e4;
     box-shadow: 0 0 0 2px rgba(12, 102, 228, 0.2);
   }
-  
+
   &::placeholder {
     color: #6b778c;
   }
@@ -176,7 +234,7 @@ const ButtonContainer = styled.div`
 `;
 
 const SubmitButton = styled.button`
-  background: #28a745 ;
+  background: #28a745;
   color: white;
   border: none;
   padding: 6px 12px;
@@ -185,11 +243,11 @@ const SubmitButton = styled.button`
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s ease;
-  
+
   &:hover:not(:disabled) {
-    background: #28a745 ;
+    background: #218838;
   }
-  
+
   &:disabled {
     background: #a5adba;
     cursor: not-allowed;
@@ -204,7 +262,7 @@ const CancelButton = styled.button`
   cursor: pointer;
   border-radius: 3px;
   font-size: 14px;
-  
+
   &:hover {
     color: #172b4d;
     background: #ebecf0;
