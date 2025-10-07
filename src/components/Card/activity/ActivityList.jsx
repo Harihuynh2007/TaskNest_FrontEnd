@@ -128,7 +128,7 @@ function renderMessage(activity) {
 // Main Component
 // ============================================
 
-function ActivityList({ cardId }) {
+function ActivityList({ cardId,refreshKey = 0 }) {
   const [items, setItems] = useState([]);
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -189,8 +189,7 @@ function ActivityList({ cardId }) {
   useEffect(() => {
     if (!cardId) return;
     load(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardId]);
+  }, [cardId, refreshKey]);
 
   if (!items.length && !loading) {
     return (
