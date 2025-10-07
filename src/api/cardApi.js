@@ -73,9 +73,12 @@ export async function getCardComments(cardId) {
   return data;
 }
 
-export async function createComment(cardId, content) {
-  const { data } = await api.post(`/cards/${cardId}/comments/`, { content });
-  return data;
+export async function createComment(cardId, content, parentId = null) {
+  const res = await api.post(`/cards/${cardId}/comments/`, {
+    content,
+    parent_id: parentId
+  });
+  return res.data;
 }
 
 export async function updateComment(commentId, content) {
