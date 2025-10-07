@@ -73,6 +73,8 @@ export default function FullCardModal({
   const [replyingTo, setReplyingTo] = useState(null); // { id, author } | null
   const [activityRefreshTick, setActivityRefreshTick] = useState(0);
 
+  const [showDetails, setShowDetails] = useState(false);
+
   const fetchAttachments = async () => {
     try {
       const res = await cardApi.getCardAttachments(card.id);
@@ -706,7 +708,8 @@ export default function FullCardModal({
                           onUpdate={handleCommentUpdated}
                           onDelete={handleCommentDeleted}
                           // cho phép reply vào gốc (một cấp): gọi onReply(root.id, author)
-                          onReply={(parentId, author) => setReplyingTo({ id: parentId, author })}
+                          onReply={(parentId, author) => 
+                            setReplyingTo({ id: parentId, author })}
                         />
                       </ReplyRow>
                     ))}
@@ -715,10 +718,18 @@ export default function FullCardModal({
               </CommentList>
             )}
           </Section>
-          <Section>
-            <SectionLabel>Activity</SectionLabel>
-            <ActivityList cardId={card.id} refreshKey={activityRefreshTick} />
-          </Section>
+           <Section>
+              <ActivityHeader>
+                <SectionLabel>Activity</SectionLabel>
+                <ShowDetailsButton onClick={() => setShowDetails(!showDetails)}>
+                  {showDetails ? 'Hide details' : 'Show details'}
+                </ShowDetailsButton>
+              </ActivityHeader>
+              
+              {showDetails && (
+                <ActivityList cardId={card.id} refreshKey={activityRefreshTick} />
+              )}
+            </Section>
         </Sidebar>
       </ContentBody>
     </ModalContainer>
@@ -1075,13 +1086,18 @@ const ActivityHeader = styled.div`
 const ShowDetailsButton = styled.button`
   background: none;
   border: none;
-  color: #6b778c;
+  color: #44546f;
   font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 3px;
   text-decoration: underline;
-  
+  transition: all 0.15s ease;
+
   &:hover {
     color: #172b4d;
+    background: #091e4214;
   }
 `;
 
@@ -1179,10 +1195,10 @@ const AddButton = styled.button`
     background-color: #091e4214;
     text-decoration: underline;
   }
-`
-;
+`;
 
 const ReplyRow = styled.div`
   margin-left: 32px;
   margin-top: 8px;
 `;
+

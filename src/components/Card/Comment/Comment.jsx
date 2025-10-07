@@ -144,8 +144,8 @@ function Comment({
             >
               {formatTime(comment.created_at)}
             </CommentTime>
-            {isEdited && <EditedTag>(Edited)</EditedTag>}
-            {isOptimistic && <OptimisticTag>(Editing...)</OptimisticTag>}
+            {isEdited && <EditedTag>(edited)</EditedTag>}
+            {isOptimistic && <OptimisticTag>(Sending...)</OptimisticTag>}
           </AuthorInfo>
         </CommentHeader>
 

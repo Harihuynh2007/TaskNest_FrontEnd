@@ -128,7 +128,7 @@ export default function CommentInput({
               onClick={handleSubmit}
               disabled={!content.trim() || isLoading}
             >
-              {isLoading ? 'Posting...' : 'Save'}
+              {isLoading ? 'Saving...' : 'Save'}
             </SubmitButton>
             <CancelButton onClick={handleCancel} disabled={isLoading}>
               Cancel
