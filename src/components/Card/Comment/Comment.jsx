@@ -174,10 +174,10 @@ function Comment({
                   onClick={handleSave}
                   disabled={isLoading || !editContent.trim()}
                 >
-                  {isLoading ? 'Đang lưu...' : 'Lưu'}
+                  {isLoading ? 'Saving...' : 'Save'}
                 </SaveButton>
                 <CancelButton onClick={handleCancel} disabled={isLoading}>
-                  Hủy
+                  Cancel
                 </CancelButton>
                 <KeyboardHint>Ctrl+Enter để lưu</KeyboardHint>
               </EditActions>
