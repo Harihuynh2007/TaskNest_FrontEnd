@@ -189,6 +189,7 @@ function ActivityList({ cardId,refreshKey = 0 }) {
   useEffect(() => {
     if (!cardId) return;
     load(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cardId, refreshKey]);
 
   if (!items.length && !loading) {
