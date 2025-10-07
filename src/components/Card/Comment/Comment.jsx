@@ -10,7 +10,8 @@ function Comment({
   comment,
   onUpdate,
   onDelete,
-  currentUserId
+  currentUserId,
+  onReply
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content || '');
@@ -202,6 +203,21 @@ function Comment({
                     {canEdit && <ActionDivider>•</ActionDivider>}
                   </>
                 )}
+
+                {/* Reply - bất kỳ ai có quyền comment (FE: xuất hiện khi parent truyền onReply) */}
+                {!isOptimistic && onReply && (
+                  <>
+                    <ActionButton
+                      onClick={() => onReply?.(comment.id, comment.author)}
+                      disabled={isLoading}
+                      aria-label="Trả lời bình luận"
+                      title="Trả lời"
+                    >
+                      Reply
+                    </ActionButton>
+                    {canEdit && <ActionDivider>•</ActionDivider>}
+                  </>
+                )}  
 
                 {/* Edit/Delete - chỉ author thấy */}
                 {canEdit && (
