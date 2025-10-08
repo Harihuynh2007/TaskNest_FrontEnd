@@ -37,9 +37,11 @@ function getTextColor(bg) {
 }
 
 export default function BoardPane({ 
-  background, boardId, lists, setLists, onListDeleted, onCloseBoard,boardName,setBoardName }) {
+  background, boardId, lists, setLists, 
+  onListDeleted, onCloseBoard,
+  boardName,setBoardName }) {
+
   const [, setCards] = useState([]);
-  
   const [showAddList, setShowAddList] = useState(false);
   const [newListTitle, setNewListTitle] = useState('');
   const [activeCardInput, setActiveCardInput] = useState(null);
@@ -113,7 +115,14 @@ export default function BoardPane({
       // Cập nhật state và thông báo
       if (res?.data) {
         setBoardName(res.data.name);
-        toast.success("✅ Đã đổi tên board thành công!");
+        toast.success("Đã đổi tên board thành công!");
+
+        // 2) Phát sự kiện toàn cục để danh sách boards ngoài workspace tự cập nhật
+        window.dispatchEvent(
+          new CustomEvent('board:renamed', {
+            detail: { boardId, name: res.data.name }
+          })
+        );
       } else {
         toast.success("✅ Board name updated!");
       }
