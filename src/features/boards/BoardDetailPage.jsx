@@ -7,7 +7,6 @@ import PlannerPane from './panes/PlannerPane';
 import BoardPane from './panes/BoardPane';
 
 import dayjs from 'dayjs';
-
 import BottomFloatingNav from './BottomFloatingNav';
 import FullCardModal from '../../components/Card/FullCardModal.jsx';
 import ConfirmationModal from '../../components/Card/common/ConfirmationModal.jsx';
@@ -44,6 +43,9 @@ export default function BoardDetailPage() {
 
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
 
+  const [boardName, setBoardName] = useState('');
+
+  
   const handleConfirmCloseBoard = async () => {
     setShowCloseConfirm(false);
     
@@ -100,6 +102,7 @@ export default function BoardDetailPage() {
       setLoading(true);
       try {
         const res = await getBoard(workspaceId, boardId);
+        setBoardName(res.data.name);
         setBackground(res.data.background || '#e4f0f6');
       } catch (err) {
         console.error('Lỗi fetch board:', err);
@@ -121,7 +124,8 @@ export default function BoardDetailPage() {
     };
     loadInboxCards();
   }, [boardId]);
-
+  
+  
 
   // useEffect(() => {
 //   console.log('Attempting to connect to WebSocket for board:', boardId);
@@ -193,7 +197,7 @@ export default function BoardDetailPage() {
   };
 
 
-
+  
   const onDragEnd = async (result) => {
     const { source, destination, draggableId, type } = result;
     if (!destination) return;
@@ -387,7 +391,7 @@ export default function BoardDetailPage() {
       setLists(originalLists);
     }
   };
-
+  
 
   const toggleTab = (tabName) => {
     setActiveTabs((prev) =>
@@ -453,12 +457,15 @@ export default function BoardDetailPage() {
         />
       )}
       {activeTabs.includes('planner') && <PlannerPane background="#e4f0f6" />}
-      {activeTabs.includes('board') && <BoardPane 
-      background={background} 
-      boardId={numericBoardId} 
-      lists={lists} 
+      {activeTabs.includes('board') && 
+      <BoardPane 
+      background={background}
+      boardId={numericBoardId}
+      lists={lists}
       setLists={setLists}
-      onListDeleted={handleDeleteListRequest} 
+      boardName={boardName}
+      setBoardName={setBoardName}
+      onListDeleted={handleDeleteListRequest}
       onCloseBoard={handleCloseBoardRequest}
        />}
     </SplitContainer>
