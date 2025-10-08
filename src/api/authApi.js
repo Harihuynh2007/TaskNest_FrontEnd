@@ -1,59 +1,53 @@
 // src/api/authApi.js
 import api from './apiClient';
+import { auth } from './apiRoutes';
 import { TokenManager } from './tokenManager';
 
-/** ======================
- *  API Endpoints (BE)
- *  ====================== */
-const API = {
-  LOGIN: '/auth/login/',
-  REGISTER: '/auth/register/',
-  LOGOUT: '/auth/logout/',
-  ME: '/auth/me/',                 // user + profile (read-only)
-  PROFILE: '/auth/me/profile/',    // GET | PATCH profile
-  SEARCH_USERS: '/auth/users/search/',
-};
-
-/** ======================
- *  Validators
- *  ====================== */
 export const isValidEmail = (email) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-/** ======================
- *  Error mapper
- *  ====================== */
-const handleApiError = (err, custom = {}, fallback = 'Đã xảy ra lỗi không xác định') => {
-  if (err?.response) {
+export const isStrongPassword = (password) =>
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(password);
+
+const handleApiError = (err, customMessages = {}, defaultMessage = 'Đã xảy ra lỗi không xác định') => {
+  if (err.response) {
     const { status, data } = err.response;
-    if (custom[status]) return new Error(custom[status]);
-
-    const msg = data?.detail || data?.message || data?.error;
-    if (msg) return new Error(msg);
-
-    if (data && typeof data === 'object') {
-      const joined = Object.values(data).flat().join(' ');
-      if (joined) return new Error(joined);
+    
+    if (customMessages[status]) {
+      return new Error(customMessages[status]);
     }
+    
+    const serverMessage = data?.detail || data?.message || data?.error;
+    if (serverMessage) return new Error(serverMessage);
+    
+    if (typeof data === 'object' && data !== null) {
+      const errorMessages = Object.values(data).flat().join(' '); 
+      if (errorMessages) {
+        return new Error(errorMessages);
+      }
+    }
+
     return new Error('Đã xảy ra lỗi từ phía server');
+  } else if (err.request) {
+    return new Error('Không thể kết nối tới server. Vui lòng kiểm tra lại mạng.');
+  } else {
+    return new Error(defaultMessage);
   }
-  if (err?.request) return new Error('Không thể kết nối tới server. Vui lòng kiểm tra mạng.');
-  return new Error(fallback);
 };
 
-/** ======================
- *  Auth APIs
- *  ====================== */
 export const login = async ({ email, password }) => {
   if (!isValidEmail(email)) throw new Error('Email không hợp lệ');
   if (!password) throw new Error('Mật khẩu không được để trống');
 
   try {
-    const res = await api.post(API.LOGIN, { email, password });
-    // BE trả: { ok, user, token, refresh }
-    const { token, refresh, user } = res.data || {};
-    if (token) TokenManager.setTokens(token, refresh);
-    return { access: token, refresh, user };
+    const res = await api.post(auth.login(), { email, password });
+    const { token, refresh } = res.data;
+    
+    if (token && refresh) {
+      TokenManager.setTokens(token, refresh);
+    }
+    
+    return res.data;
   } catch (err) {
     throw handleApiError(err, {
       400: 'Thông tin không hợp lệ',
@@ -64,27 +58,31 @@ export const login = async ({ email, password }) => {
 
 export const register = async ({ email, password }) => {
   if (!isValidEmail(email)) throw new Error('Email không hợp lệ');
-  if (!password) throw new Error('Mật khẩu không được để trống');
+  if (!isStrongPassword(password)) {
+    throw new Error('Mật khẩu yếu. Mật khẩu phải dài ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.');
+  }
 
   try {
-    const res = await api.post(API.REGISTER, { email, password });
-    // Tuỳ BE, thường cũng trả { token, refresh, user }
-    const { token, refresh } = res.data || {};
-    if (token) TokenManager.setTokens(token, refresh); // auto-login nếu có
+    const res = await api.post(auth.register(), { email, password });
+    const { token, refresh } = res.data;
+    
+    if (token && refresh) {
+      TokenManager.setTokens(token, refresh);
+    }
+    
     return res.data;
   } catch (err) {
     throw handleApiError(err, {
       400: 'Thông tin đăng ký không hợp lệ',
-      409: 'Email đã được sử dụng',
+      409: 'Email này đã được sử dụng',
     });
   }
 };
 
 export const logout = async () => {
   try {
-    await api.post(API.LOGOUT);
+    await api.post(auth.logout());
   } catch (error) {
-    // không chặn luồng logout client-side
     console.error('API logout failed:', error);
   } finally {
     TokenManager.clearTokens();
@@ -93,13 +91,10 @@ export const logout = async () => {
   }
 };
 
-/** ======================
- *  User / Profile
- *  ====================== */
 export const getMe = async () => {
   try {
-    const res = await api.get(API.ME);
-    return res.data; // user + profile (read-only)
+    const res = await api.get(auth.me());
+    return res.data;
   } catch (err) {
     throw handleApiError(err, {}, 'Không thể tải thông tin người dùng');
   }
@@ -107,32 +102,50 @@ export const getMe = async () => {
 
 export const getProfile = async () => {
   try {
-    const res = await api.get(API.PROFILE);
-    return res.data; // chỉ profile
+    const res = await api.get(auth.profile());
+    return res.data;
   } catch (err) {
-    throw handleApiError(err, {}, 'Không thể tải hồ sơ người dùng');
+    throw handleApiError(err, {}, 'Không thể tải thông tin người dùng');
   }
 };
 
 export const updateProfile = async (profileData) => {
   try {
-    const res = await api.patch(API.PROFILE, profileData);
+    const res = await api.patch(auth.profile(), profileData);
     return res.data;
   } catch (err) {
-    throw handleApiError(err, {}, 'Không thể cập nhật hồ sơ người dùng');
+    throw handleApiError(err, {}, 'Không thể cập nhật thông tin người dùng');
   }
 };
 
-// BE chưa có endpoint change-password → để TODO
-// export const changePassword = async ({ oldPassword, newPassword }) => { ... };
+export const changePassword = async ({ oldPassword, newPassword }) => {
+  // TODO: Backend chưa implement endpoint này
+  // Uncomment khi BE đã ready
+  /*
+  if (!isStrongPassword(newPassword)) throw new Error('Mật khẩu mới quá yếu');
+  if (oldPassword === newPassword) throw new Error('Mật khẩu mới không được trùng với mật khẩu cũ');
+  
+  try {
+    const res = await api.post(auth.changePassword(), {
+      old_password: oldPassword,
+      new_password: newPassword,
+    });
+    return res.data;
+  } catch (err) {
+    throw handleApiError(err, {
+      400: 'Mật khẩu cũ không chính xác',
+    }, 'Không thể thay đổi mật khẩu');
+  }
+  */
+  throw new Error('Chức năng đổi mật khẩu chưa được kích hoạt');
+};
 
-/** ======================
- *  Utilities
- *  ====================== */
 export const searchUsers = async (query) => {
   if (!query?.trim()) return [];
   try {
-    const res = await api.get(`${API.SEARCH_USERS}?q=${encodeURIComponent(query)}`);
+    const res = await api.get(auth.searchUsers(), { 
+      params: { q: query } 
+    });
     return res.data;
   } catch (err) {
     throw handleApiError(err, {}, 'Không thể tìm kiếm người dùng');
