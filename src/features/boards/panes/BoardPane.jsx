@@ -12,7 +12,7 @@ import { createCardInList, fetchCardsByList, updateCard } from '../../../api/car
 
 import ConfirmationModal from '../../../components/Card/common/ConfirmationModal';
 import BoardFilterPopup from '../../../components/filter/BoardFilterPopup'; 
-import { fetchBoardMembers, fetchBoardLabels } from '../../../api/boardApi'; 
+import { fetchBoardMembers, fetchBoardLabels,updateBoard  } from '../../../api/boardApi'; 
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
@@ -36,7 +36,8 @@ function getTextColor(bg) {
   return brightness > 150 ? '#172b4d' : 'white';
 }
 
-export default function BoardPane({ background, boardId, lists, setLists, onListDeleted, onCloseBoard  }) {
+export default function BoardPane({ 
+  background, boardId, lists, setLists, onListDeleted, onCloseBoard,boardName,setBoardName }) {
   const [, setCards] = useState([]);
   
   const [showAddList, setShowAddList] = useState(false);
@@ -53,7 +54,7 @@ export default function BoardPane({ background, boardId, lists, setLists, onList
     toggleStatusCheckbox,
     toggleDueWithConstraint,
     setDueRangeSingle,
-    resetFilter
+    resetFilter,
   } = useTrelloFilter();
 
   const [members, setMembers] = useState([]);
@@ -62,6 +63,8 @@ export default function BoardPane({ background, boardId, lists, setLists, onList
   const filterButtonRef = useRef(null);
 
   const [showInvitePopup, setShowInvitePopup] = useState(false);
+  const { currentWorkspaceId } = useContext(WorkspaceContext);
+  const [isEditingName, setIsEditingName] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -89,6 +92,39 @@ export default function BoardPane({ background, boardId, lists, setLists, onList
     };
     if (boardId) loadData();
   }, [boardId, setLists]);
+
+  // ==== Hàm đổi tên board ==== //
+  const handleRenameBoard = async () => {
+    if (!boardName.trim()) {
+      setIsEditingName(false);
+      return;
+    }
+
+    try {
+      // Kiểm tra nếu workspace chưa sẵn sàng
+      if (!currentWorkspaceId) {
+        console.warn("⚠️ Workspace chưa load xong, không thể đổi tên board.");
+        return;
+      }
+
+      // Gọi API chuẩn có workspaceId
+      const res = await updateBoard(currentWorkspaceId, boardId, { name: boardName });
+
+      // Cập nhật state và thông báo
+      if (res?.data) {
+        setBoardName(res.data.name);
+        toast.success("✅ Đã đổi tên board thành công!");
+      } else {
+        toast.success("✅ Board name updated!");
+      }
+    } catch (err) {
+      console.error("❌ Lỗi khi đổi tên board:", err);
+      toast.error("Không thể đổi tên board.");
+    } finally {
+      setIsEditingName(false);
+    }
+  };
+
 
   const handleAddList = async (e) => {
     e.preventDefault();
@@ -237,9 +273,11 @@ export default function BoardPane({ background, boardId, lists, setLists, onList
   return (
     <Wrapper $background={background}>
       <BoardSubHeader
-        boardName="My Board"
+        boardName={boardName}
+        setBoardName={setBoardName}
+        onRenameBoard={handleRenameBoard}
         setShowFilter={setShowFilter}
-        filterButtonRef={filterButtonRef} // Truyền ref cho nút lọc
+        filterButtonRef={filterButtonRef}
         onOpenInvite={() => setShowInvitePopup(true)}
         onCloseBoard={onCloseBoard}
 
