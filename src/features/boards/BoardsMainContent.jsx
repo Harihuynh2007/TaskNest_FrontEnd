@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect,useCallback } from 'react';
 import { Button, Spinner } from 'react-bootstrap';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { fetchBoards } from '../../api/boardApi'; 
@@ -20,36 +20,67 @@ export default function BoardsMainContent({ onCreateBoard }) {
   const currentWs = workspaces.find(w => w.id === currentWorkspaceId) || {};
   const [showClosedModal, setShowClosedModal] = useState(false);
 
+  const SHOULD_REFETCH_AFTER_CREATE = true;
+  
+  const upsertById = (arr, item) => {
+    const i = arr.findIndex(b => String(b.id) === String(item.id));
+    if (i === -1) return [...arr, item];
+    const clone = arr.slice();
+    clone[i] = { ...clone[i], ...item };
+    return clone;
+  };
+
   useEffect(() => {
-    loadBoards();
-  }, [currentWorkspaceId]);
+    const handleBoardRenamed = (e) => {
+      const { boardId, name } = e.detail || {};
+      if (!boardId || !name) return;
+      setBoards(prev =>
+        prev.map(b => (b.id === boardId ? { ...b, name } : b))
+      );
+    };
+    window.addEventListener('board:renamed', handleBoardRenamed);
+    return () => window.removeEventListener('board:renamed', handleBoardRenamed);
+  }, []);
 
 
   const handleCreateBoard = async (data) => {
     console.log('📍 currentWorkspaceId =', currentWorkspaceId);
     console.log('📤 Bắt đầu tạo board:', data);
 
-
     if (!currentWorkspaceId) {
-    console.warn("⚠️ currentWorkspaceId null – không thể tạo board.");
-    return;
+      console.warn("⚠️ currentWorkspaceId null – không thể tạo board.");
+      return;
     }
+
     try {
       const res = await boardApi.createBoard(currentWorkspaceId, {
         name: data.title,
         visibility: data.visibility,
         background: data.background,
       });
-      console.log('✅ Board created:', res.data); 
-      // Cập nhật state boards trực tiếp mà không gọi lại API
-      setBoards(prevBoards => [...prevBoards, res.data]);
+
+      const newBoard = res?.data ?? res;
+
+      if (!newBoard || !newBoard.id) {
+        console.error('❌ Phản hồi tạo board không hợp lệ:', res);
+        return;
+      }
+
+      console.log('✅ Board created:', newBoard);
+
+      setBoards(prev => upsertById(prev, newBoard));
       setShowDrawer(false);
-      //navigate(`/workspaces/${currentWorkspaceId}/boards/${res.data.id}/inbox`);
+
+      if (SHOULD_REFETCH_AFTER_CREATE) {
+        loadBoards();
+      }
+
+      // (Tuỳ chọn) Điều hướng thẳng vào board mới tạo
+      // navigate(`/workspaces/${currentWorkspaceId}/boards/${newBoard.id}/inbox`);
     } catch (err) {
       console.error('❌ Lỗi tạo board:', err);
-
       if (err.response) {
-        console.error('📥 Lỗi từ API:', err.response.data);    
+        console.error('📥 Lỗi từ API:', err.response.data);
         console.error('📥 Status code:', err.response.status);
       } else if (err.request) {
         console.error('📡 Không có phản hồi từ server:', err.request);
@@ -59,18 +90,25 @@ export default function BoardsMainContent({ onCreateBoard }) {
     }
   };
 
-  const loadBoards = async () => {
+
+  const loadBoards = useCallback(async () => {
     if (!currentWorkspaceId) return;
     setLoading(true);
     try {
       const res = await fetchBoards(currentWorkspaceId);
-      setBoards(res.data || []);
-    } catch {
-      setError('Cannot load boards.');
+      setBoards(res.data || res);
+    } catch (e) {
+      setError('Cannot load boards');
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentWorkspaceId]); 
+
+  useEffect(() => {
+    setBoards([]);
+    loadBoards();
+  }, [loadBoards]); 
+
 
   const handleBoardReopened = () => {
     // Cách đơn giản nhất: Tải lại toàn bộ danh sách boards
