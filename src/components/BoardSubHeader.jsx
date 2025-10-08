@@ -5,20 +5,52 @@ import BoardSubHeaderRight from './BoardSubHeaderRight';
 
 import ShareBoardPopup from './member/ShareBoardPopup';
 
-export default function BoardSubHeader({ boardName = 'Untitled Board', setShowFilter, filterButtonRef, onOpenInvite,onCloseBoard  }) {
+export default function BoardSubHeader({ boardName = 'Untitled Board',
+  setBoardName,
+  onRenameBoard,
+  setShowFilter,
+  filterButtonRef,
+  onOpenInvite,
+  onCloseBoard  
+}) {
+  
   const [isStarred, setIsStarred] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const handleToggleStar = () => {
     setIsStarred(prevIsStarred => !prevIsStarred);
     console.log(isStarred? 'Bỏ đánh dấu sao' : 'Đã đánh dấu sao');
   }
   
+  const handleBlur = () => {
+    setIsEditing(false);
+    if (onRenameBoard) onRenameBoard(); // gọi API updateBoard trong BoardPane
+  };
+  
   return (
     <HeaderContainer>
       <InnerWrapper>
         <LeftSpan>
-          <BoardSubHeaderLeft boardName={boardName} />
+          {isEditing ? (
+            <BoardNameInput
+              value={boardName}
+              onChange={(e) => setBoardName(e.target.value)}
+              onBlur={handleBlur}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleBlur();
+                }
+              }}
+              autoFocus
+            />
+          ) : (
+            <BoardNameText onClick={() => setIsEditing(true)}>
+              {boardName}
+            </BoardNameText>
+          )}
         </LeftSpan>
+
 
         <RightSpan>
           <BoardSubHeaderRight 
@@ -69,3 +101,24 @@ const RightSpan = styled.span`
   justify-content: flex-end;
 `;
 
+const BoardNameText = styled.h2`
+  font-size: 18px;
+  font-weight: 700;
+  color: #172b4d;
+  cursor: pointer;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const BoardNameInput = styled.input`
+  font-size: 18px;
+  font-weight: 700;
+  color: #172b4d;
+  border: none;
+  outline: 2px solid #4c9aff;
+  border-radius: 4px;
+  padding: 4px 6px;
+  width: 200px;
+`;
