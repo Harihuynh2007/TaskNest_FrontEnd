@@ -20,6 +20,8 @@ import { fetchInboxCards, updateCard, createInboxCard } from '../../api/cardApi'
 
 import { AuthContext } from '../../contexts/AuthContext.jsx';
 
+import { useRecentBoards } from '../../hooks/useRecentBoards';
+
 export default function BoardDetailPage() {
   const navigate = useNavigate();
   const { workspaceId, boardId } = useParams();
@@ -44,18 +46,16 @@ export default function BoardDetailPage() {
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
 
   const [boardName, setBoardName] = useState('');
+  const { addToRecent, removeFromRecent } = useRecentBoards();
 
   
   const handleConfirmCloseBoard = async () => {
     setShowCloseConfirm(false);
     
     try {
-      // ✅ Gọi API `PATCH` để cập nhật is_closed = true
-      // Bạn cần tạo hàm này trong `boardApi.js`
       // updateBoard = (workspaceId, boardId, data) => api.patch(...)
       await updateBoard(workspaceId, boardId, { is_closed: true });
-
-      // ✅ Chuyển hướng người dùng về trang chủ hoặc trang boards
+      removeFromRecent(Number(boardId));
       navigate('/boards'); 
     } catch (err) {
       console.error('❌ Failed to close board:', err);
@@ -102,16 +102,27 @@ export default function BoardDetailPage() {
       setLoading(true);
       try {
         const res = await getBoard(workspaceId, boardId);
-        setBoardName(res.data.name);
-        setBackground(res.data.background || '#e4f0f6');
+        const boardData = res.data;
+        
+        setBoardName(boardData.name);
+        setBackground(boardData.background || '#e4f0f6');
+        
+        // ✅ Add to recent với đầy đủ thông tin
+        addToRecent({
+          id: boardData.id,
+          name: boardData.name,
+          background: boardData.background,
+          workspaceId: Number(workspaceId),
+          workspaceName: boardData.workspace?.name || undefined
+        });
       } catch (err) {
-        console.error('Lỗi fetch board:', err);
+        console.error('Failed to load board:', err);
       } finally {
         setLoading(false);
       }
     }
     loadBoard();
-  }, [workspaceId, boardId]);
+  }, [workspaceId, boardId, addToRecent]);
 
   useEffect(() => {
     const loadInboxCards = async () => {
@@ -201,18 +212,6 @@ export default function BoardDetailPage() {
   const onDragEnd = async (result) => {
     const { source, destination, draggableId, type } = result;
     if (!destination) return;
-
-    const ensureCardStructure = (card) => ({
-      id: card.id,
-      name: card.name || '',
-      description: card.description || '',
-      due_date: card.due_date || null,
-      completed: card.completed ?? false,
-      list: card.list || null,
-      visibility: card.visibility || 'private',
-      status: card.status || 'doing',
-      position: card.position ?? 0,
-    });
 
     let movedCard;
     let originalCards = [...cards]; // Lưu trạng thái ban đầu để rollback
