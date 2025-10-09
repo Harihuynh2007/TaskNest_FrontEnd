@@ -3,6 +3,7 @@ import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { login as authLogin, logout as authLogout, register as authRegister } from '../api/authApi';
 import { fetchWorkspaces } from '../api/workspaceApi';
 import api from '../api/apiClient'; 
+import { TokenManager } from '../api/tokenManager';
 
 export const AuthContext = createContext();
 
@@ -13,9 +14,9 @@ export function AuthProvider({ children }) {
 
   const fetchUserDetails = useCallback(async () => {
     try {
-      
+
       const { data } = await api.get('/auth/me/');
-        setUser({
+      setUser({
         id: data.id,
         email: data.email,
         username: data.username,
@@ -24,8 +25,7 @@ export function AuthProvider({ children }) {
       });
     } catch (err) {
       console.error('Failed to fetch user:', err);
-      localStorage.removeItem('token');
-       localStorage.removeItem('refresh_token'); 
+      TokenManager.clearTokens();
       setUser(null);
     } finally {
       setLoading(false);
@@ -42,7 +42,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = TokenManager.getAccessToken();
     if (token) {
       Promise.all([fetchUserDetails(), preloadWorkspaces()]).finally(() => {
         setLoading(false);
@@ -67,12 +67,23 @@ export function AuthProvider({ children }) {
     };
   }, [fetchUserDetails]);
   
+  //apiClient phát window.dispatchEvent('unauthorized') → Tránh kẹt “ghost session” khi refresh token hết hạn.
+  useEffect(() => {
+    const onUnauthorized = () => {
+      setUser(null);
+      TokenManager.clearTokens();
+      delete api.defaults.headers.common['Authorization'];
+    };
+    window.addEventListener('unauthorized', onUnauthorized);
+    return () => window.removeEventListener('unauthorized', onUnauthorized);
+  }, []);
+
+
   const login = useCallback(async (email, password) => {
     const data = await authLogin({ email, password });
     const { token: access, refresh } = data;
 
-    localStorage.setItem('token', access);
-    localStorage.setItem('refresh_token', refresh);
+    TokenManager.setTokens(access, refresh);
 
     api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
 
@@ -87,8 +98,7 @@ export function AuthProvider({ children }) {
     const { token: access, refresh, user: userData } = res.data;
 
     // Lưu token và cập nhật state
-    localStorage.setItem('token', access);
-    localStorage.setItem('refresh_token', refresh);
+    TokenManager.setTokens(access, refresh);
     api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
     
     // Cập nhật user state trực tiếp từ response để UI nhanh hơn
@@ -109,8 +119,7 @@ export function AuthProvider({ children }) {
     const data = await authRegister({ email, password }); 
     const { token: access, refresh } = data;
 
-    localStorage.setItem('token', access);
-    localStorage.setItem('refresh_token', refresh);
+    TokenManager.setTokens(access, refresh);
 
     api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
 
@@ -123,8 +132,7 @@ export function AuthProvider({ children }) {
   const logout = useCallback(() => {
     return authLogout()
       .then(() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('refresh_token');
+        TokenManager.clearTokens();
 
         delete api.defaults.headers.common['Authorization'];
 
@@ -134,8 +142,7 @@ export function AuthProvider({ children }) {
       .catch(error => {
         console.error('Logout error:', error);
         // Vẫn dọn dẹp localStorage dù có lỗi
-        localStorage.removeItem('token');
-        localStorage.removeItem('refresh_token');
+        TokenManager.clearTokens();
         delete api.defaults.headers.common['Authorization'];
         setUser(null);
       });
