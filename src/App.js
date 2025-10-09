@@ -12,6 +12,7 @@ import BoardDetailPage from './features/boards/BoardDetailPage';
 import PrivateRoute from './Layouts/PrivateRoute';
 import WithHeaderOnlyLayout from './Layouts/WithHeaderOnlyLayout.jsx'; // thêm dòng này
 import ProfileAndVisibility from './features/boards/settings/profileandvisibility/ProfileAndVisibility.jsx';
+import BoardsMainContent from './features/boards/BoardsMainContent';
 
 import { GlobalStyle } from './styles/GlobalStyle';
 
@@ -53,15 +54,18 @@ function App() {
               <WithHeaderOnlyLayout>
                 <BoardDetailPage />
               </WithHeaderOnlyLayout>
+              
             </PrivateRoute>
           }
         />
+        
         {/* Settings - bảo vệ + header */}
         <Route
           path="/settings/profile"
           element={
             <PrivateRoute>
               <WithHeaderOnlyLayout>
+                <BoardsMainContent />
                 <ProfileAndVisibility />
               </WithHeaderOnlyLayout>
             </PrivateRoute>
