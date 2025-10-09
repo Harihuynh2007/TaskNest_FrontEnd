@@ -6,7 +6,9 @@ export default function WithHeaderOnlyLayout({ children }) {
   return (
     <>
       <Header />
-      <div className="pt-3">{children}</div>
+      <div className="container-fluid pt-3">
+        {children}
+      </div>
     </>
   );
 }
