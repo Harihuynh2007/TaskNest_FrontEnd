@@ -1,28 +1,35 @@
-// src/contexts/WorkspaceContext.jsx
-import  React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import * as workspaceApi from '../api/workspaceApi';
 import { AuthContext } from './AuthContext';
 
 export const WorkspaceContext = createContext();
 
 export function WorkspaceProvider({ children }) {
-  const { user } = useContext(AuthContext)
+  const { user } = useContext(AuthContext);
 
   const [workspaces, setWorkspaces] = useState([]);
   const [currentWorkspaceId, setCurrentWorkspaceId] = useState(null);
   const [searchNav, setSearchNav] = useState('');
   const [loadingWorkspaces, setLoadingWorkspaces] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
-  const refreshWorkspaces = async () => {
+
+  // ✅ Wrap với useCallback để tránh re-render
+  const refreshWorkspaces = useCallback(async () => {
+    if (!user) return; // ✅ Guard clause
+    
     setLoadingWorkspaces(true);
     try {
       const res = await workspaceApi.fetchWorkspaces();
-      setWorkspaces(res.data || []);
-      if (res.data && res.data.length > 0) {
-        setCurrentWorkspaceId(res.data[0].id);
-        console.log('✅ Auto-set workspaceId =', res.data[0].id);
+      const data = res.data || [];
+      setWorkspaces(data);
+      
+      if (data.length > 0) {
+        setCurrentWorkspaceId(data[0].id);
+        console.log('✅ Auto-set workspaceId =', data[0].id);
       } else {
         console.warn('⚠️ No workspaces found');
+        setCurrentWorkspaceId(null);
       }
     } catch (err) {
       console.error('❌ Failed to fetch workspaces:', err);
@@ -31,20 +38,30 @@ export function WorkspaceProvider({ children }) {
     } finally {
       setLoadingWorkspaces(false);
     }
-  };
+  }, [user]); // ✅ Dependency chính xác
 
   useEffect(() => {
-    // Chỉ tải workspaces khi `user` đã được xác định (tức là đã đăng nhập thành công)
     if (user) {
       refreshWorkspaces();
     } else {
-      // Nếu không có user (logout hoặc chưa login), đảm bảo state được dọn dẹp
+      // Cleanup khi logout
       setWorkspaces([]);
       setCurrentWorkspaceId(null);
-      setLoadingWorkspaces(false); // Quan trọng: dừng trạng thái loading
+      setLoadingWorkspaces(false);
     }
-  }, [user]); // 5. Lắng nghe sự thay đổi của `user`
+  }, [user, refreshWorkspaces]); // ✅ Đầy đủ dependencies
 
+  // ✅ Helper function để tạo workspace
+  const createWorkspace = useCallback(async (data) => {
+    try {
+      const res = await workspaceApi.createWorkspace(data);
+      await refreshWorkspaces(); // ✅ Refresh sau khi tạo
+      return { success: true, data: res.data };
+    } catch (err) {
+      console.error('❌ Create workspace failed:', err);
+      return { success: false, error: err.response?.data?.message || 'Failed to create workspace' };
+    }
+  }, [refreshWorkspaces]);
 
   return (
     <WorkspaceContext.Provider
@@ -55,7 +72,8 @@ export function WorkspaceProvider({ children }) {
         searchNav,
         setSearchNav,
         loadingWorkspaces,
-        refreshWorkspaces, // 👈 để gọi lại sau khi tạo workspace
+        refreshWorkspaces,
+        createWorkspace, // ✅ Export để Modal dùng
       }}
     >
       {children}
