@@ -20,7 +20,7 @@ export default function BoardsMainContent({ onCreateBoard }) {
   const currentWs = workspaces.find(w => w.id === currentWorkspaceId) || {};
   const [showClosedModal, setShowClosedModal] = useState(false);
 
-  const SHOULD_REFETCH_AFTER_CREATE = true;
+  const SHOULD_REFETCH_AFTER_CREATE = false;
   
   const upsertById = (arr, item) => {
     const i = arr.findIndex(b => String(b.id) === String(item.id));
@@ -138,15 +138,6 @@ export default function BoardsMainContent({ onCreateBoard }) {
               />
             )}
           </div>
-
-          <Button
-            variant="light"
-            className="mt-3"
-            style={{ borderRadius: 4, fontWeight: 500 }}
-            onClick={() => setShowClosedModal(true)}
-          >
-            View all closed boards
-          </Button>
         </div>
 
         {/* RIGHT: Tabs */}
@@ -169,26 +160,25 @@ export default function BoardsMainContent({ onCreateBoard }) {
           </div>
         ) : error ? (
           <div className="text-danger text-center">{error}</div>
-        ) : boards.length === 0 ? (
-          <div className="text-center">No boards found.</div>
         ) : (
           <BoardGrid>
+            <CreateCard onClick={() => setShowDrawer(true)}>Create new board</CreateCard>
+
             {boards.map(board => (
               <Link
                 key={board.id}
                 to={`/workspaces/${currentWorkspaceId}/boards/${board.id}/inbox`}
                 style={{ textDecoration: 'none' }}
               >
-                <BoardCard>{board.name}</BoardCard>
+                <BoardCard style={{ background: board.background || '#f4f5f7' }}>
+                  {board.name}
+                </BoardCard>
               </Link>
             ))}
           </BoardGrid>
         )}
       </div>
-      <ClosedBoardsModal 
-      show={showClosedModal} 
-      onClose={() => setShowClosedModal(false)}
-      onBoardReopened={handleBoardReopened} />
+
     </div>
   );
 }
