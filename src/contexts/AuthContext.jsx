@@ -4,6 +4,7 @@ import { login as authLogin, logout as authLogout, register as authRegister } fr
 import { fetchWorkspaces } from '../api/workspaceApi';
 import api from '../api/apiClient'; 
 import { TokenManager } from '../api/tokenManager';
+import * as recentBoardsUtil from '../utils/recentBoards';
 
 export const AuthContext = createContext();
 
