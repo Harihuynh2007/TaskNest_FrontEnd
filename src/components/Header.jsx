@@ -1,148 +1,188 @@
-import React, { useContext, useState, useEffect, useRef } from 'react';
-import {
-  Navbar,
-  Nav,
-  Container,
-  InputGroup,
-  FormControl,
-  Button,
-} from 'react-bootstrap';
-import { Link, useNavigate } from 'react-router-dom';
+// src/components/Header.jsx
+import React, { useContext, useEffect, useRef, useState, useCallback } from 'react';
+import { Navbar, Nav, Container, InputGroup, FormControl, Button, Badge } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext, WorkspaceContext, ModalContext } from '../contexts';
-import { MdSearch, MdNotificationsNone } from 'react-icons/md';
+import { MdSearch } from 'react-icons/md';
 import { FiHelpCircle } from 'react-icons/fi';
 import { AiOutlineGlobal } from 'react-icons/ai';
-import AppsDropdown from './AppsDropdown';
 import UserDropdown from './UserDropdown';
 import CreateDropdown from './CreateDropdown';
-import SwitchAccountsModal from '../features/auth/SwitchAccountsModal';
 import BoardThemeDrawer from '../features/boards/BoardThemeDrawer';
 import NotificationBell from './Notification/NotificationBell';
+import FeedbackPopup from '../components/FeedbackPopup';
+import AppsDropdown from './AppsDropdown';
 
 export default function Header() {
+  const navigate = useNavigate();
   const { user, logout } = useContext(AuthContext);
   const { workspaces, currentWorkspaceId, searchNav, setSearchNav } = useContext(WorkspaceContext);
   const { modals, closeModal } = useContext(ModalContext);
-  const currentWs = workspaces.find(w => w.id === currentWorkspaceId) || {};
-  const navigate = useNavigate();
 
+  const currentWs = workspaces.find(w => w.id === currentWorkspaceId);
   const [isFocused, setIsFocused] = useState(false);
   const [showCreateDropdown, setShowCreateDropdown] = useState(false);
-  const dropdownRef = useRef(null);
   const [showBoardTheme, setShowBoardTheme] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
 
-  
+  const createRef = useRef(null);
+  const feedbackRef = useRef(null);
+  const searchRef = useRef(null);
 
-  const handleSearchChange = (e) => {
-    setSearchNav(e.target.value);
-  };
-
+  // Close popovers when clicking outside
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setShowCreateDropdown(false);
+    const onClickOutside = (e) => {
+      if (createRef.current && !createRef.current.contains(e.target)) setShowCreateDropdown(false);
+      if (feedbackRef.current && !feedbackRef.current.contains(e.target)) setShowFeedback(false);
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, []);
+
+  // Cmd/Ctrl + K to focus search
+  useEffect(() => {
+    const onKey = (e) => {
+      const hotkey = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k';
+      if (hotkey) {
+        e.preventDefault();
+        searchRef.current?.focus();
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const onCreateBoard = useCallback(() => {
+    setShowCreateDropdown(false);
+    setShowBoardTheme(true);
   }, []);
 
   return (
     <>
-      <Navbar bg="white" expand="lg" className="border-bottom py-2">
+      <div className="tn-header-shadow" />
+      <Navbar
+        bg="transparent"
+        expand="lg"
+        className="tn-header sticky-top"
+        role="navigation"
+        aria-label="TaskNest primary"
+      >
         <Container fluid className="px-3">
-          <Navbar.Toggle aria-controls="responsive-navbar-nav" />
-          <Navbar.Collapse id="responsive-navbar-nav">
-            <Nav className="align-items-center">
-              <AppsDropdown />
-              <Navbar.Brand
-                role="button"
-                onClick={() => navigate('/boards')}
-                style={{ textDecoration: 'none' }}
+          {/* Left cluster: App switcher + logo */}
+          <Nav className="align-items-center gap-2">
+            <AppsDropdown />
+
+
+            <button
+              className="tn-brand"
+              onClick={() => navigate('/boards')}
+              aria-label="TaskNest Home"
+              title="TaskNest"
+            >
+              <span className="tn-brand-glyph" aria-hidden="true" />
+              <span className="tn-brand-text">TaskNest</span>
+              {currentWs?.name && (
+                <Badge bg="light" text="dark" className="ms-2 tn-ws-badge" title="Current workspace">
+                  {currentWs.name}
+                </Badge>
+              )}
+            </button>
+          </Nav>
+
+          {/* Center: Search */}
+          <div className="tn-search-wrap">
+            <InputGroup className={`tn-search ${isFocused ? 'focused' : ''}`}>
+              <InputGroup.Text className="tn-search-icon">
+                <MdSearch size={16} />
+              </InputGroup.Text>
+              <FormControl
+                ref={searchRef}
+                placeholder="Search (Ctrl / ⌘ + K)"
+                value={searchNav}
+                onChange={(e) => setSearchNav(e.target.value)}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                aria-label="Search boards, cards, members"
+              />
+            </InputGroup>
+          </div>
+
+          {/* Right cluster: Create | Feedback | Notifications | Help | Locale | User */}
+          <Nav className="align-items-center gap-1">
+            <div className="position-relative" ref={createRef}>
+              <Button
+                variant="success"
+                className="tn-create-btn"
+                onClick={() => setShowCreateDropdown(v => !v)}
+                aria-haspopup="menu"
+                aria-expanded={showCreateDropdown}
+                aria-label="Create board or workspace"
               >
-                <span style={{ color: '#28A745', fontSize: '24px', fontWeight: 'bold' }}>TaskNest</span>
-              </Navbar.Brand>
-
-            </Nav>
-
-            <div className="d-flex align-items-center mx-auto" style={{ flex: '1 1 700px', maxWidth: 700, minWidth: 0 }}>
-              <InputGroup
-                className="flex-grow-1"
-                style={{
-                  background: '#f4f5f7',
-                  border: '1px solid #dfe1e6',
-                  borderRadius: 3,
-                  boxShadow: isFocused ? '0 0 0 2px rgba(40, 167, 69, 0.3)' : 'none',
-                }}
-              >
-                <InputGroup.Text style={{ background: 'transparent', border: 'none', padding: '0 8px' }}>
-                  <MdSearch size={16} color="#5e6c84" />
-                </InputGroup.Text>
-                <FormControl
-                  placeholder="Search"
-                  value={searchNav}
-                  onChange={handleSearchChange}
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
-                  style={{ border: 'none', background: 'transparent', padding: '4px 8px' }}
-                />
-              </InputGroup>
-
-              <div className="d-flex align-items-center position-relative ms-2" ref={dropdownRef}>
-                <Button
-                  variant="success"
-                  style={{
-                    backgroundColor: '#28A745',
-                    borderColor: '#28A745',
-                    height: 28,
-                    padding: '0 10px',
-                    minWidth: '70px',
-                    whiteSpace: 'nowrap',
+                <span className="tn-plus">＋</span> Create
+              </Button>
+              {showCreateDropdown && (
+                <CreateDropdown
+                  onCreateBoard={onCreateBoard}
+                  onStartTemplate={() => {
+                    setShowCreateDropdown(false);
+                    navigate('/templates');
                   }}
-                  onClick={() => setShowCreateDropdown(!showCreateDropdown)}
-                >
-                  Create
-                </Button>
-
-                {showCreateDropdown && (
-                  <CreateDropdown
-                    onCreateBoard={() => {
-                      setShowCreateDropdown(false);
-                      setShowBoardTheme(true);
-                    }}
-                    onStartTemplate={() => {
-                      setShowCreateDropdown(false);
-                      navigate('/templates');
-                    }}
-                  />
-                )}
-
-                {showBoardTheme && (
-                  <BoardThemeDrawer
-                    show={showBoardTheme}
-                    onClose={() => setShowBoardTheme(false)}
-                    onCreate={(data) => {
-                      console.log('Create board:', data);
-                      setShowBoardTheme(false);
-                      // Optionally: Call API to create board
-                    }}
-                  />
-                )}
-              </div>
+                />
+              )}
             </div>
 
-            <Nav className="align-items-center">
-              <AiOutlineGlobal size={20} style={{ marginLeft: '4px' }} />
-              <NotificationBell />
-              <FiHelpCircle size={20} style={{ marginLeft: '4px' }} />
-              {user && <UserDropdown user={user} logout={logout} />}
-            </Nav>
-          </Navbar.Collapse>
+            <div className="position-relative" ref={feedbackRef}>
+              <button
+                className="tn-icon-btn"
+                aria-label="Feedback"
+                onClick={() => setShowFeedback(v => !v)}
+                title="Feedback"
+              >
+                {/* megaphone-ish icon */}
+                <svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true">
+                  <path fill="currentColor" d="M13.5 3.1c0-.35-.37-.58-.69-.46L7.5 4.76v4.73l5.31 2.13c.32.13.69-.1.69-.46zM6 9.25H3a.5.5 0 0 1-.5-.5V5.5A.5.5 0 0 1 3 5h3v4.25ZM6 10.75V13a.5.5 0 0 1-.5.5H5A2 2 0 0 1 3 11v-2.25H6Z"/>
+                </svg>
+              </button>
+              {showFeedback && <FeedbackPopup onClose={() => setShowFeedback(false)} />}
+            </div>
+
+            <NotificationBell />
+
+            <button
+              className="tn-icon-btn"
+              aria-label="Help"
+              title="Help & resources"
+              onClick={() => navigate('/help')}
+            >
+              <FiHelpCircle size={18} />
+            </button>
+
+            <button
+              className="tn-icon-btn"
+              aria-label="Language & region"
+              title="Language & region"
+            >
+              <AiOutlineGlobal size={18} />
+            </button>
+
+            {user && <UserDropdown logout={logout} />}
+          </Nav>
         </Container>
       </Navbar>
 
+      {showBoardTheme && (
+        <BoardThemeDrawer
+          show={showBoardTheme}
+          onClose={() => setShowBoardTheme(false)}
+          onCreate={(data) => {
+            console.log('Create board:', data);
+            setShowBoardTheme(false);
+          }}
+        />
+      )}
+
       {modals.switchAccounts?.open && (
-        <SwitchAccountsModal
+        <modals.switchAccounts.component
           onSwitch={modals.switchAccounts.props.onSwitch}
           onClose={() => closeModal('switchAccounts')}
         />

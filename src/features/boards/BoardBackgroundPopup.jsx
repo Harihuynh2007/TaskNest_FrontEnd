@@ -64,10 +64,13 @@ const PopupWrapper = styled.div`
   top: 0;
   left: 280px;
   width: 300px;
-  background: white;
+  background: var(--surface-2, #222834);
+  color: var(--text-primary, #e1e3e6);
+  border: 1px solid var(--panel-border, #3a414f);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+
   border-radius: 8px;
   padding: 16px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
   z-index: 1000;
 `;
 
@@ -80,14 +83,17 @@ const Header = styled.div`
 `;
 
 const CloseButton = styled.button`
-  background: none;
-  border: 1px solid #ccc;
+  background: transparent;
+  border: 1px solid var(--panel-border, #3a414f);
+  color: var(--text-secondary, #8a93a2);
+
   border-radius: 50%;
   width: 24px;
   height: 24px;
   line-height: 1;
   font-size: 16px;
   cursor: pointer;
+  &:hover { background: var(--surface-3, #2c3341); color: var(--text-primary, #e1e3e6); }
 `;
 
 const Section = styled.div`
@@ -100,11 +106,7 @@ const Label = styled.div`
   font-size: 14px;
   display: flex;
   justify-content: space-between;
-  a {
-    font-size: 12px;
-    text-decoration: underline;
-    color: #5b6f8c;
-  }
+  a { color: var(--text-secondary, #8a93a2); }
 `;
 
 const Grid = styled.div`
@@ -139,10 +141,8 @@ const LinkButton = styled.button`
   padding: 0;
   font-size: 12px;
   text-decoration: underline;
-  color: #5b6f8c;
+  color: var(--text-secondary, #8a93a2);
   cursor: pointer;
 
-  &:hover {
-    color: #2c3e50;
-  }
+  &:hover { color: var(--text-primary, #e1e3e6); }
 `;

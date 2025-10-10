@@ -71,3 +71,142 @@
   transition: all 0.2s ease;
 }
 
+
+
+/* Icon buttons */
+.tn-icon-btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px; width: 36px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #626F86;
+  transition: .15s ease;
+}
+.tn-icon-btn:hover{ background: var(--tn-hover); color: var(--tn-text); }
+.tn-icon-btn:active{ transform: translateY(1px) scale(.98); }
+.tn-icon-btn:focus-visible{
+  outline: 0;
+  box-shadow: 0 0 0 2px var(--tn-focus);
+}
+
+/* Create */
+.tn-create-btn{
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  border: none;
+  background: linear-gradient(135deg, var(--tn-green), var(--tn-green-700));
+}
+.tn-create-btn:hover{ filter: brightness(0.98); }
+.tn-plus{ margin-right: 6px; }
+
+/* Search */
+.tn-search-wrap{ flex: 1 1 700px; max-width: 720px; min-width: 0; padding: 0 12px; }
+.tn-search{
+  background: #F4F5F7;
+  border: 1px solid #DFE1E6;
+  border-radius: 12px;
+  transition: box-shadow .15s ease, background .15s ease, border-color .15s ease;
+}
+.tn-search.focused{
+  box-shadow: 0 0 0 3px var(--tn-focus);
+  background: #fff;
+  border-color: #C9D1D9;
+}
+.tn-search .form-control{
+  border: none;
+  background: transparent;
+  padding: 8px 10px;
+  min-height: 36px;
+  font-size: 14px;
+}
+.tn-search .form-control:focus{ box-shadow: none; }
+.tn-search-icon{
+  border: none;
+  background: transparent;
+  padding-left: 10px;
+  color: #5e6c84;
+}
+
+/* Dropdown surface unify */
+.create-dropdown, .custom-dropdown-menu{
+  border: 1px solid var(--tn-stroke);
+  box-shadow: var(--tn-shadow);
+  backdrop-filter: var(--tn-blur);
+}
+
+/* Feedback popup polish */
+[data-testid="feedback-popup"], .tn-feedback{
+  border: 1px solid var(--tn-stroke);
+  box-shadow: var(--tn-shadow);
+}
+
+/* === Apps Dropdown polish to match header === */
+.apps-dropdown .app-menu-toggle {
+  height: 36px; width: 36px;
+  border-radius: 9px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: #626F86 !important;
+  transition: .15s ease;
+}
+.apps-dropdown .app-menu-toggle:hover { background: var(--tn-hover); color: var(--tn-text) !important; }
+.apps-dropdown .app-menu-toggle:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 2px var(--tn-focus);
+}
+.apps-dropdown .dropdown-menu {
+  border: 1px solid var(--tn-stroke);
+  box-shadow: var(--tn-shadow);
+  backdrop-filter: var(--tn-blur);
+}
+.apps-dropdown .dropdown-item img { margin-right: 8px; }
+
+/* ===== TASKNEST HEADER - DARK MODE REFRESH ===== */
+
+
+/* 3. Đồng bộ các Dropdown (Create, Apps, User Menu) */
+.create-dropdown,
+.custom-dropdown-menu,
+.apps-dropdown .dropdown-menu {
+  background: var(--tn-dark-surface);
+  border: 1px solid var(--tn-dark-stroke);
+  box-shadow: var(--tn-dark-shadow);
+  backdrop-filter: saturate(180%) blur(12px);
+}
+
+/* Items bên trong dropdown */
+.create-item,
+.custom-dropdown-item {
+  color: var(--tn-dark-text);
+}
+.create-item:hover,
+.custom-dropdown-item:hover {
+  background-color: var(--tn-dark-hover);
+}
+
+/* Text phụ và icon trong dropdown */
+.create-item .icon,
+.create-item .desc,
+.custom-dropdown-item small,
+.custom-dropdown-header {
+  color: var(--tn-dark-text-subtle);
+}
+
+/* Màu viền trái khi hover */
+.create-item:hover {
+  border-left: 3px solid var(--tn-brand-accent);
+}
+
+/* Feedback Popup */
+[data-testid="feedback-popup"], .tn-feedback {
+    background: var(--tn-dark-bg);
+    border: 1px solid var(--tn-dark-stroke);
+    box-shadow: var(--tn-dark-shadow);
+    color: var(--tn-dark-text);
+}

@@ -44,7 +44,11 @@ const NavWrapper = styled.div`
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  background: white;
+  
+  background: var(--surface-2, #222834);
+  border: 1px solid var(--panel-border, #3a414f);
+  color: var(--text-primary, #e1e3e6);
+
   border-radius: 999px;
   padding: 6px 12px;
   gap: 8px;
@@ -62,9 +66,10 @@ const NavItem = styled.button`
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  color: ${({ $isActive }) => ($isActive ? '#28a745' : '#5e6c84')};
-  background: ${({ $isActive }) => ($isActive ? '#e6f0ff' : 'transparent')};
-  box-shadow: ${({ $isActive }) => ($isActive ? 'inset 0 -2px 0 #0c66e4' : 'none')};
+  color: ${({ $isActive }) => ($isActive ? 'var(--brand-primary, #58aff6)' : 'var(--text-secondary, #8a93a2)')};
+  background: ${({ $isActive }) => ($isActive ? 'var(--surface-3, #2c3341)' : 'transparent')};
+  box-shadow: ${({ $isActive }) => ($isActive ? 'inset 0 -2px 0 var(--brand-primary, #58aff6)' : 'none')};
+
   transition: 0.2s;
 
   &:hover {
@@ -77,8 +82,9 @@ const NavItem = styled.button`
       box-shadow: none;
     `
         : `
-      background: #f0f4ff;
-    `}
+      background: var(--surface-3, #2c3341);
+
+    `
   }
 
   span {

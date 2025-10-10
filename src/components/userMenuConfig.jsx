@@ -12,68 +12,68 @@ const UserInfo = ({ user }) => {
   );
 };
 
-export const getUserMenuConfig = ({ user, logout, openModal }) => {
-  // Tính toán các giá trị cần thiết một lần ở đây
-  const displayName = user?.display_name || user?.username?.split('@')[0] || 'User';
-  const userInitial = displayName.charAt(0).toUpperCase();
-
-  // URL placeholder mới, an toàn
-  const safeAvatar = user?.avatar || `https://placehold.co/32x32/28a745/FFFFFF?text=${userInitial}`;
+// src/components/userMenuConfig.js
+export function getUserMenuConfig({ user, logout, openModal, onToggleTheme }) {
+  const p = user?.profile || {};
+  const accountName = p.display_name || p.display_name_computed || user?.email || 'User';
+  const accountEmail = user?.email || '';
 
   return [
-    { section: 'ACCOUNT' },
+    // ===== Account section =====
+    { section: 'Account', key: 'sec-account' },
     {
-      // Sử dụng component UserInfo để render label
-      label: <UserInfo user={user} />,
-      // Sử dụng avatar đã được xử lý an toàn
-      avatar: safeAvatar,
-      disabled: true, // Giữ nguyên vì item này không thể click
+      type: 'accountHeader',
+      key: 'accountHeader',
+      name: accountName,
+      email: accountEmail,
+      avatar:
+        p.avatar_url ||
+        p.avatar_thumbnail_url ||
+        `https://placehold.co/40x40/28a745/FFFFFF?text=${encodeURIComponent(
+          (p.initials || accountEmail?.[0] || 'U').toUpperCase()
+        )}`,
     },
     {
+      key: 'switch-accounts',
       label: 'Switch accounts',
-      onClick: () => openModal('switchAccounts', { onSwitch: () => console.log('Account switched') }),
+      href: '/auth/switch-accounts', // TODO: route thật của bạn
     },
     {
+      key: 'manage-account',
       label: 'Manage account',
-      href: '/manage-account',
+      href: '/account', // TODO: route thật của bạn / trang hồ sơ
+      target: '_blank',
     },
-    { divider: true },
-    { section: 'TASKNEST' },
+    { divider: true, key: 'd1' },
 
-    { label: 'Profile and visibility', href: '/settings/profile' },
-    
+    // ===== Trello section =====
+    { section: 'Trello', key: 'sec-trello' },
+    { key: 'profile', label: 'Profile and visibility', href: '/u/me/profile' },
+    { key: 'activity', label: 'Activity', href: '/u/me/activity' },
+    { key: 'cards', label: 'Cards', href: '/u/me/cards' },
+    { key: 'settings', label: 'Settings', href: '/u/me/account' },
     {
-      label: 'Activity',
-      href: '/activity',
-    },
-    {
-      label: 'Cards',
-      href: '/cards',
-    },
-    {
-      label: 'Settings',
-      href: '/settings',
-    },
-    {
+      key: 'theme',
       label: 'Theme',
-      href: '#theme',
+      onClick: () => onToggleTheme?.(), // toggle dark/light
     },
-    { divider: true },
+
+    // ===== Workspace creation =====
+    { divider: true, key: 'd2' },
     {
+      key: 'create-workspace',
       label: 'Create Workspace',
-      onClick: () => openModal('createWorkspace', { onCreate: () => console.log('Workspace created') }),
+      onClick: () => openModal?.('CreateWorkspaceModal'),
+      icon: 'org',
     },
-    {
-      label: 'Help',
-      href: '/help',
-    },
-    {
-      label: 'Shortcuts',
-      href: '#shortcuts',
-    },
-    {
-      label: 'Log out',
-      onClick: logout,
-    },
+
+    // ===== Help =====
+    { divider: true, key: 'd3' },
+    { key: 'help', label: 'Help', href: '/help', target: '_blank' },
+    { key: 'shortcuts', label: 'Shortcuts', onClick: () => openModal?.('ShortcutsModal') },
+
+    // ===== Logout =====
+    { divider: true, key: 'd4' },
+    { key: 'logout', label: 'Log out', onClick: logout },
   ];
-};
+}

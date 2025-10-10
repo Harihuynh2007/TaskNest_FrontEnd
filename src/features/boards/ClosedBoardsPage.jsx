@@ -103,7 +103,7 @@ export default function ClosedBoardsModal({ show, onClose,onBoardReopened  }) {
             key={board.id} 
             board={board} 
             onReopen={handleReopen} 
-            onDelete={setBoardToDelete} // Mở modal xác nhận
+            onDelete={setBoardToDelete} 
           />
         ))}
       </ListGroup>

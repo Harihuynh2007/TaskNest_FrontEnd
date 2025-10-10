@@ -119,13 +119,14 @@ export default function BoardThemeDrawer({ show, onClose, onCreate, isOwner = tr
 
       <Button
         variant="primary"
-        onClick={handleCreate}
         className="w-100"
+        onClick={handleCreate}
         disabled={!title.trim()}
-        style={{ background: '#579dff', borderColor: '#579dff', fontWeight: 500 }}
+        style={{ background: 'var(--brand-primary, #58aff6)', borderColor: 'transparent', fontWeight: 700 }}
       >
         Create
       </Button>
+
 
       <Button variant="light" className="w-100 mt-3" style={{ fontWeight: 500 }}>
         Start with a template
@@ -143,7 +144,10 @@ const DrawerWrapper = styled.div`
   top: calc(100% + 8px);
   left: 0;
   width: 320px;
-  background: white;
+  background: var(--surface-2, #222834);
+  color: var(--text-primary, #e1e3e6);
+  border: 1px solid var(--panel-border, #3a414f);
+
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 6px 12px rgba(0,0,0,0.2);
@@ -159,8 +163,8 @@ const Header = styled.div`
 `;
 
 const CloseBtn = styled.button`
-  background: none;
-  border: 1px solid #c1c7d0;
+  background: transparent;
+  border: 1px solid var(--panel-border, #3a414f);
   width: 28px;
   height: 28px;
   font-size: 18px;
@@ -171,11 +175,9 @@ const CloseBtn = styled.button`
   justify-content: center;
   padding: 0;
   cursor: pointer;
-  color: #172b4d;
+  color: var(--text-secondary, #8a93a2);
   transition: all 0.15s;
-  &:hover {
-    background: #f4f5f7;
-  }
+  &:hover { background: var(--surface-3, #2c3341); color: var(--text-primary, #e1e3e6); }
 `;
 
 const PreviewBox = styled.div`
@@ -200,7 +202,7 @@ const ColorDot = styled.div`
   height: 32px;
   border-radius: 4px;
   background-color: ${props => props.color};
-  border: ${props => (props.active ? '2px solid #172b4d' : '1px solid #ccc')};
+  border: ${props => (props.$active ? '2px solid var(--brand-primary, #58aff6)' : '1px solid var(--panel-border, #3a414f)')};
   cursor: pointer;
 `;
 
@@ -208,7 +210,10 @@ const ColorDotMore = styled.div`
   width: 40px;
   height: 32px;
   border-radius: 4px;
-  background: #f4f5f7;
+
+  background: var(--surface-3, #2c3341);
+  color: var(--text-primary, #e1e3e6)
+
   display: flex;
   align-items: center;
   justify-content: center;

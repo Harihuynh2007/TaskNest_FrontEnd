@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { FixedSizeList } from 'react-window';
 
-// Grid container for all boards and create-tile
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -11,7 +10,6 @@ const Grid = styled.div`
   padding: 16px;
 `;
 
-// Common tile styles
 const Tile = styled.div`
   background-color: #f4f5f7;
   border-radius: 6px;

@@ -6,8 +6,10 @@ export default function BoardTitle({ title }) {
 }
 
 const StyledTile = styled.div`
-  background-color: #dfe1e6;
-  border: 2px solid #28A745; // Thêm viền xanh lá
+  background-color: var(--surface-2, #222834);
+  border: 1px solid var(--panel-border, #3a414f);
+  color: var(--text-primary, #e1e3e6);
+
   border-radius: 3px;
   width: 200px;
   height: 120px;
@@ -15,7 +17,5 @@ const StyledTile = styled.div`
   align-items: center;
   justify-content: center;
   margin-right: 16px;
-  &:hover {
-    background-color: #e0f3e0; // Hiệu ứng hover với màu xanh nhạt
-  }
+  &:hover { background-color: var(--surface-3, #2c3341); }
 `;

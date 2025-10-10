@@ -184,30 +184,27 @@ export default function BoardsMainContent({ onCreateBoard }) {
 }
 
 const CreateCard = styled.div`
-  width: 180px;
-  height: 100px;
-  border: 2px solid #1e7e34;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f4f5f7;
-  color: #172b4d;
-  font-weight: 500;
-  cursor: pointer;
-  transition: 0.2s;
+  width: 180px; height: 100px; border: 2px dashed var(--brand-primary, #58aff6);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  background: var(--surface-2, #222834); color: var(--text-secondary, #8a93a2);
+  font-weight: 500; cursor: pointer; transition: 0.2s;
   &:hover {
-    background-color: #e0e0e0;
+    background: var(--surface-3, #2c3341);
+    color: var(--text-primary, #e1e3e6);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,.24);
   }
 `;
 
+
 const TabButton = styled(Button).attrs({ variant: 'light' })`
-  background-color: #f4f5f7;
-  border: 1px solid #dcdfe4;
-  color: #172b4d;
-  font-weight: 500;
-  padding: 6px 12px;
+  background: var(--surface-2, #222834);
+  border: 1px solid var(--panel-border, #3a414f);
+  color: var(--text-secondary, #8a93a2);
+  font-weight: 500; padding: 6px 12px;
+  &:hover { background: var(--surface-3, #2c3341); color: var(--text-primary, #e1e3e6); }
 `;
+
 
 const BoardGrid = styled.div`
   display: grid;
@@ -217,17 +214,15 @@ const BoardGrid = styled.div`
 `;
 
 const BoardCard = styled.div`
-  background-color: #f4f5f7;
-  border-radius: 6px;
-  height: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  background: var(--surface-2, #222834);
+  border-radius: 6px; height: 100px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-primary, #e1e3e6);
+  font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+  position: relative; overflow: hidden;
   &:hover {
-    background-color: #e2e4e6;
+    background: var(--surface-3, #2c3341);
+    box-shadow: 0 8px 16px rgba(0,0,0,.24);
+    transform: translateY(-2px);
   }
 `;

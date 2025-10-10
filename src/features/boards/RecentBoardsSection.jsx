@@ -22,7 +22,7 @@ export default function RecentBoardsSection({ recentBoards, loading }) {
   }
 
   if (!recentBoards || recentBoards.length === 0) {
-    return null; // Không hiển thị section nếu không có boards
+    return null; 
   }
 
   return (
@@ -63,11 +63,8 @@ const Section = styled.div`
 `;
 
 const SectionHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  color: #44546f;
+  display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+  color: var(--text-secondary, #8a93a2);
 `;
 
 const SectionTitle = styled.h6`
@@ -89,38 +86,17 @@ const BoardGrid = styled.div`
 `;
 
 const RecentBoardCard = styled.div`
-  position: relative;
-  height: 96px;
-  border-radius: 8px;
-  background: ${props => props.$background || '#f1f2f4'};
-  background-size: cover;
-  background-position: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  overflow: hidden;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0.1) 0%,
-      rgba(0, 0, 0, 0.4) 100%
-    );
-    opacity: 0;
-    transition: opacity 0.2s ease;
+  position: relative; height: 96px; border-radius: 8px;
+  background: ${p => p.$background || 'var(--surface-2, #222834)'};
+  background-size: cover; background-position: center; cursor: pointer; transition: all .2s; overflow: hidden;
+  &::before{
+    content:''; position:absolute; inset:0;
+    background: linear-gradient(to bottom, rgba(0,0,0,.1) 0%, rgba(0,0,0,.45) 100%);
+    opacity:0; transition: opacity .2s;
   }
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-    
-    &::before {
-      opacity: 1;
-    }
-  }
+  &:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0,0,0,.24); &::before{opacity:1;} }
 `;
+
 
 const CardOverlay = styled.div`
   position: absolute;
@@ -133,35 +109,17 @@ const CardOverlay = styled.div`
 `;
 
 const BoardName = styled.div`
-  font-weight: 700;
-  font-size: 16px;
-  color: #172b4d;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(4px);
-  padding: 4px 8px;
-  border-radius: 4px;
-  line-height: 1.3;
-  max-width: fit-content;
-  
-  /* Truncate long names */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
+  color: var(--text-primary, #e1e3e6); background: rgba(0,0,0,.45);
+  backdrop-filter: blur(4px); padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 16px;
 `;
 
+
 const WorkspaceBadge = styled.div`
-  font-size: 11px;
-  font-weight: 600;
-  color: #626f86;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(4px);
-  padding: 2px 6px;
-  border-radius: 3px;
-  max-width: fit-content;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
+  color: var(--text-secondary, #8a93a2); background: rgba(0,0,0,.35);
+  backdrop-filter: blur(4px); padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .3px; max-width: fit-content;
 `;
+
 
 // Skeleton Loading
 const SkeletonGrid = styled(BoardGrid)``;
