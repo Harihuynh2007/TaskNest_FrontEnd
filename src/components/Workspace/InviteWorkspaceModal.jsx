@@ -1,42 +1,47 @@
 // src/components/InviteWorkspaceModal.jsx
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { FiLink } from 'react-icons/fi';
 import { X } from 'react-feather';
 import dayjs from 'dayjs';
 import { inviteMember, createShareLink } from '../../api/workspaceApi';
 
-// =============== styled ===============
 const Backdrop = styled.div`
   position: fixed; inset: 0;
   display: grid; place-items: center;
   padding: 16px;
-  background: rgba(0,0,0,0.4);
-  z-index: 1000;
+  background: rgba(0,0,0,0.45);
+  z-index: 1100;
 `;
 
 const Card = styled.div`
   width: min(92vw, 620px);
   max-height: 90vh;
-  background: #fff; color: #1f2328;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.18);
+  background: var(--surface-4, #2c3750); color: var(--text-primary, #e6e9ee);
+  border: 1px solid var(--panel-border, #3a465e);
+  border-radius: 14px;
+  box-shadow: 0 16px 42px rgba(0,0,0,.36);
   display: flex; flex-direction: column;
 `;
 
 const Header = styled.div`
   display:flex; align-items:center; justify-content:space-between;
-  padding: 14px 18px; border-bottom: 1px solid #e6eaef;
-  h3{margin:0; font-size:18px; font-weight:600;}
-  button{border:0;background:transparent;cursor:pointer;font-size:20px;color:#666;}
+  padding: 14px 18px; border-bottom: 1px solid var(--panel-border, #3a465e);
+  h3{margin:0; font-size:18px; font-weight:800;}
+  button{
+    all: unset; width: 32px; height: 32px; border-radius: 8px;
+    display:inline-flex; align-items:center; justify-content:center; cursor:pointer;
+    color: var(--text-secondary, #9aa5b5);
+    &:hover{ background: var(--surface-3, #232d3e); color: var(--text-primary); }
+  }
 `;
 
 const Body = styled.div`
-  padding: 16px 18px; overflow:auto;
+  padding: 16px 18px; overflow:auto; display:grid; gap:12px;
 `;
 
 const Footer = styled.div`
-  padding: 12px 18px 16px; border-top: 1px solid #e6eaef;
+  padding: 12px 18px 16px; border-top: 1px solid var(--panel-border, #3a465e);
   display:flex; justify-content:flex-end; gap:8px;
 `;
 
@@ -44,73 +49,81 @@ const Row = styled.div`
   display:flex; align-items:center; gap:10px; flex-wrap:wrap;
 `;
 
-const InputShell = styled.div`
-  position: relative; width: 100%;
-`;
+const InputShell = styled.div` position: relative; width: 100%; `;
 
 const EmailInput = styled.input`
   width: 100%;
-  border: 1px solid #d0d7de;
+  border: 1px solid var(--panel-border, #3a465e);
   border-radius: 10px;
   padding: 10px 12px;
   font-size: 14px; outline: none;
+  background: var(--surface-2, #1b2331);
+  color: var(--text-primary, #e6e9ee);
   transition: box-shadow .15s, border-color .15s;
-  &:focus { border-color:#388bff; box-shadow:0 0 0 3px rgba(56,139,255,.2); }
+  &:focus { border-color: transparent; box-shadow: 0 0 0 3px var(--ring, rgba(91,188,247,.38)); }
 `;
 
 const PillBox = styled.div`
   width: 100%;
   display:flex; align-items:center; gap:8px;
-  border: 1px solid #d0d7de; border-radius: 10px;
-  padding: 6px 8px 6px 10px; background:#fff;
+  border: 1px solid var(--panel-border, #3a465e); border-radius: 10px;
+  padding: 6px 8px 6px 10px; background: var(--surface-2, #1b2331);
 `;
 
 const Pill = styled.span`
   display:inline-flex; align-items:center; gap:6px;
-  background:#eef6ff; color:#0a66ff;
-  border:1px solid #cfe4ff; border-radius: 999px;
-  padding: 6px 8px; font-size: 13px; font-weight:600;
+  background: rgba(91,188,247,.18); color: var(--brand-primary, #5bbcf7);
+  border:1px solid rgba(91,188,247,.4); border-radius: 999px;
+  padding: 6px 8px; font-size: 13px; font-weight:700;
   svg{cursor:pointer}
 `;
 
 const SendBtn = styled.button`
   margin-left: auto;
-  border: 1px solid #28a745; background:#28a745; color:#fff;
-  border-radius: 8px; padding: 8px 12px; font-weight:700;
-  cursor:pointer;
-  &:disabled{opacity:.6; cursor:not-allowed;}
+  border: 0; background: var(--brand-gradient, linear-gradient(135deg,#5bbcf7 0%, #3a7bd5 100%)); color:#fff;
+  border-radius: 10px; padding: 10px 12px; font-weight:800;
+  box-shadow: 0 4px 14px rgba(58,123,213,.35);
+  cursor:pointer; transition: filter .15s, box-shadow .15s;
+  &:hover{ filter:brightness(1.03); box-shadow:0 8px 20px rgba(58,123,213,.45);}
+  &:disabled{ opacity:.6; cursor:not-allowed; box-shadow:none; }
 `;
 
 const TextArea = styled.textarea`
   width:100%; min-height: 88px; resize: vertical;
-  border:1px solid #d0d7de; border-radius:10px;
+  border:1px solid var(--panel-border, #3a465e); border-radius:10px;
   padding: 10px 12px; font-size:14px; outline: none;
-  &:focus { border-color:#388bff; box-shadow:0 0 0 3px rgba(56,139,255,.2); }
+  background: var(--surface-2, #1b2331);
+  color: var(--text-primary, #e6e9ee);
+  &:focus { border-color: transparent; box-shadow:0 0 0 3px var(--ring, rgba(91,188,247,.38)); }
 `;
 
-const Subtle = styled.div`
-  margin-top: 14px; font-size: 14px; color: #57606a;
-`;
+const Subtle = styled.div` margin-top: 6px; font-size: 14px; color: var(--text-secondary, #9aa5b5); `;
 
 const Button = styled.button`
-  border: 1px solid #d0d7de; background:#f6f8fa; color:#111;
-  padding: 8px 12px; border-radius: 8px; cursor: pointer;
-  display:inline-flex; align-items:center; gap:8px; font-weight:600;
-  &:hover{ background:#eef1f4; }
+  border: 1px solid var(--panel-border, #3a465e); background: var(--surface-2, #1b2331); color: var(--text-primary, #e6e9ee);
+  padding: 8px 12px; border-radius: 10px; cursor: pointer;
+  display:inline-flex; align-items:center; gap:8px; font-weight:700;
+  &:hover{ background: var(--surface-3, #232d3e); }
   &:disabled{ opacity:.6; cursor:not-allowed; }
 `;
 
 const Primary = styled(Button)`
-  background:#0a66ff; border-color:#0a66ff; color:#fff;
-  &:hover{ background:#0a58e6; }
+  background: var(--brand-gradient, linear-gradient(135deg,#5bbcf7 0%, #3a7bd5 100%));
+  border: none; color:#fff;
+  box-shadow: 0 4px 14px rgba(58,123,213,.35);
+  &:hover{ filter:brightness(1.03); box-shadow:0 8px 20px rgba(58,123,213,.45); }
 `;
 
 const LinkBox = styled.div`
   margin-top: 10px; display:flex; gap:8px;
-  input{ flex:1; border:1px solid #d0d7de; border-radius:8px; padding:8px 10px; font-size:13px; }
+  input{
+    flex:1; border:1px solid var(--panel-border, #3a465e); border-radius:8px; padding:8px 10px; font-size:13px;
+    background: var(--surface-2, #1b2331); color: var(--text-primary, #e6e9ee);
+    &:focus{ outline:none; box-shadow:0 0 0 3px var(--ring, rgba(91,188,247,.38)); border-color: transparent; }
+  }
 `;
 
-// =============== helpers ===============
+// helpers
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function InviteWorkspaceModal({
@@ -119,7 +132,7 @@ export default function InviteWorkspaceModal({
   onClose
 }) {
   const [raw, setRaw] = useState('');
-  const [selected, setSelected] = useState(null); // {label, value} — email hoặc username
+  const [selected, setSelected] = useState(null); // {label, value, type}
   const [message, setMessage] = useState('Join this Workspace to start collaborating with me!');
   const [sending, setSending] = useState(false);
 
@@ -134,30 +147,18 @@ export default function InviteWorkspaceModal({
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return ()=>{
-        document.removeEventListener('keydown', onKey);
-        document.body.style.overflow = prev;
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
     }
   }, [onClose]);
 
-  // Khi người dùng nhấn Enter trong input:
+  // Enter trong input
   const trySelect = () => {
     const v = raw.trim();
     if (!v) return;
-    // 1) nếu là email, chấp nhận ngay
-    if (emailRegex.test(v)) {
-      setSelected({ label: v, value: v, type: 'email' });
-      setRaw('');
-      return;
-    }
-    // 2) nếu là username (ví dụ "@tanhaorn"), bỏ @ và chấp nhận
-    if (v.startsWith('@') && v.length > 1) {
-      setSelected({ label: v, value: v.slice(1), type: 'username' });
-      setRaw('');
-      return;
-    }
-    // fallback: coi như email nếu người dùng cố ý
-    setSelected({ label: v, value: v, type: 'email' });
-    setRaw('');
+    if (emailRegex.test(v)) { setSelected({ label: v, value: v, type: 'email' }); setRaw(''); return; }
+    if (v.startsWith('@') && v.length > 1) { setSelected({ label: v, value: v.slice(1), type: 'username' }); setRaw(''); return; }
+    setSelected({ label: v, value: v, type: 'email' }); setRaw('');
   };
 
   const removeSelected = () => setSelected(null);
@@ -166,23 +167,18 @@ export default function InviteWorkspaceModal({
     if (!selected) return;
     setSending(true);
     try {
-      // Trello-like: nếu là username -> BE của bạn có thể map sang email; ở đây ưu tiên email.
       const email = selected.type === 'email' ? selected.value : `${selected.value}@example.com`;
       await inviteMember(workspaceId, {
         email,
         role: 'member',
-        // bạn có thể gửi kèm message ở BE; nếu chưa có trường message thì bỏ
         message,
         expires_at: dayjs().add(7, 'day').toISOString()
       });
-      // reset
       setSelected(null);
       setMessage('Join this Workspace to start collaborating with me!');
     } catch (e) {
       console.error(e);
-    } finally {
-      setSending(false);
-    }
+    } finally { setSending(false); }
   };
 
   const handleCreateLink = async () => {
@@ -193,9 +189,7 @@ export default function InviteWorkspaceModal({
       setLink(`${origin}/join/${data.token}`);
     } catch (e) {
       console.error(e);
-    } finally {
-      setCreating(false);
-    }
+    } finally { setCreating(false); }
   };
 
   const copy = async ()=>{ try{ await navigator.clipboard.writeText(link);}catch{} };
@@ -209,7 +203,6 @@ export default function InviteWorkspaceModal({
         </Header>
 
         <Body>
-          {/* INPUT KHI CHƯA CHỌN */}
           {!selected ? (
             <InputShell>
               <EmailInput
@@ -221,20 +214,18 @@ export default function InviteWorkspaceModal({
             </InputShell>
           ) : (
             <Row style={{ alignItems: 'center' }}>
-                <PillBox style={{ flex: 1 }}>
-                    <Pill>
-                    {selected.label}
-                    <X size={14} onClick={removeSelected} />
-                    </Pill>
-                </PillBox>
-                <SendBtn onClick={handleSendInvite} disabled={sending}>
-                    {sending ? 'Sending…' : 'Send invite'}
-                </SendBtn>
+              <PillBox style={{ flex: 1 }}>
+                <Pill>
+                  {selected.label}
+                  <X size={14} onClick={removeSelected} />
+                </Pill>
+              </PillBox>
+              <SendBtn onClick={handleSendInvite} disabled={sending}>
+                {sending ? 'Sending…' : 'Send invite'}
+              </SendBtn>
             </Row>
-
           )}
 
-          {/* TEXTAREA CHỈ HIỆN KHI ĐÃ CHỌN */}
           {selected && (
             <div style={{ marginTop: 12 }}>
               <TextArea
@@ -245,7 +236,6 @@ export default function InviteWorkspaceModal({
             </div>
           )}
 
-          {/* SHARE LINK */}
           <Subtle>Invite someone to this Workspace with a link:</Subtle>
           <Row style={{ marginTop: 8 }}>
             <Button onClick={handleCreateLink} disabled={creating}>

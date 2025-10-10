@@ -47,7 +47,7 @@ export function getUserMenuConfig({ user, logout, openModal, onToggleTheme }) {
     { divider: true, key: 'd1' },
 
     // ===== Trello section =====
-    { section: 'Trello', key: 'sec-trello' },
+    { section: 'Tasknest', key: 'sec-tasknest' },
     { key: 'profile', label: 'Profile and visibility', href: '/u/me/profile' },
     { key: 'activity', label: 'Activity', href: '/u/me/activity' },
     { key: 'cards', label: 'Cards', href: '/u/me/cards' },

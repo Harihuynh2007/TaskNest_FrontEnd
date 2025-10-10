@@ -2,14 +2,17 @@
 import React, { useContext, useMemo, useCallback, useState } from 'react';
 import styled from 'styled-components';
 import { Dropdown, Image } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   FaChevronDown, FaSignOutAlt, FaQuestionCircle, FaPlus, FaExchangeAlt,
   FaCog, FaIdBadge, FaUser, FaKeyboard, FaMoon, FaSun
 } from 'react-icons/fa';
 
 import { AuthContext } from '../contexts/AuthContext';
-import { ModalContext } from '../contexts/ModalContext';
+import { WorkspaceContext } from '../contexts/WorkspaceContext';
+import CreateWorkspaceModal from './Workspace/CreateWorkspaceModal';
+import InviteWorkspaceModal from './Workspace/InviteWorkspaceModal';
+import * as workspaceApi from '../api/workspaceApi';
 
 /* =========================
    Styled (dark-premium ready)
@@ -35,6 +38,7 @@ const Menu = styled(Dropdown.Menu)`
   border: 1px solid var(--panel-border, #3a465e);
   border-radius: 12px;
   box-shadow: 0 14px 32px rgba(0,0,0,.38);
+  line-height: 1.2;
 `;
 
 const SectionTitle = styled.div`
@@ -62,9 +66,9 @@ const Item = styled(Dropdown.Item)`
   svg { opacity: .9; }
 `;
 
-/* Dùng cho item hành động (onClick) để tránh bị style .btn/.button của Bootstrap */
+/* Button action reset để tránh bootstrap biến thành pill sáng */
 const ActionItem = styled.button`
-  all: unset;               /* reset mọi kiểu mặc định */
+  all: unset;
   box-sizing: border-box;
   width: 100%;
   display: flex; align-items: center; gap: 10px;
@@ -78,7 +82,6 @@ const ActionItem = styled.button`
   }
   svg { opacity: .9; }
 `;
-
 
 const AccountHeader = styled.div`
   display: flex; gap: 10px; padding: 10px; border-radius: 12px;
@@ -108,7 +111,7 @@ const ToggleChip = styled.span`
 /* =========================
    Helper: build menu config
    ========================= */
-function buildMenu({ user, onLogout, openModal, onToggleTheme, isDark }) {
+function buildMenu({ user, onLogout, onCreateWs, onToggleTheme, isDark }) {
   const p = user?.profile || {};
   const name = p.display_name || p.display_name_computed || user?.email || 'User';
   const email = user?.email || '';
@@ -127,7 +130,7 @@ function buildMenu({ user, onLogout, openModal, onToggleTheme, isDark }) {
 
     { type: 'divider' },
 
-    { type: 'section', label: 'Trello' },
+    { type: 'section', label: 'Tasknest' },
     { icon: <FaUser />, label: 'Profile and visibility', href: '/u/me/profile' },
     { icon: <FaCog />, label: 'Settings', href: '/u/me/account' },
     {
@@ -138,13 +141,13 @@ function buildMenu({ user, onLogout, openModal, onToggleTheme, isDark }) {
 
     { type: 'divider' },
 
-    { icon: <FaPlus />, label: 'Create Workspace', onClick: () => openModal?.('CreateWorkspaceModal') },
+    { icon: <FaPlus />, label: 'Create Workspace', onClick: onCreateWs },
 
     { type: 'divider' },
 
     { type: 'section', label: 'Help' },
     { icon: <FaQuestionCircle />, label: 'Help', href: '/help', target: '_blank' },
-    { icon: <FaKeyboard />, label: 'Shortcuts', onClick: () => openModal?.('ShortcutsModal') },
+    { icon: <FaKeyboard />, label: 'Shortcuts', href: '/shortcuts' },
 
     { type: 'divider' },
 
@@ -157,8 +160,14 @@ function buildMenu({ user, onLogout, openModal, onToggleTheme, isDark }) {
    ========================= */
 export default function UserDropdown({ align = 'end', onToggleTheme: onToggleThemeProp }) {
   const { user, logout } = useContext(AuthContext);
-  const { openModal } = useContext(ModalContext);
+  const { setCurrentWorkspaceId, refreshWorkspaces } = useContext(WorkspaceContext);
   const [open, setOpen] = useState(false);
+
+  // Modals
+  const [showCreate, setShowCreate] = useState(false);
+  const [justCreated, setJustCreated] = useState(null); // {id, name}
+
+  const navigate = useNavigate();
 
   // Theme toggle fallback (nếu không truyền prop)
   const isDark = typeof window !== 'undefined'
@@ -171,71 +180,113 @@ export default function UserDropdown({ align = 'end', onToggleTheme: onToggleThe
     document.body.setAttribute('data-theme', nowDark ? 'light' : 'dark');
   }, [onToggleThemeProp]);
 
+  const onCreateWs = useCallback(() => setShowCreate(true), []);
+
   const menu = useMemo(
     () => buildMenu({
       user,
       onLogout: logout,
-      openModal,
+      onCreateWs,
       onToggleTheme,
       isDark
     }),
-    [user, logout, openModal, onToggleTheme, isDark]
+    [user, logout, onCreateWs, onToggleTheme, isDark]
   );
 
   const account = menu.find(m => m.type === 'account') || {};
   const handleSelect = useCallback(() => setOpen(false), []);
 
+  // Handle Create Workspace submit (được gọi từ CreateWorkspaceModal)
+  const handleContinueCreate = useCallback(async ({ name, type, description }) => {
+    try {
+      const { data } = await workspaceApi.createWorkspace({
+        name,
+        type,
+        description
+      });
+      // cập nhật context
+      setCurrentWorkspaceId?.(data.id);
+      await refreshWorkspaces?.();
+      setShowCreate(false);
+      setJustCreated({ id: data.id, name: data.name });
+      // chuyển tới trang boards
+      navigate('/boards', { replace: true });
+    } catch (e) {
+      console.error('Create workspace error', e);
+      alert(e?.response?.data?.error || 'Failed to create workspace');
+    }
+  }, [setCurrentWorkspaceId, refreshWorkspaces, navigate]);
+
   return (
-    <Dropdown align={align} show={open} onToggle={setOpen} onSelect={handleSelect}>
-      <ToggleBtn id="user-menu-toggle">
-        <Avatar src={account.avatar} alt="avatar" roundedCircle />
-        <ToggleChip><Dot /> {account.name?.split(' ')[0] || 'User'}</ToggleChip>
-        <FaChevronDown size={12} />
-      </ToggleBtn>
-
-      <Menu>
-        {/* Account header */}
-        <AccountHeader>
+    <>
+      <Dropdown align={align} show={open} onToggle={setOpen} onSelect={handleSelect}>
+        <ToggleBtn id="user-menu-toggle">
           <Avatar src={account.avatar} alt="avatar" roundedCircle />
-          <div>
-            <div className="name">{account.name || 'User'}</div>
-            {account.email ? <div className="email">{account.email}</div> : null}
-          </div>
-        </AccountHeader>
+          <ToggleChip><Dot /> {account.name?.split(' ')[0] || 'User'}</ToggleChip>
+          <FaChevronDown size={12} />
+        </ToggleBtn>
 
-        {/* Items */}
-        {menu.map((m, idx) => {
-          if (m.type === 'account') return null;
-          if (m.type === 'divider') return <Divider key={`div-${idx}`} />;
-          if (m.type === 'section') return <SectionTitle key={`sec-${m.label}`}>{m.label}</SectionTitle>;
+        <Menu>
+          {/* Account header */}
+          <AccountHeader>
+            <Avatar src={account.avatar} alt="avatar" roundedCircle />
+            <div>
+              <div className="name">{account.name || 'User'}</div>
+              {account.email ? <div className="email">{account.email}</div> : null}
+            </div>
+          </AccountHeader>
 
-          const content = (
-            <>
-              {m.icon}
-              <span>{m.label}</span>
-            </>
-          );
+          {/* Items */}
+          {menu.map((m, idx) => {
+            if (m.type === 'account') return null;
+            if (m.type === 'divider') return <Divider key={`div-${idx}`} />;
+            if (m.type === 'section') return <SectionTitle key={`sec-${m.label}`}>{m.label}</SectionTitle>;
 
-          if (m.href) {
-            // External or internal
-            return m.href.startsWith('http') || m.target === '_blank' ? (
-              <Item as="a" href={m.href} target={m.target || '_self'} rel="noopener noreferrer" key={`a-${idx}`}>
-                {content}
-              </Item>
-            ) : (
-              <Item as={Link} to={m.href} key={`link-${idx}`}>
-                {content}
-              </Item>
+            const content = (
+              <>
+                {m.icon}
+                <span>{m.label}</span>
+              </>
             );
-          }
 
-          return (
-            <ActionItem onClick={m.onClick} key={`btn-${idx}`} type="button">
-              {content}
-            </ActionItem>
-          );
-        })}
-      </Menu>
-    </Dropdown>
+            if (m.href) {
+              // External or internal
+              return m.href.startsWith('http') || m.target === '_blank' ? (
+                <Item as="a" href={m.href} target={m.target || '_self'} rel="noopener noreferrer" key={`a-${idx}`}>
+                  {content}
+                </Item>
+              ) : (
+                <Item as={Link} to={m.href} key={`link-${idx}`}>
+                  {content}
+                </Item>
+              );
+            }
+
+            return (
+              <ActionItem onClick={m.onClick} key={`btn-${idx}`} type="button">
+                {content}
+              </ActionItem>
+            );
+          })}
+        </Menu>
+      </Dropdown>
+
+      {/* Create Workspace */}
+      {showCreate && (
+        <CreateWorkspaceModal
+          onClose={() => setShowCreate(false)}
+          onContinue={handleContinueCreate}
+        />
+      )}
+
+      {/* Invite ngay sau khi tạo xong */}
+      {justCreated && (
+        <InviteWorkspaceModal
+          workspaceId={justCreated.id}
+          workspaceName={justCreated.name}
+          onClose={() => setJustCreated(null)}
+        />
+      )}
+    </>
   );
 }
