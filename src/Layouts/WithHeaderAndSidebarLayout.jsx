@@ -7,12 +7,10 @@ export default function WithHeaderAndSidebarLayout({ children }) {
   return (
     <>
       <Header />
-{/* Lớp nền full-width để không bị trắng 2 bên */}
 <div style={{
   background: 'var(--surface-1, #171c26)',
   minHeight: 'calc(100vh - var(--header-height, 56px))'
 }}>
-  {/* Lớp container giữa trang (giữ maxWidth nếu bạn muốn) */}
   <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '0 16px' }}>
     <Row className="g-0" style={{ height: 'calc(100vh - var(--header-height, 56px))' }}>
       <SiderBar />

@@ -9,9 +9,9 @@ import { AiOutlineGlobal } from 'react-icons/ai';
 import UserDropdown from './UserDropdown';
 import CreateDropdown from './CreateDropdown';
 import BoardThemeDrawer from '../features/boards/BoardThemeDrawer';
-import NotificationBell from './Notification/NotificationBell';
 import FeedbackPopup from '../components/FeedbackPopup';
 import AppsDropdown from './AppsDropdown';
+import NotificationBell from '../features/notifications/NotificationBell';
 
 export default function Header() {
   const navigate = useNavigate();
@@ -71,14 +71,13 @@ export default function Header() {
           {/* Left cluster: App switcher + logo */}
           <Nav className="align-items-center gap-2">
             <AppsDropdown />
-
-
             <button
               className="tn-brand"
               onClick={() => navigate('/boards')}
               aria-label="TaskNest Home"
               title="TaskNest"
             >
+
               <span className="tn-brand-glyph" aria-hidden="true" />
               <span className="tn-brand-text">TaskNest</span>
               {currentWs?.name && (
@@ -88,6 +87,7 @@ export default function Header() {
               )}
             </button>
           </Nav>
+
 
           {/* Center: Search */}
           <div className="tn-search-wrap">
