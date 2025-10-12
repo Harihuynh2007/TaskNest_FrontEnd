@@ -1,14 +1,12 @@
-import React, { useContext, useState, useEffect,useCallback } from 'react';
+// BoardsMainContent.jsx - FIXED VERSION
+import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { Button, Spinner } from 'react-bootstrap';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { fetchBoards } from '../../api/boardApi'; 
 import { Link } from 'react-router-dom';
-
 import * as boardApi from '../../api/boardApi'; 
 import styled from 'styled-components';
 import BoardThemeDrawer from './BoardThemeDrawer';
-
-
 import ClosedBoardsModal from './ClosedBoardsPage';
 
 export default function BoardsMainContent({ onCreateBoard }) {
@@ -42,13 +40,12 @@ export default function BoardsMainContent({ onCreateBoard }) {
     return () => window.removeEventListener('board:renamed', handleBoardRenamed);
   }, []);
 
-
   const handleCreateBoard = async (data) => {
     console.log('📍 currentWorkspaceId =', currentWorkspaceId);
     console.log('📤 Bắt đầu tạo board:', data);
 
     if (!currentWorkspaceId) {
-      console.warn("⚠️ currentWorkspaceId null – không thể tạo board.");
+      console.warn("⚠️ currentWorkspaceId null — không thể tạo board.");
       return;
     }
 
@@ -74,14 +71,11 @@ export default function BoardsMainContent({ onCreateBoard }) {
       if (SHOULD_REFETCH_AFTER_CREATE) {
         loadBoards();
       }
-
-      // (Tuỳ chọn) Điều hướng thẳng vào board mới tạo
-      // navigate(`/workspaces/${currentWorkspaceId}/boards/${newBoard.id}/inbox`);
     } catch (err) {
       console.error('❌ Lỗi tạo board:', err);
       if (err.response) {
-        console.error('📥 Lỗi từ API:', err.response.data);
-        console.error('📥 Status code:', err.response.status);
+        console.error('🔥 Lỗi từ API:', err.response.data);
+        console.error('🔥 Status code:', err.response.status);
       } else if (err.request) {
         console.error('📡 Không có phản hồi từ server:', err.request);
       } else {
@@ -89,7 +83,6 @@ export default function BoardsMainContent({ onCreateBoard }) {
       }
     }
   };
-
 
   const loadBoards = useCallback(async () => {
     if (!currentWorkspaceId) return;
@@ -109,120 +102,311 @@ export default function BoardsMainContent({ onCreateBoard }) {
     loadBoards();
   }, [loadBoards]); 
 
-
   const handleBoardReopened = () => {
-    // Cách đơn giản nhất: Tải lại toàn bộ danh sách boards
     loadBoards();
   };
 
   return (
-    <div className="p-4" style={{ width: '100%' }}>
-      <div className="d-flex justify-content-between align-items-start">
-        {/* LEFT: Workspace info */}
-        <div>
-          <h6 className="text-uppercase text-muted mb-3" style={{ fontWeight: 800 }}>Your Workspaces</h6>
-          <div className="d-flex align-items-center mb-3">
-            <div className="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center" style={{ width: 32, height: 32 }}>
-              <strong>{currentWs.name?.charAt(0) || 'W'}</strong>
-            </div>
-            <span className="ml-2 px-2 font-weight-bold" style={{ fontWeight: 800 }}>{currentWs.name || 'Hard Spirit'}</span>
-          </div>
-          <div style={{ position: 'relative' }}>
-            <CreateCard onClick={() => setShowDrawer(true)}>Create new board</CreateCard>
+    <MainWrapper>
+      <ContentContainer>
+        <HeaderSection>
+          {/* LEFT: Workspace info */}
+          <WorkspaceInfo>
+            <SectionTitle>Your Workspaces</SectionTitle>
+            <WorkspaceHeader>
+              <WorkspaceAvatar>
+                <strong>{currentWs.name?.charAt(0) || 'W'}</strong>
+              </WorkspaceAvatar>
+              <WorkspaceName>{currentWs.name || 'Hard Spirit'}</WorkspaceName>
+            </WorkspaceHeader>
+            
+            {/* ✅ FIX: Relative container for drawer */}
+            <DrawerContainer>
+              <CreateCard onClick={() => setShowDrawer(true)}>
+                Create new board
+              </CreateCard>
 
-            {showDrawer && (
-              <BoardThemeDrawer
-                show={true}
-                onClose={() => setShowDrawer(false)}
-                onCreate={handleCreateBoard}
-              />
-            )}
-          </div>
-        </div>
+              {showDrawer && (
+                <BoardThemeDrawer
+                  show={true}
+                  onClose={() => setShowDrawer(false)}
+                  onCreate={handleCreateBoard}
+                />
+              )}
+            </DrawerContainer>
+          </WorkspaceInfo>
 
-        {/* RIGHT: Tabs */}
-        <div className="d-flex align-items-start gap-2">
-          <TabButton style={{ fontWeight: 800 }}>Boards</TabButton>
-          <TabButton style={{ fontWeight: 800 }}>Members</TabButton>
-          <TabButton style={{ fontWeight: 800 }}>Settings</TabButton>
-          <Button variant="outline-primary" style={{ background: '#f5f0ff', borderColor: '#c4b5fd', color: '#6b46c1' }}>Upgrade</Button>
-        </div>
-      </div>
+          {/* RIGHT: Tabs */}
+          <TabsSection>
+            <TabButton>Boards</TabButton>
+            <TabButton>Members</TabButton>
+            <TabButton>Settings</TabButton>
+            <UpgradeButton>Upgrade</UpgradeButton>
+          </TabsSection>
+        </HeaderSection>
 
-      {showDrawer && <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} />}
+        {/* ✅ FIX: Modal overlay - chỉ hiện khi drawer mở */}
+        {showDrawer && <ModalOverlay onClick={() => setShowDrawer(false)} />}
 
-      {/* Boards list */}
-      <div className="mt-4">
-        {loading ? (
-          <div className="d-flex justify-content-center">
-            <Spinner animation="border" variant="success" />
-            <span className="ml-2">Loading boards...</span>
-          </div>
-        ) : error ? (
-          <div className="text-danger text-center">{error}</div>
-        ) : (
-          <BoardGrid>
-            <CreateCard onClick={() => setShowDrawer(true)}>Create new board</CreateCard>
+        {/* Boards list */}
+        <BoardsSection>
+          {loading ? (
+            <LoadingContainer>
+              <Spinner animation="border" variant="success" />
+              <span className="ml-2">Loading boards...</span>
+            </LoadingContainer>
+          ) : error ? (
+            <ErrorContainer>{error}</ErrorContainer>
+          ) : (
+            <BoardGrid>
+              <CreateCard onClick={() => setShowDrawer(true)}>
+                Create new board
+              </CreateCard>
 
-            {boards.map(board => (
-              <Link
-                key={board.id}
-                to={`/workspaces/${currentWorkspaceId}/boards/${board.id}/inbox`}
-                style={{ textDecoration: 'none' }}
-              >
-                <BoardCard style={{ background: board.background || '#f4f5f7' }}>
-                  {board.name}
-                </BoardCard>
-              </Link>
-            ))}
-          </BoardGrid>
-        )}
-      </div>
-
-    </div>
+              {boards.map(board => (
+                <Link
+                  key={board.id}
+                  to={`/workspaces/${currentWorkspaceId}/boards/${board.id}/inbox`}
+                  style={{ textDecoration: 'none' }}
+                >
+                  <BoardCard style={{ background: board.background || '#f4f5f7' }}>
+                    {board.name}
+                  </BoardCard>
+                </Link>
+              ))}
+            </BoardGrid>
+          )}
+        </BoardsSection>
+      </ContentContainer>
+    </MainWrapper>
   );
 }
 
-const CreateCard = styled.div`
-  width: 180px; height: 100px; border: 2px dashed var(--brand-primary, #58aff6);
-  border-radius: 8px; display: flex; align-items: center; justify-content: center;
-  background: var(--surface-2, #222834); color: var(--text-secondary, #8a93a2);
-  font-weight: 500; cursor: pointer; transition: 0.2s;
-  &:hover {
-    background: var(--surface-3, #2c3341);
-    color: var(--text-primary, #e1e3e6);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,.24);
+// ============================================
+// STYLED COMPONENTS - FIXED VERSION
+// ============================================
+
+const MainWrapper = styled.div`
+  width: 100%;
+  min-height: 100vh;
+  background: var(--surface-1, #1a1f2b);
+`;
+
+const ContentContainer = styled.div`
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  
+  @media (max-width: 768px) {
+    padding: 16px;
   }
 `;
 
+const HeaderSection = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 32px;
+  gap: 24px;
+  
+  @media (max-width: 968px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+`;
+
+const WorkspaceInfo = styled.div`
+  flex: 1;
+`;
+
+const SectionTitle = styled.h6`
+  text-transform: uppercase;
+  color: var(--text-secondary, #8a93a2);
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+`;
+
+const WorkspaceHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+`;
+
+const WorkspaceAvatar = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--brand-primary, #58aff6);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+`;
+
+const WorkspaceName = styled.span`
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--text-primary, #e1e3e6);
+`;
+
+/* ✅ FIX: DrawerContainer - relative positioning cho drawer */
+const DrawerContainer = styled.div`
+  position: relative;
+  display: inline-block;
+`;
+
+/* ✅ FIX: ModalOverlay - backdrop cho drawer */
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+  backdrop-filter: blur(2px);
+`;
+
+const TabsSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+`;
 
 const TabButton = styled(Button).attrs({ variant: 'light' })`
   background: var(--surface-2, #222834);
   border: 1px solid var(--panel-border, #3a414f);
   color: var(--text-secondary, #8a93a2);
-  font-weight: 500; padding: 6px 12px;
-  &:hover { background: var(--surface-3, #2c3341); color: var(--text-primary, #e1e3e6); }
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  
+  &:hover {
+    background: var(--surface-3, #2c3341);
+    color: var(--text-primary, #e1e3e6);
+    transform: translateY(-1px);
+  }
 `;
 
+const UpgradeButton = styled(Button)`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+  font-weight: 600;
+  padding: 8px 20px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+`;
+
+const BoardsSection = styled.div`
+  margin-top: 24px;
+`;
+
+const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 0;
+  color: var(--text-secondary, #8a93a2);
+`;
+
+const ErrorContainer = styled.div`
+  text-align: center;
+  color: #e76a24;
+  padding: 40px;
+  font-weight: 500;
+`;
 
 const BoardGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 16px;
-  margin-top: 16px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+`;
+
+const CreateCard = styled.div`
+  width: 100%;
+  height: 120px;
+  border: 2px dashed var(--brand-primary, #58aff6);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2, #222834);
+  color: var(--text-secondary, #8a93a2);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background: var(--surface-3, #2c3341);
+    color: var(--text-primary, #e1e3e6);
+    border-color: #7ec3ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(88, 175, 246, 0.2);
+  }
 `;
 
 const BoardCard = styled.div`
   background: var(--surface-2, #222834);
-  border-radius: 6px; height: 100px;
-  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
   color: var(--text-primary, #e1e3e6);
-  font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s;
-  position: relative; overflow: hidden;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  
+  /* Gradient overlay for better text readability */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.1) 0%,
+      rgba(0, 0, 0, 0.3) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  
   &:hover {
-    background: var(--surface-3, #2c3341);
-    box-shadow: 0 8px 16px rgba(0,0,0,.24);
-    transform: translateY(-2px);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    
+    &::before {
+      opacity: 1;
+    }
+  }
+  
+  /* Text layer */
+  & > * {
+    position: relative;
+    z-index: 1;
   }
 `;

@@ -22,6 +22,20 @@ import { AuthContext } from '../../contexts/AuthContext.jsx';
 
 import { useRecentBoards } from '../../hooks/useRecentBoards';
 
+const DEFAULT_WEEK_PALETTE = [
+  '#8E9AAF', // Sun
+  '#58AFF6', // Mon
+  '#6EE7B7', // Tue
+  '#FBBF24', // Wed
+  '#F472B6', // Thu
+  '#A78BFA', // Fri
+  '#F87171'  // Sat
+];
+const LS_KEYS = (boardId) => ({
+  auto: `board:${boardId}:autoWeekday`,
+  palette: `board:${boardId}:weekPalette`
+});
+
 export default function BoardDetailPage() {
   const navigate = useNavigate();
   const { workspaceId, boardId } = useParams();
@@ -48,7 +62,48 @@ export default function BoardDetailPage() {
   const [boardName, setBoardName] = useState('');
   const { addToRecent, removeFromRecent } = useRecentBoards();
 
+  const [autoWeekday, setAutoWeekday] = useState(false);
+  const [weekPalette, setWeekPalette] = useState(DEFAULT_WEEK_PALETTE);
+  const [todayIndex, setTodayIndex] = useState(dayjs().day()); // 0..6
+  const resolvedBackground = autoWeekday ? weekPalette[todayIndex] : background;
+
   
+    // Load theme preferences from localStorage by boardId
+  useEffect(() => {
+    if (!boardId) return;
+    const { auto, palette } = LS_KEYS(boardId);
+    const savedAuto = localStorage.getItem(auto);
+    const savedPalette = localStorage.getItem(palette);
+
+    if (savedAuto != null) setAutoWeekday(savedAuto === 'true');
+    if (savedPalette) {
+      try {
+        const parsed = JSON.parse(savedPalette);
+        if (Array.isArray(parsed) && parsed.length === 7) setWeekPalette(parsed);
+      } catch (_) {}
+    }
+  }, [boardId]);
+
+  // Nếu bật Auto → set màu theo hôm nay, và hẹn giờ đổi vào 00:00 hôm sau
+  useEffect(() => {
+    if (!autoWeekday) return;
+    setTodayIndex(dayjs().day());
+    const now = dayjs();
+    const nextMidnight = now.add(1, 'day').startOf('day');
+    const ms = nextMidnight.diff(now, 'millisecond');
+    const t = setTimeout(() => setTodayIndex(dayjs().day()), ms);
+    return () => clearTimeout(t);
+  }, [autoWeekday, todayIndex]);
+
+  // Persist auto & palette
+  useEffect(() => {
+    if (!boardId) return;
+    const { auto, palette } = LS_KEYS(boardId);
+    localStorage.setItem(auto, String(autoWeekday));
+    localStorage.setItem(palette, JSON.stringify(weekPalette));
+  }, [boardId, autoWeekday, weekPalette]);
+
+
   const handleConfirmCloseBoard = async () => {
     setShowCloseConfirm(false);
     
@@ -136,6 +191,15 @@ export default function BoardDetailPage() {
     loadInboxCards();
   }, [boardId]);
   
+  useEffect(() => {
+    if (!autoWeekday) return;
+    setTodayIndex(dayjs().day());
+    const now = dayjs();
+    const next = now.add(1, 'day').startOf('day');
+    const t = setTimeout(() => setTodayIndex(dayjs().day()), next.diff(now, 'millisecond'));
+    return () => clearTimeout(t);
+  }, [autoWeekday, todayIndex]);
+
   
 
   // useEffect(() => {
@@ -174,6 +238,14 @@ export default function BoardDetailPage() {
 //   };
 // }, [boardId]);
 
+  const [openThemePanel, setOpenThemePanel] = useState(false);
+
+  const toggleAutoWeekday = () => setAutoWeekday(v => !v);
+  const updateWeekColorAt = (idx, color) => {
+    const next = [...weekPalette];
+    next[idx] = color || next[idx];
+    setWeekPalette(next);
+  };
   const handleAddCard = async () => {
     const trimmedValue = inputValue.trim();
     if (trimmedValue === '') {
@@ -508,6 +580,8 @@ export default function BoardDetailPage() {
 
   if (loading) return <div>Loading board...</div>;
 
+
+
   return (
     <>
       {editPopup && <DarkOverlay />}
@@ -515,7 +589,7 @@ export default function BoardDetailPage() {
         <FullCardModal card={selectedCard} onClose={() => setSelectedCard(null)} />
       )}
 
-      <BoardWrapper $background={background}>
+      <BoardWrapper $background={resolvedBackground}>
         <DragDropContext onDragEnd={onDragEnd}>
             {renderPanes()}
         </DragDropContext>
@@ -556,6 +630,81 @@ export default function BoardDetailPage() {
           currentUser={currentUser} 
         />
       )}
+            {/* Floating Theme Button */}
+      <ThemeFab
+        onClick={() => setOpenThemePanel(true)}
+        aria-label="Open theme settings"
+        title="Theme"
+      >
+        🎨
+      </ThemeFab>
+
+      {/* Theme Panel */}
+      {openThemePanel && (
+        <ThemePanel role="dialog" aria-label="Theme panel">
+          <PanelHeader>
+            <strong>Board Theme</strong>
+            <CloseX onClick={() => setOpenThemePanel(false)} aria-label="Close">×</CloseX>
+          </PanelHeader>
+
+          <Section>
+            <label className="row">
+              <input
+                type="checkbox"
+                checked={autoWeekday}
+                onChange={toggleAutoWeekday}
+              />
+              <span style={{ marginLeft: 8, fontWeight: 600 }}>Auto change by weekday</span>
+            </label>
+            <p className="hint">
+              When enabled, today’s background color is used from the 7-day palette.
+            </p>
+          </Section>
+
+          {autoWeekday ? (
+            <WeekGrid>
+              {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d, i) => (
+                <WeekCell key={d} data-active={i===todayIndex}>
+                  <span className="day">{d}</span>
+                  <input
+                    type="color"
+                    value={weekPalette[i]}
+                    onChange={(e) => updateWeekColorAt(i, e.target.value)}
+                    aria-label={`Pick color for ${d}`}
+                  />
+                </WeekCell>
+              ))}
+            </WeekGrid>
+          ) : (
+            <Section>
+              <p className="hint" style={{ marginBottom: 8 }}>Pick a static background:</p>
+              <Row>
+                {['#A869C1','#228CD5','#00B8FF','#F06292','#0277BD','#111827','#0f172a'].map(c => (
+                  <Swatch
+                    key={c}
+                    style={{ background: c }}
+                    data-active={background===c}
+                    onClick={() => setBackground(c)}
+                    aria-label={`Pick ${c}`}
+                  />
+                ))}
+                <input
+                  type="color"
+                  value={background}
+                  onChange={(e) => setBackground(e.target.value)}
+                  aria-label="Pick custom color"
+                  className="color-input"
+                />
+              </Row>
+            </Section>
+          )}
+
+          <LivePreview style={{ background: resolvedBackground }}>
+            Live preview
+          </LivePreview>
+        </ThemePanel>
+      )}
+
     </>
   );
 }
@@ -588,4 +737,82 @@ const DarkOverlay = styled.div`
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
   z-index: 998;
+`;
+
+const ThemeFab = styled.button`
+  position: fixed;
+  right: 20px;
+  bottom: 24px;
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  border: 1px solid #2a2f3b;
+  background: rgba(20,24,33,0.7);
+  backdrop-filter: blur(4px);
+  color: #e5e7eb;
+  font-size: 24px;
+  display: grid; place-items: center;
+  cursor: pointer; z-index: 1001;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  transition: transform .12s ease, background .12s ease;
+  &:hover { transform: translateY(-2px); background: rgba(20,24,33,0.9); }
+  &:focus-visible { outline: 2px solid #58aff6; outline-offset: 2px; }
+`;
+
+const ThemePanel = styled.div`
+  position: fixed;
+  right: 20px;
+  bottom: 92px;
+  width: 320px;
+  background: #0f172a; /* slate-900 */
+  color: #e5e7eb;
+  border: 1px solid #1f2937;
+  border-radius: 16px;
+  padding: 12px 12px 16px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+  z-index: 1002;
+  .hint { color: #9ca3af; font-size: 12px; margin-top: 6px; }
+  .color-input { width: 40px; height: 32px; border: 1px solid #374151; background: transparent; border-radius: 6px; padding: 0; cursor: pointer; }
+`;
+
+const PanelHeader = styled.div`
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+`;
+
+const CloseX = styled.button`
+  width: 28px; height: 28px; border-radius: 50%;
+  background: transparent; color: #9ca3af; border: 1px solid #253049;
+  display: grid; place-items: center; cursor: pointer;
+  &:hover { background: #111827; color: #e5e7eb; }
+`;
+
+const Section = styled.div`
+  background: #0b1220; border: 1px solid #1e293b; border-radius: 12px;
+  padding: 10px; margin: 10px 0;
+`;
+
+const Row = styled.div`
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+`;
+
+const Swatch = styled.button`
+  width: 36px; height: 28px; border-radius: 6px; border: 1px solid #2a2f3b;
+  cursor: pointer; position: relative;
+  &[data-active='true'] { outline: 2px solid #58aff6; outline-offset: 1px; }
+`;
+
+const WeekGrid = styled.div`
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 8px;
+`;
+
+const WeekCell = styled.div`
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  background: #0b1220; border: 1px solid #1f2937; border-radius: 10px; padding: 6px;
+  .day { font-size: 11px; color: #9ca3af; }
+  &[data-active='true'] { border-color: #58aff6; box-shadow: 0 0 0 2px rgba(88,175,246,.15) inset; }
+`;
+
+const LivePreview = styled.div`
+  height: 64px; border-radius: 10px; display: grid; place-items: center;
+  margin-top: 10px; border: 1px solid #1f2937; color: #111827; font-weight: 700;
+  background-clip: padding-box;
 `;
