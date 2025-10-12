@@ -1,304 +1,244 @@
-// src/pages/ProfileAndVisibility.jsx
-import React, { useEffect, useState } from "react";
-import styled from "styled-components";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import styled, { css } from "styled-components";
 import axiosClient from "../../../../api/apiClient";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation } from "react-router-dom";
+
+/** ===================== Design Tokens ===================== */
+const tokens = {
+  radius: { sm: "8px", md: "12px", lg: "16px", full: "9999px" },
+  shadow: { sm: "0 1px 2px rgba(0,0,0,.2)", md: "0 6px 24px rgba(0,0,0,.25)" },
+  color: {
+    bg: "#0b0f19",
+    surface: "#111827",
+    surfaceAlt: "#0f172a",
+    line: "#1f2937",
+    text: "#e5e7eb",
+    textMuted: "#9aa4b2",
+    accent: "#8b5cf6",
+    accentHover: "#7c3aed",
+    accentRing: "#a78bfa",
+    success: "#34d399",
+    warning: "#f59e0b",
+    danger: "#f43f5e",
+  },
+};
+
+/** Utility */
+const focusRing = css`
+  outline: none;
+  box-shadow: 0 0 0 3px ${tokens.color.accentRing}33, 0 0 0 1px ${tokens.color.accentRing};
+`;
 
 /** ===================== Styled Components ===================== */
 const Container = styled.div`
   min-height: 100vh;
-  background: #f1f2f4;
-  display: flex;
+  background: ${tokens.color.bg};
+  color: ${tokens.color.text};
+  display: grid;
+  grid-template-columns: 260px 1fr;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const Sidebar = styled.aside`
-  width: 240px;
-  background: white;
-  border-right: 1px solid #dfe1e6;
-  padding: 0;
+  border-right: 1px solid ${tokens.color.line};
+  background: linear-gradient(180deg, ${tokens.color.surface} 0%, ${tokens.color.surfaceAlt} 100%);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 16px 0;
+
+  @media (max-width: 1024px) {
+    position: static;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid ${tokens.color.line};
+  }
 `;
 
 const SidebarSection = styled.div`
-  padding: 16px 0;
-  border-bottom: 1px solid #dfe1e6;
+  padding: 12px 0 16px;
+  &:not(:last-of-type) { border-bottom: 1px dashed ${tokens.color.line}; }
 `;
 
 const SectionTitle = styled.h3`
-  font-size: 12px;
-  font-weight: 600;
-  color: #6b778c;
+  font-size: 11px;
+  letter-spacing: .08em;
   text-transform: uppercase;
-  margin: 0 0 8px 0;
-  padding: 0 16px;
-  letter-spacing: 0.04em;
+  color: ${tokens.color.textMuted};
+  margin: 0 16px 8px;
 `;
 
-const NavItem = styled.div`
-  padding: 8px 16px;
-  cursor: ${p => p.disabled ? 'not-allowed' : 'pointer'};
-  color: ${p => p.disabled ? '#a5adba' : p.active ? '#0079bf' : '#172b4d'};
-  background: ${p => p.active ? '#e4f0f6' : 'transparent'};
-  font-weight: ${p => p.active ? '600' : '400'};
-  border-right: ${p => p.active ? '2px solid #0079bf' : 'none'};
-  
-  &:hover {
-    background: ${p => p.disabled ? 'transparent' : p.active ? '#e4f0f6' : '#f4f5f7'};
-  }
-`;
-
-const MainContent = styled.main`
-  flex: 1;
-  background: #f1f2f4;
-  overflow-y: auto;
-`;
-
-const ContentWrapper = styled.div`
-  max-width: 864px;
-  margin: 0 auto;
-  padding: 32px 16px;
-`;
-
-const Header = styled.div`
-  margin-bottom: 32px;
-`;
-
-const Title = styled.h1`
-  font-size: 24px;
-  font-weight: 600;
-  color: #172b4d;
-  margin: 0 0 8px 0;
-`;
-
-const Subtitle = styled.p`
-  color: #6b778c;
-  margin: 0;
+const NavButton = styled.button`
+  width: 100%;
+  text-align: left;
+  padding: 10px 16px;
+  background: transparent;
+  border: 0;
+  color: ${tokens.color.text};
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  border-radius: 0;
   font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  ${(p) => p.$active && css`
+    background: linear-gradient(90deg, ${tokens.color.accent}14, transparent);
+    border-left-color: ${tokens.color.accent};
+    font-weight: 600;
+  `}
+
+  ${(p) => p.disabled && css`
+    opacity: .5; cursor: not-allowed;
+  `}
+
+  &:hover { background: ${(p) => (p.disabled ? "transparent" : tokens.color.accent + "10")}; }
+  &:focus-visible { ${focusRing} }
 `;
 
-const Card = styled.div`
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(9, 30, 66, 0.25);
-  margin-bottom: 16px;
-  overflow: hidden;
+const Main = styled.main`
+  background: radial-gradient(100% 100% at 0% 0%, #0c1222 0%, ${tokens.color.bg} 60%);
 `;
 
-const CardHeader = styled.div`
-  padding: 20px 20px 0 20px;
-  border-bottom: 1px solid #dfe1e6;
+const Content = styled.div`
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 28px 20px 80px;
+`;
+
+const PageHeader = styled.header` margin-bottom: 24px; `;
+const Title = styled.h1` font-size: 28px; line-height: 1.2; margin: 0 0 8px; `;
+const Subtitle = styled.p` margin: 0; color: ${tokens.color.textMuted}; `;
+
+const Card = styled.section`
+  background: linear-gradient(180deg, ${tokens.color.surface} 0%, ${tokens.color.surfaceAlt} 100%);
+  border: 1px solid ${tokens.color.line};
+  border-radius: ${tokens.radius.lg};
+  box-shadow: ${tokens.shadow.md};
+  overflow: clip;
+  backdrop-filter: saturate(130%) blur(6px);
   margin-bottom: 20px;
 `;
 
-const CardTitle = styled.h2`
-  font-size: 16px;
-  font-weight: 600;
-  color: #172b4d;
-  margin: 0 0 8px 0;
+const CardHeader = styled.div`
+  padding: 18px 20px;
+  border-bottom: 1px solid ${tokens.color.line};
 `;
 
-const CardDescription = styled.p`
-  color: #6b778c;
-  font-size: 14px;
-  margin: 0 0 16px 0;
+const CardTitle = styled.h2` font-size: 16px; margin: 0 0 6px; font-weight: 700; `;
+const CardDesc = styled.p` margin: 0; color: ${tokens.color.textMuted}; font-size: 14px; `;
+const CardBody = styled.div` padding: 20px; `;
+
+const Banner = styled.div`
+  position: relative;
+  height: 140px;
+  background: linear-gradient(135deg, ${tokens.color.accent} 0%, ${tokens.color.accentHover} 100%);
+  display: grid; place-items: center;
+  img { width: 100%; height: 100%; object-fit: cover; }
 `;
 
-const CardContent = styled.div`
-  padding: 0 20px 20px 20px;
+const BannerOverlay = styled.div`
+  position: absolute; inset: 0; background: linear-gradient(180deg, #0000, #0006);
 `;
 
-const FormRow = styled.div`
-  display: grid;
-  grid-template-columns: ${p => p.single ? '1fr' : '1fr 1fr'};
-  gap: 16px;
-  margin-bottom: 16px;
+const BannerAction = styled.label`
+  position: absolute; top: 10px; right: 10px;
+  padding: 6px 12px; font-size: 12px; cursor: pointer;
+  border-radius: ${tokens.radius.sm};
+  color: white; background: #0008; border: 1px solid ${tokens.color.line};
+  backdrop-filter: blur(2px);
+  input { display: none; }
+  &:hover { background: #000b; }
+  &:focus-visible { ${focusRing} }
 `;
 
-const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
+const BannerPlaceholder = styled.div` color: #ffffffcc; font-size: 14px; z-index: 1; `;
+const AvatarRow = styled.div` display: flex; align-items: center; gap: 16px; margin-top: -32px; `;
+
+const Avatar = styled.div`
+  width: 80px; height: 80px; border-radius: ${tokens.radius.full};
+  border: 3px solid ${tokens.color.bg};
+  background: ${tokens.color.line};
+  overflow: hidden; display: grid; place-items: center;
+  img { width: 100%; height: 100%; object-fit: cover; }
 `;
 
-const Label = styled.label`
-  font-size: 12px;
-  font-weight: 600;
-  color: #6b778c;
-  margin-bottom: 4px;
-  text-transform: uppercase;
+const AvatarInitial = styled.span` color: ${tokens.color.textMuted}; font-weight: 700; font-size: 28px; `;
+
+const UploadBtn = styled.label`
+  padding: 8px 14px; font-size: 14px; cursor: pointer; border: 1px solid ${tokens.color.line};
+  border-radius: ${tokens.radius.sm}; background: ${tokens.color.surfaceAlt};
+  transition: .15s ease;
+  input{ display:none; }
+  &:hover{ background: ${tokens.color.surface}; }
+  &:focus-visible{ ${focusRing} }
 `;
+
+const Grid = styled.div`
+  display: grid; gap: 16px; grid-template-columns: 1fr 1fr;
+  @media (max-width: 720px){ grid-template-columns: 1fr; }
+`;
+
+const Field = styled.div` display: flex; flex-direction: column; gap: 6px; `;
+const Label = styled.label` font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: ${tokens.color.textMuted}; `;
 
 const Input = styled.input`
-  padding: 8px 12px;
-  border: 2px solid #dfe1e6;
-  border-radius: 4px;
-  font-size: 14px;
-  color: #172b4d;
-  transition: border-color 0.2s ease;
-  
-  &:focus {
-    outline: none;
-    border-color: #0079bf;
-  }
-  
-  &::placeholder {
-    color: #a5adba;
-  }
+  padding: 10px 12px; font-size: 14px; color: ${tokens.color.text};
+  background: ${tokens.color.surfaceAlt}; border: 1px solid ${tokens.color.line};
+  border-radius: ${tokens.radius.sm};
+  &:focus{ ${focusRing} }
+  &::placeholder{ color: ${tokens.color.textMuted}; }
 `;
 
 const Textarea = styled.textarea`
-  padding: 8px 12px;
-  border: 2px solid #dfe1e6;
-  border-radius: 4px;
-  font-size: 14px;
-  color: #172b4d;
-  min-height: 80px;
-  resize: vertical;
-  font-family: inherit;
-  transition: border-color 0.2s ease;
-  
-  &:focus {
-    outline: none;
-    border-color: #0079bf;
-  }
-  
-  &::placeholder {
-    color: #a5adba;
-  }
+  padding: 10px 12px; min-height: 96px; resize: vertical; font-size: 14px; color: ${tokens.color.text};
+  background: ${tokens.color.surfaceAlt}; border: 1px solid ${tokens.color.line};
+  border-radius: ${tokens.radius.sm}; font-family: inherit; &:focus{ ${focusRing} }
+  &::placeholder{ color: ${tokens.color.textMuted}; }
 `;
 
-const AvatarSection = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin: 20px 0;
+const CheckList = styled.div` display: grid; gap: 12px; `;
+const CheckItem = styled.label`
+  display: grid; grid-template-columns: 18px 1fr; align-items: start; gap: 10px; cursor: pointer;
+  input{ accent-color: ${tokens.color.accent}; width: 18px; height: 18px; margin-top: 2px; }
 `;
 
-const Avatar = styled.div`
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: #dfe1e6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-`;
-
-const AvatarInitial = styled.div`
-  font-size: 24px;
-  font-weight: 600;
-  color: #6b778c;
-`;
-
-const UploadButton = styled.label`
-  padding: 8px 16px;
-  background: #0079bf;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.2s ease;
-  
-  &:hover {
-    background: #005a8b;
-  }
-  
-  input {
-    display: none;
-  }
-`;
+const Row = styled.div` display: flex; gap: 12px; flex-wrap: wrap; align-items: center; `;
 
 const Button = styled.button`
-  padding: 10px 16px;
-  background: #0079bf;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  
-  &:hover {
-    background: #005a8b;
-  }
-  
-  &:disabled {
-    background: #a5adba;
-    cursor: not-allowed;
-  }
+  --bg: ${tokens.color.accent}; --bgH: ${tokens.color.accentHover};
+  padding: 10px 16px; color: white; background: var(--bg);
+  border: 0; border-radius: ${tokens.radius.sm}; cursor: pointer; font-weight: 600; font-size: 14px;
+  transition: .15s ease; box-shadow: ${tokens.shadow.sm};
+  &:hover{ background: var(--bgH); }
+  &:disabled{ opacity: .6; cursor: not-allowed; }
+  &:focus-visible{ ${focusRing} }
 `;
 
-const CheckboxGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin: 16px 0;
+const GhostButton = styled(Button)`
+  --bg: ${tokens.color.surface}; --bgH: ${tokens.color.surfaceAlt};
+  color: ${tokens.color.text}; border: 1px solid ${tokens.color.line};
 `;
 
-const CheckboxItem = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #172b4d;
-  
-  input {
-    width: 16px;
-    height: 16px;
-    accent-color: #0079bf;
-  }
+const Helper = styled.p` margin: 6px 0 0; font-size: 12px; color: ${tokens.color.textMuted}; `;
+
+const InlineMsg = styled.div`
+  font-size: 13px; margin-left: 8px;
+  color: ${(p) => (p.$type === "success" ? tokens.color.success : p.$type === "error" ? tokens.color.danger : tokens.color.textMuted)};
 `;
 
-const Banner = styled.div`
-  height: 120px;
-  background: linear-gradient(135deg, #0079bf, #005a8b);
-  border-radius: 8px 8px 0 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-  
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-`;
-
-const BannerUpload = styled.label`
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  padding: 6px 12px;
-  background: rgba(0, 0, 0, 0.5);
-  color: white;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-  
-  input {
-    display: none;
-  }
-`;
-
-const BannerPlaceholder = styled.div`
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
+const SRLive = styled.div.attrs({ role: "status", "aria-live": "polite" })`
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);
 `;
 
 /** ===================== Component ===================== */
 export default function ProfileAndVisibility() {
   const navigate = useNavigate();
-  
+
   const [form, setForm] = useState({
     display_name: "",
     bio: "",
@@ -307,246 +247,269 @@ export default function ProfileAndVisibility() {
     avatar_url: "",
     banner_url: "",
   });
-  
   const [avatarFile, setAvatarFile] = useState(null);
   const [bannerFile, setBannerFile] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
+  const liveRef = useRef(null);
+
+  const location = useLocation();
+  const isSettings = location.pathname.startsWith('/settings');
+  const isProfile  = location.pathname.startsWith('/u/me/profile');
+  // Derived initial for avatar fallback
+  const avatarInitial = useMemo(() => (form.display_name?.trim()?.[0] || "U").toUpperCase(), [form.display_name]);
 
   useEffect(() => {
-    // Load profile từ backend
-    axiosClient.get("/auth/me/profile/").then(({ data }) => {
-      console.log("Loaded profile data:", data);
-      setForm(prev => ({ 
-        ...prev, 
-        display_name: data.display_name || "",
-        bio: data.bio || "",
-        is_discoverable: Boolean(data.is_discoverable),
-        show_boards_on_profile: Boolean(data.show_boards_on_profile),
-        avatar_url: data.avatar_url || "",
-        banner_url: data.banner_url || "",
-      }));
-    }).catch(err => {
-      console.error("Error loading profile:", err);
-    });
+    let mounted = true;
+    axiosClient
+      .get("/auth/me/profile/")
+      .then(({ data }) => {
+        if (!mounted) return;
+        setForm((prev) => ({
+          ...prev,
+          display_name: data.display_name || "",
+          bio: data.bio || "",
+          is_discoverable: Boolean(data.is_discoverable),
+          show_boards_on_profile: Boolean(data.show_boards_on_profile),
+          avatar_url: data.avatar_url || "",
+          banner_url: data.banner_url || "",
+        }));
+      })
+      .catch((err) => {
+        console.error("Error loading profile:", err);
+        setError("Không tải được hồ sơ. Vui lòng thử lại.");
+      });
+    return () => { mounted = false; };
   }, []);
 
   const handleInputChange = (field, value) => {
-    setForm(prev => ({ ...prev, [field]: value }));
+    setSaved(false);
+    setError("");
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const fileOk = (file) => file && file.size <= 5 * 1024 * 1024; // 5MB guard
+
   const handleAvatarChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setAvatarFile(file);
-      // Preview immediately
-      const previewUrl = URL.createObjectURL(file);
-      setForm(prev => ({ ...prev, avatar_url: previewUrl }));
-    }
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!fileOk(file)) { setError("Ảnh đại diện vượt quá 5MB."); return; }
+    setAvatarFile(file);
+    const preview = URL.createObjectURL(file);
+    setForm((p) => ({ ...p, avatar_url: preview }));
   };
 
   const handleBannerChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setBannerFile(file);
-      // Preview immediately
-      const previewUrl = URL.createObjectURL(file);
-      setForm(prev => ({ ...prev, banner_url: previewUrl }));
-    }
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!fileOk(file)) { setError("Ảnh banner vượt quá 5MB."); return; }
+    setBannerFile(file);
+    const preview = URL.createObjectURL(file);
+    setForm((p) => ({ ...p, banner_url: preview }));
   };
 
   const handleSave = async () => {
     setSaving(true);
+    setSaved(false);
+    setError("");
     try {
       const fd = new FormData();
-
-      // Text
       fd.append("display_name", String(form.display_name || ""));
       fd.append("bio", String(form.bio || ""));
-
-      // Booleans -> string 'true'/'false'
       fd.append("is_discoverable", form.is_discoverable ? "true" : "false");
       fd.append("show_boards_on_profile", form.show_boards_on_profile ? "true" : "false");
-
-      // Files
       if (avatarFile) fd.append("avatar", avatarFile);
       if (bannerFile) fd.append("banner", bannerFile);
-
-      // Debug
-      console.log("FormData contents:");
-      for (let [k, v] of fd.entries()) console.log(k, v);
 
       const res = await axiosClient.patch("/auth/me/profile/", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      // Cập nhật form theo response
       setForm((prev) => ({
         ...prev,
         ...res.data,
         avatar_url: res.data.avatar_url || prev.avatar_url,
         banner_url: res.data.banner_url || prev.banner_url,
       }));
-
       setAvatarFile(null);
       setBannerFile(null);
 
-      // Đồng bộ về Header/Subheader: refetch /auth/me
+      // Refresh header user (keeps your existing approach)
       try {
-        const me = await axiosClient.get("/auth/me");
-        // Nếu bạn có setter trong AuthContext, hãy gọi ở đây, ví dụ:
-        // setUser(me.data);
-        // Nếu chưa có, tạm bắn event để nơi khác lắng nghe và tự reload:
+        await axiosClient.get("/auth/me");
         window.dispatchEvent(new Event("auth:user-updated"));
       } catch (e) {
         console.warn("Could not refresh /auth/me after profile save", e);
       }
-    } catch (error) {
-      console.error("Error saving profile:", error);
-      console.error("Error response:", error.response?.data);
-      alert(
-        "Error saving profile: " + (error.response?.data?.error || error.message)
-      );
+
+      setSaved(true);
+      liveRef.current && (liveRef.current.textContent = "Lưu hồ sơ thành công");
+    } catch (err) {
+      console.error("Error saving profile:", err);
+      setError(err?.response?.data?.error || "Không thể lưu thay đổi. Vui lòng thử lại.");
+      liveRef.current && (liveRef.current.textContent = "Lỗi khi lưu hồ sơ");
     } finally {
       setSaving(false);
+      setTimeout(() => liveRef.current && (liveRef.current.textContent = ""), 2000);
     }
   };
 
-
   return (
     <Container>
-      <Sidebar>
+      <SRLive ref={liveRef} />
+      <Sidebar aria-label="Profile navigation">
         <SidebarSection>
           <SectionTitle>Personal Settings</SectionTitle>
-          <NavItem active>Profile and visibility</NavItem>
-          <NavItem disabled>Settings</NavItem>
-          <NavItem disabled>Activity</NavItem>
-          <NavItem disabled>Cards</NavItem>
+          <NavButton
+            type="button"
+            $active={isProfile}
+            aria-current={isProfile ? 'page' : undefined}
+            onClick={() => navigate('/u/me/profile')}
+          >
+            Profile & visibility
+          </NavButton>
+
+          <NavButton
+            type="button"
+            $active={isSettings}
+            aria-current={isSettings ? 'page' : undefined}
+            onClick={() => navigate('/settings')}
+          >
+            Settings
+          </NavButton>
+          <NavButton type="button" disabled aria-disabled>Activity</NavButton>
+          <NavButton type="button" disabled aria-disabled>Cards</NavButton>
         </SidebarSection>
-        
         <SidebarSection>
           <SectionTitle>Workspace</SectionTitle>
-          <NavItem onClick={() => navigate("/boards")}>Boards</NavItem>
-          <NavItem disabled>Members</NavItem>
-          <NavItem disabled>Settings</NavItem>
-          <NavItem disabled>Upgrade workspace</NavItem>
+          <NavButton type="button" onClick={() => navigate("/boards")}>Boards</NavButton>
+          <NavButton type="button" disabled aria-disabled>Members</NavButton>
+          <NavButton type="button" disabled aria-disabled>Settings</NavButton>
+          <NavButton type="button" disabled aria-disabled>Upgrade workspace</NavButton>
+
         </SidebarSection>
       </Sidebar>
 
-      <MainContent>
-        <ContentWrapper>
-          <Header>
-            <Title>Profile and visibility</Title>
-            <Subtitle>
-              Manage your personal information and control who can see and access your account.
-            </Subtitle>
-          </Header>
+      <Main>
+        <Content>
+          <PageHeader>
+            <Title>Profile & visibility</Title>
+            <Subtitle>Quản lý thông tin cá nhân và quyền hiển thị của bạn.</Subtitle>
+          </PageHeader>
 
-          {/* Profile Picture Card */}
+          {/* Avatar + Banner */}
           <Card>
             <Banner>
               {form.banner_url ? (
                 <img src={form.banner_url} alt="Profile banner" />
               ) : (
-                <BannerPlaceholder>Add a banner to your profile</BannerPlaceholder>
+                <BannerPlaceholder>Thêm banner cho hồ sơ của bạn</BannerPlaceholder>
               )}
-              <BannerUpload>
+              <BannerOverlay />
+              <BannerAction>
                 <input type="file" accept="image/*" onChange={handleBannerChange} />
-                Change
-              </BannerUpload>
+                Đổi banner
+              </BannerAction>
             </Banner>
-            
-            <CardContent>
-              <AvatarSection>
-                <Avatar>
+            <CardBody>
+              <AvatarRow>
+                <Avatar aria-label="Avatar">
                   {form.avatar_url ? (
-                    <img src={form.avatar_url} alt="Profile" />
+                    <img src={form.avatar_url} alt="Profile avatar" />
                   ) : (
-                    <AvatarInitial>
-                      {form.display_name ? form.display_name.charAt(0).toUpperCase() : 'U'}
-                    </AvatarInitial>
+                    <AvatarInitial>{avatarInitial}</AvatarInitial>
                   )}
                 </Avatar>
-                <div>
-                  <UploadButton>
+                <Row>
+                  <UploadBtn>
                     <input type="file" accept="image/*" onChange={handleAvatarChange} />
-                    Change avatar
-                  </UploadButton>
-                </div>
-              </AvatarSection>
-            </CardContent>
+                    Đổi avatar
+                  </UploadBtn>
+                  {saved && <InlineMsg $type="success">Đã lưu</InlineMsg>}
+                  {error && <InlineMsg $type="error">{error}</InlineMsg>}
+                </Row>
+              </AvatarRow>
+            </CardBody>
           </Card>
 
-          {/* About Card */}
+          {/* About */}
           <Card>
             <CardHeader>
               <CardTitle>About</CardTitle>
-              <CardDescription>
-                This information will appear on your profile.
-              </CardDescription>
+              <CardDesc>Thông tin này sẽ xuất hiện trên hồ sơ công khai của bạn.</CardDesc>
             </CardHeader>
-            
-            <CardContent>
-              <FormRow single>
-                <FormGroup>
-                  <Label>Display Name *</Label>
-                  <Input
-                    type="text"
-                    value={form.display_name}
-                    onChange={(e) => handleInputChange('display_name', e.target.value)}
-                    placeholder="Enter your display name"
-                  />
-                </FormGroup>
-              </FormRow>
-              
-              <FormRow single>
-                <FormGroup>
-                  <Label>Bio</Label>
-                  <Textarea
-                    value={form.bio}
-                    onChange={(e) => handleInputChange('bio', e.target.value)}
-                    placeholder="Tell people a bit about yourself..."
-                  />
-                </FormGroup>
-              </FormRow>
-            </CardContent>
+            <CardBody>
+              <Field>
+                <Label htmlFor="display_name">Display name *</Label>
+                <Input
+                  id="display_name"
+                  type="text"
+                  placeholder="Tên hiển thị"
+                  value={form.display_name}
+                  onChange={(e) => handleInputChange("display_name", e.target.value)}
+                />
+              </Field>
+              <Field style={{ marginTop: 12 }}>
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea
+                  id="bio"
+                  placeholder="Giới thiệu ngắn gọn về bạn..."
+                  value={form.bio}
+                  onChange={(e) => handleInputChange("bio", e.target.value)}
+                />
+                <Helper>Gợi ý: 1-2 câu về vai trò, kỹ năng và sở thích.</Helper>
+              </Field>
+            </CardBody>
           </Card>
 
-          {/* Privacy Settings Card */}
+          {/* Privacy */}
           <Card>
             <CardHeader>
               <CardTitle>Privacy</CardTitle>
-              <CardDescription>
-                Control who can see your profile and find you on Trello.
-              </CardDescription>
+              <CardDesc>Kiểm soát ai có thể xem và tìm thấy hồ sơ của bạn.</CardDesc>
             </CardHeader>
-            
-            <CardContent>
-              <CheckboxGroup>
-                <CheckboxItem>
-                  <input 
-                    type="checkbox" 
+            <CardBody>
+              <CheckList>
+                <CheckItem>
+                  <input
+                    id="discoverable"
+                    type="checkbox"
                     checked={form.is_discoverable}
-                    onChange={(e) => handleInputChange('is_discoverable', e.target.checked)}
+                    onChange={(e) => handleInputChange("is_discoverable", e.target.checked)}
                   />
-                  Make my profile public
-                </CheckboxItem>
-                <CheckboxItem>
-                  <input 
+                  <div>
+                    <label htmlFor="discoverable"><strong>Public profile</strong></label>
+                    <Helper>Cho phép người khác tìm kiếm và xem hồ sơ của bạn.</Helper>
+                  </div>
+                </CheckItem>
+                <CheckItem>
+                  <input
+                    id="show_boards"
                     type="checkbox"
                     checked={form.show_boards_on_profile}
-                    onChange={(e) => handleInputChange('show_boards_on_profile', e.target.checked)}
+                    onChange={(e) => handleInputChange("show_boards_on_profile", e.target.checked)}
                   />
-                  Show my boards on my public profile
-                </CheckboxItem>
-              </CheckboxGroup>
-              
-              <Button onClick={handleSave} disabled={saving}>
-                {saving ? "Saving..." : "Save"}
-              </Button>
-            </CardContent>
+                  <div>
+                    <label htmlFor="show_boards"><strong>Hiển thị boards trên hồ sơ</strong></label>
+                    <Helper>Hiển thị danh sách board công khai trên trang hồ sơ.</Helper>
+                  </div>
+                </CheckItem>
+              </CheckList>
+              <Row style={{ marginTop: 18 }}>
+                <Button onClick={handleSave} disabled={saving} aria-busy={saving} aria-label="Save profile">
+                  {saving ? "Đang lưu..." : "Lưu thay đổi"}
+                </Button>
+                <GhostButton type="button" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                  Lên đầu trang
+                </GhostButton>
+                {!saving && saved && <InlineMsg $type="success">Lưu thành công.</InlineMsg>}
+                {!saving && error && <InlineMsg $type="error">{error}</InlineMsg>}
+              </Row>
+            </CardBody>
           </Card>
-        </ContentWrapper>
-      </MainContent>
+        </Content>
+      </Main>
     </Container>
   );
 }

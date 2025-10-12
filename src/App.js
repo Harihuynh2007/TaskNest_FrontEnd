@@ -13,7 +13,7 @@ import PrivateRoute from './Layouts/PrivateRoute';
 import WithHeaderOnlyLayout from './Layouts/WithHeaderOnlyLayout.jsx'; // thêm dòng này
 import ProfileAndVisibility from './features/boards/settings/profileandvisibility/ProfileAndVisibility.jsx';
 import BoardsMainContent from './features/boards/BoardsMainContent';
-
+import Settings from './features/boards/settings/Setting.jsx';
 
 import { GlobalStyle } from './styles/GlobalStyle';
 
@@ -71,8 +71,17 @@ function App() {
             </PrivateRoute>
           }
         />
-
-
+        <Route
+          path="/settings"
+          element={
+            <PrivateRoute>
+              <WithHeaderOnlyLayout>
+                <Settings />
+              </WithHeaderOnlyLayout>
+            </PrivateRoute>
+          }
+        />
+        
         <Route
           path="/boards/*"
           element={

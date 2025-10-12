@@ -45,7 +45,6 @@ export function getUserMenuConfig({ user, logout, openModal, onToggleTheme }) {
       target: '_blank',
     },
     { divider: true, key: 'd1' },
-
     { section: 'Tasknest', key: 'sec-tasknest' },
     { key: 'profile', label: 'Profile and visibility', href: '/u/me/profile' },
     { key: 'activity', label: 'Activity', href: '/u/me/activity' },
