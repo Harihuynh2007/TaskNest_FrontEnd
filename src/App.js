@@ -14,6 +14,7 @@ import WithHeaderOnlyLayout from './Layouts/WithHeaderOnlyLayout.jsx'; // thêm 
 import ProfileAndVisibility from './features/boards/settings/profileandvisibility/ProfileAndVisibility.jsx';
 import BoardsMainContent from './features/boards/BoardsMainContent';
 
+
 import { GlobalStyle } from './styles/GlobalStyle';
 
 const LogoutRedirect = () => {
@@ -61,16 +62,16 @@ function App() {
         
         {/* Settings - bảo vệ + header */}
         <Route
-          path="/settings/profile"
+          path="/u/me/profile"
           element={
             <PrivateRoute>
               <WithHeaderOnlyLayout>
-                <BoardsMainContent />
                 <ProfileAndVisibility />
               </WithHeaderOnlyLayout>
             </PrivateRoute>
           }
         />
+
 
         <Route
           path="/boards/*"

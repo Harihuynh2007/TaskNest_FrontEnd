@@ -1,12 +1,13 @@
 // src/components/AppsDropdown.jsx
-import React, { useMemo, useState, useContext, useEffect } from 'react';
+import React, { useMemo, useState, useContext, useEffect,useCallback } from 'react';
 import styled from 'styled-components';
 import { Dropdown } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   MdApps, MdViewKanban, MdHome, MdPeopleAlt, MdSettings,
-  MdInsights, MdExtension, MdAdd, MdNotifications, MdInbox
+  MdInsights, MdExtension, MdAdd  , MdNotifications, MdInbox
 } from 'react-icons/md';
+import toast from 'react-hot-toast';
 
 import BoardThemeDrawer from '../features/boards/BoardThemeDrawer';
 import CreateWorkspaceModal from './Workspace/CreateWorkspaceModal';
@@ -365,14 +366,26 @@ export default function AppsDropdown() {
   }, [open]);
 
   // Quick action handlers
-  const onCreateBoard = () => {
+  const onCreateBoard = useCallback(() => {
     if (!currentWorkspaceId) {
-      setError('Vui lòng chọn Workspace trước khi tạo Board');
+      const msg = 'Vui lòng chọn Workspace trước khi tạo Board.';
+      setError(msg);
+      toast.error(msg);
       return;
     }
-    setOpen(false);
-    setShowBoard(true);
-  };
+
+    // NEW: Kiểm tra quyền
+    if (currentWorkspace && currentWorkspace.can_create_board === false) {
+      const msg = `Bạn không có quyền tạo board trong workspace "${currentWorkspace.name}".`;
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
+
+  setOpen(false);
+  setShowBoard(true);
+}, [currentWorkspaceId, currentWorkspace]);
+
 
   const onCreateWorkspace = () => {
     setOpen(false);
@@ -394,10 +407,6 @@ export default function AppsDropdown() {
     setError(null);
     try {
       const { data } = await workspaceApi.createWorkspace({ name, type, description });
-        if (data?.id) {
-            setCurrentWorkspaceId?.(data.id);
-        }
-      
       if (data?.id) {
         setCurrentWorkspaceId?.(data.id);
         await refreshWorkspaces?.();
@@ -463,7 +472,7 @@ export default function AppsDropdown() {
       <Dropdown align="start" show={open} onToggle={setOpen}>
         <ToggleBtn 
           id="apps-menu-toggle" 
-          onClick={() => setOpen(v => !v)}
+         
           disabled={loading}
         >
           <MdApps size={20} />
