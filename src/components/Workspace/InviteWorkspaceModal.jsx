@@ -1,8 +1,7 @@
-// src/components/InviteWorkspaceModal.jsx
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import styled from 'styled-components';
 import { FiLink } from 'react-icons/fi';
-import { X } from 'react-feather';
+import { X, Check } from 'react-feather'; // Thêm icon Check cho trạng thái Copied
 import dayjs from 'dayjs';
 import ReactDOM from 'react-dom';
 import { inviteMember, createShareLink } from '../../api/workspaceApi';
@@ -52,7 +51,8 @@ const Row = styled.div`
 
 const InputShell = styled.div` position: relative; width: 100%; `;
 
-const EmailInput = styled.input`
+// Styled cho tất cả các loại input/select để đồng bộ hóa
+const StyledFormElement = styled.input`
   width: 100%;
   border: 1px solid var(--panel-border, #3a465e);
   border-radius: 10px;
@@ -62,6 +62,28 @@ const EmailInput = styled.input`
   color: var(--text-primary, #e6e9ee);
   transition: box-shadow .15s, border-color .15s;
   &:focus { border-color: transparent; box-shadow: 0 0 0 3px var(--ring, rgba(91,188,247,.38)); }
+
+  // Style đặc biệt cho các input[type="date"]
+  &[type="date"] {
+    appearance: none; // Tắt style mặc định của browser
+    // icon mũi tên xuống cho input type date (nếu muốn)
+    // background: var(--surface-2, #1b2331) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239aa5b5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E") no-repeat right 10px center;
+    // background-size: 12px;
+  }
+`;
+
+const EmailInput = styled(StyledFormElement)``; // Kế thừa từ StyledFormElement
+
+const Select = styled(StyledFormElement).attrs({ as: 'select' })`
+  padding-right: 28px; // Tạo không gian cho mũi tên dropdown mặc định
+  appearance: none; // Tắt mũi tên mặc định trên một số browser
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239aa5b5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+
+  // Fix cho Firefox để hiển thị mũi tên dropdown
+  &::-ms-expand { display: none; }
 `;
 
 const PillBox = styled.div`
@@ -76,7 +98,7 @@ const Pill = styled.span`
   background: rgba(91,188,247,.18); color: var(--brand-primary, #5bbcf7);
   border:1px solid rgba(91,188,247,.4); border-radius: 999px;
   padding: 6px 8px; font-size: 13px; font-weight:700;
-  svg{cursor:pointer}
+  svg{cursor:pointer; margin-left: 4px; color: var(--text-secondary); } // Tinh chỉnh màu và khoảng cách X
 `;
 
 const SendBtn = styled.button`
@@ -124,25 +146,26 @@ const LinkBox = styled.div`
   }
 `;
 
-// helpers
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export default function InviteWorkspaceModal({
-  workspaceId,
-  workspaceName = 'Workspace',
-  onClose
-}) {
+export default function InviteWorkspaceModal({ workspaceId, workspaceName = 'Workspace', onClose }) {
   const [raw, setRaw] = useState('');
-  const [selected, setSelected] = useState(null); // {label, value, type}
+  const [selected, setSelected] = useState(null);
   const [message, setMessage] = useState('Join this Workspace to start collaborating with me!');
   const [sending, setSending] = useState(false);
-
   const [creating, setCreating] = useState(false);
   const [link, setLink] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [role, setRole] = useState('member');
+  const [expiry, setExpiry] = useState('');
+  const [maxUses, setMaxUses] = useState('');
+  const [domain, setDomain] = useState('');
 
+  const inputRef = useRef(null);
   const origin = useMemo(() => window.location.origin, []);
 
   useEffect(() => {
+    inputRef.current?.focus();
     const onKey = (e)=>{ if(e.key==='Escape') onClose?.(); };
     document.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
@@ -153,13 +176,12 @@ export default function InviteWorkspaceModal({
     }
   }, [onClose]);
 
-  // Enter trong input
   const trySelect = () => {
     const v = raw.trim();
     if (!v) return;
     if (emailRegex.test(v)) { setSelected({ label: v, value: v, type: 'email' }); setRaw(''); return; }
     if (v.startsWith('@') && v.length > 1) { setSelected({ label: v, value: v.slice(1), type: 'username' }); setRaw(''); return; }
-    setSelected({ label: v, value: v, type: 'email' }); setRaw('');
+    setSelected({ label: v, value: v, type: 'email' }); setRaw(''); // Mặc định là email nếu không phải username hợp lệ
   };
 
   const removeSelected = () => setSelected(null);
@@ -168,45 +190,68 @@ export default function InviteWorkspaceModal({
     if (!selected) return;
     setSending(true);
     try {
+      // Giữ nguyên logic cũ, thêm domain restriction nếu có (dù không được dùng cho email invite)
       const email = selected.type === 'email' ? selected.value : `${selected.value}@example.com`;
       await inviteMember(workspaceId, {
         email,
-        role: 'member',
+        role,
         message,
-        expires_at: dayjs().add(7, 'day').toISOString()
+        expires_at: expiry ? dayjs(expiry).toISOString() : null
       });
+      // Reset form sau khi gửi thành công
       setSelected(null);
+      setRaw(''); // Đảm bảo input email trống rỗng
       setMessage('Join this Workspace to start collaborating with me!');
+      setExpiry('');
+      setRole('member');
     } catch (e) {
       console.error(e);
+      // TODO: Thêm thông báo lỗi cho người dùng
     } finally { setSending(false); }
   };
 
   const handleCreateLink = async () => {
     setCreating(true);
+    setCopied(false);
     try {
-      const payload = { role: 'member', expires_at: null, max_uses: null, domain_restriction: '' };
+      const payload = {
+        role,
+        expires_at: expiry ? dayjs(expiry).toISOString() : null,
+        max_uses: maxUses ? parseInt(maxUses) : null,
+        domain_restriction: domain || ''
+      };
       const { data } = await createShareLink(workspaceId, payload);
       setLink(`${origin}/join/${data.token}`);
     } catch (e) {
       console.error(e);
+      // TODO: Thêm thông báo lỗi cho người dùng
     } finally { setCreating(false); }
   };
 
-  const copy = async ()=>{ try{ await navigator.clipboard.writeText(link);}catch{} };
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      // Tắt trạng thái copied sau một thời gian
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      console.error("Failed to copy:", e);
+      // TODO: Thêm thông báo lỗi cho người dùng
+    }
+  };
 
   const modal = (
     <Backdrop onMouseDown={(e)=>{ if(e.target===e.currentTarget) onClose?.(); }}>
       <Card onMouseDown={(e)=>e.stopPropagation()}>
         <Header>
-          <h3>Invite to Workspace</h3>
-          <button aria-label="Close" onClick={onClose}>×</button>
+          <h3>Invite to {workspaceName}</h3> {/* Tùy biến tiêu đề */}
+          <button aria-label="Close" onClick={onClose}><X size={20}/></button> {/* Dùng icon X thay vì 'x' */}
         </Header>
-
         <Body>
           {!selected ? (
             <InputShell>
               <EmailInput
+                ref={inputRef}
                 placeholder="Email address or name"
                 value={raw}
                 onChange={(e)=>setRaw(e.target.value)}
@@ -214,7 +259,7 @@ export default function InviteWorkspaceModal({
               />
             </InputShell>
           ) : (
-            <Row style={{ alignItems: 'center' }}>
+            <Row>
               <PillBox style={{ flex: 1 }}>
                 <Pill>
                   {selected.label}
@@ -228,29 +273,42 @@ export default function InviteWorkspaceModal({
           )}
 
           {selected && (
-            <div style={{ marginTop: 12 }}>
-              <TextArea
-                value={message}
-                onChange={(e)=>setMessage(e.target.value)}
-                placeholder="Write a personal message (optional)…"
-              />
-            </div>
+            <TextArea
+              value={message}
+              onChange={(e)=>setMessage(e.target.value)}
+              placeholder="Write a personal message (optional)…"
+            />
           )}
 
-          <Subtle>Invite someone to this Workspace with a link:</Subtle>
-          <Row style={{ marginTop: 8 }}>
+          <Subtle style={{ marginTop: 18 }}>Or generate a reusable invite link:</Subtle>
+
+          <Row style={{ flexWrap: 'wrap', gap: 10 }}>
+            {/* Sử dụng StyledFormElement và Select cho các controls dưới đây */}
+            <Select value={role} onChange={(e) => setRole(e.target.value)} style={{ flex: 1, minWidth: '120px' }}>
+              <option value="member">Member</option>
+              <option value="admin">Admin</option>
+              <option value="observer">Observer</option>
+            </Select>
+            <StyledFormElement type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} style={{ flex: 1, minWidth: '140px' }} />
+            <StyledFormElement type="number" min="1" placeholder="Max Uses" value={maxUses} onChange={(e) => setMaxUses(e.target.value)} style={{ flex: 1, minWidth: '100px' }} />
+            <StyledFormElement type="text" placeholder="Domain (optional)" value={domain} onChange={(e) => setDomain(e.target.value)} style={{ flex: 1, minWidth: '140px' }} />
+          </Row>
+
+          <Row>
             <Button onClick={handleCreateLink} disabled={creating}>
               <FiLink /> {creating ? 'Creating…' : 'Create link'}
             </Button>
           </Row>
+
           {link && (
             <LinkBox>
               <input value={link} readOnly />
-              <Primary onClick={copy}>Copy</Primary>
+              <Primary onClick={copy}>
+                {copied ? <><Check size={18} /> Copied</> : 'Copy'}
+              </Primary>
             </LinkBox>
           )}
         </Body>
-
         <Footer>
           <Button onClick={onClose}>Close</Button>
         </Footer>
