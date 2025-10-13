@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { FiLink } from 'react-icons/fi';
 import { X } from 'react-feather';
 import dayjs from 'dayjs';
+import ReactDOM from 'react-dom';
 import { inviteMember, createShareLink } from '../../api/workspaceApi';
 
 const Backdrop = styled.div`
@@ -11,7 +12,7 @@ const Backdrop = styled.div`
   display: grid; place-items: center;
   padding: 16px;
   background: rgba(0,0,0,0.45);
-  z-index: 1100;
+  z-index: 5000;
 `;
 
 const Card = styled.div`
@@ -194,7 +195,7 @@ export default function InviteWorkspaceModal({
 
   const copy = async ()=>{ try{ await navigator.clipboard.writeText(link);}catch{} };
 
-  return (
+  const modal = (
     <Backdrop onMouseDown={(e)=>{ if(e.target===e.currentTarget) onClose?.(); }}>
       <Card onMouseDown={(e)=>e.stopPropagation()}>
         <Header>
@@ -256,4 +257,5 @@ export default function InviteWorkspaceModal({
       </Card>
     </Backdrop>
   );
+  return ReactDOM.createPortal(modal, document.body);
 }
