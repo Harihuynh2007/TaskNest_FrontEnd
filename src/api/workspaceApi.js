@@ -135,3 +135,8 @@ export const canCreateBoard = (workspace, members, userId) => {
   return isWorkspaceOwner(workspace, userId);
   // To allow members too, compute membership and OR the check above.
 };
+
+export const createWorkspaceShareLink = async (workspaceId) => {
+  const res = await api.post(`/workspaces/${workspaceId}/share-link/`);
+  return res.data; 
+};

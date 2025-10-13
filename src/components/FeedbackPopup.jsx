@@ -22,12 +22,13 @@ const PopupContainer = styled.div`
   top: 60px;
   right: 16px;
   z-index: 1000;
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
   padding: 12px;
   width: 320px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 `;
 
 const PopupHeader = styled.div`
@@ -61,19 +62,22 @@ const PopupBody = styled.div`
 `;
 
 const SubmitButton = styled.button`
-  background: #28a745;
+  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
   color: white;
   border: none;
   padding: 6px 12px;
-  border-radius: 4px;
+  border-radius: 8px;
   font-weight: 600;
   align-self: flex-end;
   cursor: pointer;
-
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  transition: transform 0.2s ease;
   &:hover {
-    background: #218838;
+    background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+    transform: translateY(-1px);
   }
+  &:active { transform: translateY(0); }
 `;
 
-// ---------------------------
+
 
