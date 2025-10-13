@@ -2,9 +2,9 @@ import React, { useState, useEffect, useContext  } from 'react';
 import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
 
-import InboxPane from './panes/InboxPane';
-import PlannerPane from './panes/PlannerPane';
-import BoardPane from './panes/BoardPane';
+import InboxPane from './panel/InboxPanel/InboxPane.jsx';
+import PlannerPane from './panel/PlannerPanel/PlannerPane.jsx';
+import BoardPane from './panel/BoardPanel/BoardPane';
 
 import dayjs from 'dayjs';
 import BottomFloatingNav from './BottomFloatingNav';
@@ -511,7 +511,6 @@ export default function BoardDetailPage() {
     <SplitContainer>
       {activeTabs.includes('inbox') && (
         <InboxPane
-          background="#e4f0f6"
           cards={cards}
           setCards={setCards}
           inputValue={inputValue}
@@ -630,14 +629,18 @@ export default function BoardDetailPage() {
           currentUser={currentUser} 
         />
       )}
-            {/* Floating Theme Button */}
-      <ThemeFab
-        onClick={() => setOpenThemePanel(true)}
-        aria-label="Open theme settings"
-        title="Theme"
-      >
-        🎨
-      </ThemeFab>
+           
+      {activeTabs.includes('board') && (
+        <ThemeFab
+          onClick={() => setOpenThemePanel(true)}
+          aria-label="Open theme settings"
+          title="Theme"
+        >
+          🎨
+        </ThemeFab>
+      )}
+
+      
 
       {/* Theme Panel */}
       {openThemePanel && (

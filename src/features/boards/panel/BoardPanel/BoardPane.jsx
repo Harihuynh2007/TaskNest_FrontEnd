@@ -1,24 +1,24 @@
 import React, { useState, useEffect, useRef,useContext } from 'react';
 import styled from 'styled-components';
-import BoardSubHeader from '../../../components/BoardSubHeader';
+import BoardSubHeader from '../../../../components/BoardSubHeader';
 import { FaPlus, FaTimes } from 'react-icons/fa';
-import ListColumn from '../../../components/ListColumn';
-import FullCardModal from '../../../components/Card/FullCardModal';
-import CardEditPopup from '../../../components/Card/CardEditPopup';
+import ListColumn from '../../../../components/ListColumn';
+import FullCardModal from '../../../../components/Card/FullCardModal';
+import CardEditPopup from '../../../../components/Card/CardEditPopup';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
-import { createList, fetchLists, updateList, deleteList  } from '../../../api/listApi';
-import { createCardInList, fetchCardsByList, updateCard } from '../../../api/cardApi';
+import { createList, fetchLists, updateList, deleteList  } from '../../../../api/listApi';
+import { createCardInList, fetchCardsByList, updateCard } from '../../../../api/cardApi';
 
-import ConfirmationModal from '../../../components/Card/common/ConfirmationModal';
-import BoardFilterPopup from '../../../components/filter/BoardFilterPopup'; 
-import { fetchBoardMembers, fetchBoardLabels,updateBoard  } from '../../../api/boardApi'; 
+import ConfirmationModal from '../../../../components/Card/common/ConfirmationModal';
+import BoardFilterPopup from '../../../../components/filter/BoardFilterPopup'; 
+import { fetchBoardMembers, fetchBoardLabels,updateBoard  } from '../../../../api/boardApi'; 
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
-import ShareBoardPopup from '../../../components/member/ShareBoardPopup';
-import useTrelloFilter from '../../../components/hook/useTrelloFilter';
-import { WorkspaceContext } from '../../../contexts'; 
+import ShareBoardPopup from '../../../../components/member/ShareBoardPopup';
+import useTrelloFilter from '../../../../components/hook/useTrelloFilter';
+import { WorkspaceContext } from '../../../../contexts'; 
 
 
 import { toast } from 'react-hot-toast';

@@ -1,4 +1,3 @@
-// BoardsMainContent.jsx - FIXED VERSION
 import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { Button, Spinner } from 'react-bootstrap';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
@@ -120,32 +119,34 @@ export default function BoardsMainContent({ onCreateBoard }) {
               <WorkspaceName>{currentWs.name || 'Hard Spirit'}</WorkspaceName>
             </WorkspaceHeader>
             
-            {/* ✅ FIX: Relative container for drawer */}
-            <DrawerContainer>
-              <CreateCard onClick={() => setShowDrawer(true)}>
-                Create new board
-              </CreateCard>
+            {/* Create board button - desktop only */}
+            <DesktopOnly>
+              <DrawerContainer>
+                <CreateCard onClick={() => setShowDrawer(true)}>
+                  Create new board
+                </CreateCard>
 
-              {showDrawer && (
-                <BoardThemeDrawer
-                  show={true}
-                  onClose={() => setShowDrawer(false)}
-                  onCreate={handleCreateBoard}
-                />
-              )}
-            </DrawerContainer>
+                {showDrawer && (
+                  <BoardThemeDrawer
+                    show={true}
+                    onClose={() => setShowDrawer(false)}
+                    onCreate={handleCreateBoard}
+                  />
+                )}
+              </DrawerContainer>
+            </DesktopOnly>
           </WorkspaceInfo>
 
           {/* RIGHT: Tabs */}
           <TabsSection>
             <TabButton>Boards</TabButton>
             <TabButton>Members</TabButton>
-            <TabButton>Settings</TabButton>
-            <UpgradeButton>Upgrade</UpgradeButton>
+            <TabButton className="hide-on-small">Settings</TabButton>
+            <UpgradeButton className="hide-on-mobile">Upgrade</UpgradeButton>
           </TabsSection>
         </HeaderSection>
 
-        {/* ✅ FIX: Modal overlay - chỉ hiện khi drawer mở */}
+        {/* Modal overlay */}
         {showDrawer && <ModalOverlay onClick={() => setShowDrawer(false)} />}
 
         {/* Boards list */}
@@ -159,8 +160,10 @@ export default function BoardsMainContent({ onCreateBoard }) {
             <ErrorContainer>{error}</ErrorContainer>
           ) : (
             <BoardGrid>
+              {/* Create card - visible on all devices */}
               <CreateCard onClick={() => setShowDrawer(true)}>
-                Create new board
+                <CreateCardIcon>+</CreateCardIcon>
+                <CreateCardText>Create new board</CreateCardText>
               </CreateCard>
 
               {boards.map(board => (
@@ -170,7 +173,7 @@ export default function BoardsMainContent({ onCreateBoard }) {
                   style={{ textDecoration: 'none' }}
                 >
                   <BoardCard style={{ background: board.background || '#f4f5f7' }}>
-                    {board.name}
+                    <BoardCardContent>{board.name}</BoardCardContent>
                   </BoardCard>
                 </Link>
               ))}
@@ -183,7 +186,7 @@ export default function BoardsMainContent({ onCreateBoard }) {
 }
 
 // ============================================
-// STYLED COMPONENTS - FIXED VERSION
+// STYLED COMPONENTS - FULLY RESPONSIVE
 // ============================================
 
 const MainWrapper = styled.div`
@@ -200,6 +203,10 @@ const ContentContainer = styled.div`
   @media (max-width: 768px) {
     padding: 16px;
   }
+  
+  @media (max-width: 480px) {
+    padding: 12px;
+  }
 `;
 
 const HeaderSection = styled.div`
@@ -212,11 +219,13 @@ const HeaderSection = styled.div`
   @media (max-width: 968px) {
     flex-direction: column;
     align-items: stretch;
+    gap: 16px;
   }
 `;
 
 const WorkspaceInfo = styled.div`
   flex: 1;
+  min-width: 0; /* Fix text overflow */
 `;
 
 const SectionTitle = styled.h6`
@@ -226,6 +235,11 @@ const SectionTitle = styled.h6`
   font-size: 12px;
   letter-spacing: 0.5px;
   margin-bottom: 16px;
+  
+  @media (max-width: 480px) {
+    font-size: 11px;
+    margin-bottom: 12px;
+  }
 `;
 
 const WorkspaceHeader = styled.div`
@@ -233,6 +247,11 @@ const WorkspaceHeader = styled.div`
   align-items: center;
   gap: 12px;
   margin-bottom: 20px;
+  
+  @media (max-width: 480px) {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
 `;
 
 const WorkspaceAvatar = styled.div`
@@ -246,21 +265,39 @@ const WorkspaceAvatar = styled.div`
   justify-content: center;
   font-weight: 700;
   font-size: 18px;
+  flex-shrink: 0;
+  
+  @media (max-width: 480px) {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
 `;
 
 const WorkspaceName = styled.span`
   font-weight: 800;
   font-size: 18px;
   color: var(--text-primary, #e1e3e6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
 `;
 
-/* ✅ FIX: DrawerContainer - relative positioning cho drawer */
+const DesktopOnly = styled.div`
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
 const DrawerContainer = styled.div`
   position: relative;
   display: inline-block;
 `;
 
-/* ✅ FIX: ModalOverlay - backdrop cho drawer */
 const ModalOverlay = styled.div`
   position: fixed;
   top: 0;
@@ -277,6 +314,27 @@ const TabsSection = styled.div`
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 8px;
+  }
+  
+  .hide-on-small {
+    @media (max-width: 640px) {
+      display: none;
+    }
+  }
+  
+  .hide-on-mobile {
+    @media (max-width: 480px) {
+      display: none;
+    }
+  }
 `;
 
 const TabButton = styled(Button).attrs({ variant: 'light' })`
@@ -287,11 +345,17 @@ const TabButton = styled(Button).attrs({ variant: 'light' })`
   padding: 8px 16px;
   border-radius: 6px;
   transition: all 0.2s;
+  white-space: nowrap;
   
   &:hover {
     background: var(--surface-3, #2c3341);
     color: var(--text-primary, #e1e3e6);
     transform: translateY(-1px);
+  }
+  
+  @media (max-width: 480px) {
+    padding: 6px 12px;
+    font-size: 14px;
   }
 `;
 
@@ -303,15 +367,25 @@ const UpgradeButton = styled(Button)`
   padding: 8px 20px;
   border-radius: 6px;
   transition: all 0.2s;
+  white-space: nowrap;
   
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
   }
+  
+  @media (max-width: 480px) {
+    padding: 6px 14px;
+    font-size: 14px;
+  }
 `;
 
 const BoardsSection = styled.div`
   margin-top: 24px;
+  
+  @media (max-width: 480px) {
+    margin-top: 16px;
+  }
 `;
 
 const LoadingContainer = styled.div`
@@ -321,6 +395,10 @@ const LoadingContainer = styled.div`
   gap: 12px;
   padding: 60px 0;
   color: var(--text-secondary, #8a93a2);
+  
+  @media (max-width: 480px) {
+    padding: 40px 0;
+  }
 `;
 
 const ErrorContainer = styled.div`
@@ -328,6 +406,11 @@ const ErrorContainer = styled.div`
   color: #e76a24;
   padding: 40px;
   font-weight: 500;
+  
+  @media (max-width: 480px) {
+    padding: 24px;
+    font-size: 14px;
+  }
 `;
 
 const BoardGrid = styled.div`
@@ -335,9 +418,28 @@ const BoardGrid = styled.div`
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 16px;
   
+  /* Tablet */
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+  }
+  
+  /* Mobile landscape */
   @media (max-width: 768px) {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 12px;
+  }
+  
+  /* Mobile portrait */
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  /* Small mobile */
+  @media (max-width: 360px) {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 `;
 
@@ -347,8 +449,10 @@ const CreateCard = styled.div`
   border: 2px dashed var(--brand-primary, #58aff6);
   border-radius: 8px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   background: var(--surface-2, #222834);
   color: var(--text-secondary, #8a93a2);
   font-weight: 600;
@@ -361,6 +465,36 @@ const CreateCard = styled.div`
     border-color: #7ec3ff;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(88, 175, 246, 0.2);
+  }
+  
+  @media (max-width: 768px) {
+    height: 110px;
+    font-size: 14px;
+  }
+  
+  @media (max-width: 480px) {
+    height: 100px;
+    font-size: 13px;
+    gap: 6px;
+  }
+`;
+
+const CreateCardIcon = styled.div`
+  font-size: 32px;
+  font-weight: 300;
+  line-height: 1;
+  
+  @media (max-width: 480px) {
+    font-size: 28px;
+  }
+`;
+
+const CreateCardText = styled.div`
+  text-align: center;
+  padding: 0 8px;
+  
+  @media (max-width: 480px) {
+    font-size: 12px;
   }
 `;
 
@@ -379,7 +513,6 @@ const BoardCard = styled.div`
   transition: all 0.2s;
   position: relative;
   overflow: hidden;
-  text-align: center;
   
   /* Gradient overlay for better text readability */
   &::before {
@@ -404,9 +537,30 @@ const BoardCard = styled.div`
     }
   }
   
-  /* Text layer */
-  & > * {
-    position: relative;
-    z-index: 1;
+  @media (max-width: 768px) {
+    height: 110px;
+    font-size: 15px;
+    padding: 12px;
+  }
+  
+  @media (max-width: 480px) {
+    height: 100px;
+    font-size: 14px;
+    padding: 10px;
+  }
+`;
+
+const BoardCardContent = styled.div`
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  word-break: break-word;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  
+  @media (max-width: 480px) {
+    -webkit-line-clamp: 2;
   }
 `;
