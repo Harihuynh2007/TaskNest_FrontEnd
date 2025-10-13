@@ -1,0 +1,393 @@
+import React, { useState, useRef, useEffect } from 'react';
+import styled from 'styled-components';
+import { Droppable, Draggable } from '@hello-pangea/dnd';
+
+import InboxSubHeader from '../../../../components/InboxSubHeader';
+import CardEditPopup from '../../../../components/Card/CardEditPopup';
+import FullCardModal from '../../../../components/Card/FullCardModal';
+import CardItem from '../../../../components/Card/CardItem';
+import FeedbackPopup from '../../../../components/FeedbackPopup';
+import InboxFilterPopup from '../../../../components/filter/InboxFilterPopup';
+import useTrelloFilter from '../../../../components/hook/useTrelloFilter';
+import dayjs from 'dayjs';
+import isoWeek from 'dayjs/plugin/isoWeek';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+import * as cardApi from '../../../../api/cardApi';
+import { toast } from 'react-hot-toast';
+import useInboxThemeColor from './useInboxThemeColor';
+import InboxThemePicker from './InboxThemePicker';
+import InboxThemeButton from './InboxThemeButton';
+
+dayjs.extend(isoWeek);
+dayjs.extend(isSameOrBefore);
+
+export default function InboxPane({
+  cards,
+  setCards,
+  inputValue,
+  setInputValue,
+  showInput,
+  setShowInput,
+  editPopup,
+  setEditPopup,
+  selectedCard,
+  setSelectedCard,
+  handleAddCard,
+  toggleComplete,
+  handleSaveCard,
+}) {
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
+
+  const {
+    inboxColor,
+    previewColor,
+    effectiveColor,
+    setInboxColor,
+    applyPreview,
+    clearPreview,
+  } = useInboxThemeColor();
+
+
+  const {
+    filter,
+    setKeyword,
+    toggleArrayItem,
+    toggleStatusCheckbox,
+    toggleDueWithConstraint,
+    resetFilter,
+    setDueRangeSingle,
+  } = useTrelloFilter();
+
+  const handleCheckClick = async (cardId, next) => {
+    setCards(prev =>
+      prev.map(c => (c.id === cardId ? { ...c, completed: next } : c))
+    );
+    try {
+      await cardApi.updateCard(cardId, { completed: next });
+    } catch (err) {
+      setCards(prev =>
+        prev.map(c => (c.id === cardId ? { ...c, completed: !next } : c))
+      );
+      toast?.error?.('Cập nhật trạng thái thất bại, đã hoàn tác.');
+      console.error(err);
+    }
+  };
+
+  const handleCardDeleted = (deletedCardId) => {
+    setCards((prevCards) => prevCards.filter((card) => card.id !== deletedCardId));
+  };
+
+  const [popupPos, setPopupPos] = useState({ top: 0, left: 0 });
+  const filterButtonRef = useRef(null);
+
+  const filteredCards = cards.filter((card) => {
+    const name = (card.name || '').toLowerCase();
+    const kw = (filter.keyword || '').toLowerCase();
+    const matchKeyword = name.includes(kw);
+
+    const matchStatus =
+      filter.status === 'all' ||
+      (filter.status === 'completed' && !!card.completed) ||
+      (filter.status === 'incomplete' && !card.completed);
+
+    const dueSel = Array.isArray(filter.due) ? filter.due : [];
+    const selectedNone = dueSel.includes('none');
+    const selectedOverdue = dueSel.includes('overdue');
+    const selectedRange = ['today', 'week', 'month'].find((v) =>
+      dueSel.includes(v)
+    );
+
+    const due = card.due_date ? dayjs(card.due_date) : null;
+    const today = dayjs();
+
+    const isNone = !due;
+    const isOverdue = due && due.isBefore(today, 'day') && !card.completed;
+    const inToday = due && due.isSame(today, 'day');
+    const inWeek = due && due.isoWeek() === today.isoWeek() && due.year() === today.year();
+    const inMonth = due && due.month() === today.month() && due.year() === today.year();
+
+    const matchDue =
+      (!selectedNone && !selectedOverdue && !selectedRange)
+        ? true
+        : (selectedNone && isNone) ||
+          (selectedOverdue && isOverdue) ||
+          (!!selectedRange &&
+            ((selectedRange === 'today' && inToday) ||
+              (selectedRange === 'week' && inWeek) ||
+              (selectedRange === 'month' && inMonth)));
+
+    const created = card.created_at ? dayjs(card.created_at) : null;
+    const createdSel = Array.isArray(filter.created) ? filter.created : [];
+
+    const matchCreated =
+      createdSel.length === 0
+        ? true
+        : createdSel.some((k) => {
+            switch (k) {
+              case 'week':
+                return created && created.isoWeek() === today.isoWeek() && created.year() === today.year();
+              case '2weeks':
+                return created && created.isAfter(today.subtract(14, 'day'));
+              case 'month':
+                return created && created.month() === today.month() && created.year() === today.year();
+              default:
+                return true;
+            }
+          });
+
+    return matchKeyword && matchStatus && matchDue && matchCreated;
+  });
+
+  useEffect(() => {
+    if (showFilter && filterButtonRef.current) {
+      const rect = filterButtonRef.current.getBoundingClientRect();
+      setPopupPos({
+        top: rect.top + window.scrollY,
+        left: rect.left + window.scrollX - 304 - 8,
+      });
+    }
+  }, [showFilter]);
+
+  return (
+    <PaneWrapper $background={effectiveColor}>
+      <InboxSubHeader
+        setShowFeedback={setShowFeedback}
+        setShowFilter={setShowFilter}
+        filterButtonRef={filterButtonRef}
+      />
+      
+
+      {editPopup && <DarkOverlay />}
+      <InnerContent>
+        
+        <InboxThemeButton />
+        
+        {selectedCard && (
+          <FullCardModal
+            card={selectedCard}
+            onClose={() => setSelectedCard(null)}
+            onCardUpdate={(updatedCard) => {
+              setCards((prev) => prev.map((card) => card.id === updatedCard.id ? updatedCard : card));
+            }}
+          />
+        )}
+
+        {showFeedback && <FeedbackPopup onClose={() => setShowFeedback(false)} />}
+
+        {showFilter && (
+          <InboxFilterPopup
+            filter={filter}
+            onClose={() => setShowFilter(false)}
+            position={popupPos}
+            setKeyword={setKeyword}
+            toggleArrayItem={toggleArrayItem}
+            toggleStatusCheckbox={toggleStatusCheckbox}
+            toggleDueWithConstraint={toggleDueWithConstraint}
+            setDueRangeSingle={setDueRangeSingle}
+          />
+        )}
+
+        {showInput ? (
+          <CardInputWrapper>
+            <Input
+              placeholder="Enter a title"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              autoFocus
+            />
+            <ButtonRow>
+              <AddButton onClick={handleAddCard}>Add card</AddButton>
+              <CancelButton onClick={() => { setShowInput(false); setInputValue(''); }}>Cancel</CancelButton>
+            </ButtonRow>
+          </CardInputWrapper>
+        ) : (
+          <AddCardTrigger onClick={() => setShowInput(true)}>+ Add a new card</AddCardTrigger>
+        )}
+
+        <Droppable droppableId="inbox" type="CARD">
+          {(provided, snapshot) => (
+            <CardList
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              $isDraggingOver={snapshot.isDraggingOver}
+            >
+              {filteredCards.map((card, index) => (
+                <Draggable key={card.id} draggableId={String(card.id)} index={index}>
+                  {(provided, snapshot) => (
+                    <DraggableCardWrapper
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      $isDragging={snapshot.isDragging}
+                      data-is-dragging={snapshot.isDragging}
+                    >
+                      <CardItem
+                        isInbox={true}
+                        draggingOver={snapshot.draggingOver}
+                        card={card}
+                        index={index}
+                        isDragging={snapshot.isDragging}
+                        onEditClick={(e, card, index, rect) => {
+                          setEditPopup({ card, index, text: card.name, anchorRect: rect });
+                        }}
+                        onCheckClick={handleCheckClick}
+                        onCardClick={(card) => setSelectedCard(card)}
+                      />
+                    </DraggableCardWrapper>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </CardList>
+          )}
+        </Droppable>
+
+        {editPopup && (
+          <CardEditPopup
+            anchorRect={editPopup.anchorRect}
+            card={editPopup.card}
+            cardText={editPopup.text}
+            onChange={(val) => setEditPopup({ ...editPopup, text: val })}
+            onSave={handleSaveCard}
+            onClose={() => setEditPopup(null)}
+            onOpenFullCard={() => {
+              const c = editPopup?.card;
+              setEditPopup(null);
+              if (c) setSelectedCard(c); 
+            }}
+            isInboxMode={true}
+            onCardDeleted={handleCardDeleted}
+          />
+        )}
+      </InnerContent>
+    </PaneWrapper>
+  );
+}
+
+const PaneWrapper = styled.div`
+  background: ${({ $background }) => $background || 'var(--surface-1, #171c26)'};
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+`;
+
+const InnerContent = styled.div`
+  width: 100%;
+  max-width: 768px;
+  margin: 0 auto;
+  padding: 0 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const DarkOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+`;
+
+const CardInputWrapper = styled.div`
+  background: var(--surface-2, #1f2633);
+  padding: 12px 16px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+`;
+
+const Input = styled.textarea`
+  width: 100%;
+  min-height: 40px;
+  font-size: 15px;
+  padding: 8px 10px;
+  background: var(--surface-1, #171c26);
+  color: var(--text-primary, #e1e3e6);
+  border: 1px solid #2c3748;
+  border-radius: 6px;
+  resize: none;
+  outline: none;
+  box-shadow: inset 0 0 0 1px #2c3748;
+
+  &:focus {
+    box-shadow: 0 0 0 2px var(--brand-primary, #4aa8ff);
+    border-color: transparent;
+  }
+`;
+
+const ButtonRow = styled.div`
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+`;
+
+const AddButton = styled.button`
+  background: var(--brand-primary, #28a745);
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    background: #219638;
+  }
+`;
+
+const CancelButton = styled.button`
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 14px;
+  cursor: pointer;
+
+  &:hover {
+    color: #cbd5e1;
+  }
+`;
+
+const AddCardTrigger = styled.div`
+  background-color: var(--surface-2, #1f2633);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: #cbd5e1;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  border: 1px dashed #2a3342;
+  transition: background 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    background-color: #273143;
+    border-color: var(--brand-primary, #4aa8ff);
+  }
+`;
+
+const CardList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 8px;
+  min-height: 48px;
+  transition: background-color 0.2s ease;
+  background: ${({ $isDraggingOver }) => $isDraggingOver ? 'rgba(74,168,255,0.08)' : 'transparent'};
+`;
+
+const DraggableCardWrapper = styled.div`
+  width: 100%;
+  cursor: grab;
+  transition: transform 0.2s ease;
+
+  ${({ $isDragging }) => $isDragging && `
+    width: 272px;
+    margin: 0 auto;
+    cursor: grabbing;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+  `}
+`;
