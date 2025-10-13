@@ -10,7 +10,7 @@ const Backdrop = styled.div`
   place-items: center;
   padding: 16px;
   background: rgba(0,0,0,.45);
-  z-index: 1300; /* cao hơn header/sidebar/anything */
+  z-index: 5000; /* cao hơn header/sidebar/anything */
 `;
 const Card = styled.div`
   width: min(96vw, 960px);
