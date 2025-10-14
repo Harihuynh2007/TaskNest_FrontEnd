@@ -1,5 +1,4 @@
 /* App.css - Application-Specific Styles */
-
 /* App Container Styles */
 .App {
   text-align: center;
@@ -94,14 +93,13 @@
 
 /* Create */
 .tn-create-btn{
-  height: 36px;
-  padding: 0 12px;
-  border-radius: 10px;
-  font-weight: 700;
-  border: none;
-  background: linear-gradient(135deg, var(--tn-green), var(--tn-green-700));
+  background: var(--create-btn-bg);
+  box-shadow: var(--create-btn-shadow);
 }
-.tn-create-btn:hover{ filter: brightness(0.98); }
+.tn-create-btn:hover{ 
+  box-shadow: var(--create-btn-shadow-hover); 
+}
+
 .tn-plus{ margin-right: 6px; }
 
 /* Search */
@@ -200,7 +198,7 @@
 
 /* Màu viền trái khi hover */
 .create-item:hover {
-  border-left: 3px solid var(--tn-brand-accent);
+  border-left: 3px solid var(--brand-primary);
 }
 
 /* Feedback Popup */

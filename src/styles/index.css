@@ -88,8 +88,8 @@ html, body, #root {
 }
 
 .create-item:hover {
-  background-color: #f4f5f7;
-  border-left: 3px solid #28A745;
+  background-color: var(--dropdown-hover);
+  border-left: 3px solid var(--brand-primary);
 }
 
 .icon {

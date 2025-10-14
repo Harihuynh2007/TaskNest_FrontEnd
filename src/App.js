@@ -17,6 +17,9 @@ import Settings from './features/boards/settings/Setting.jsx';
 
 import { GlobalStyle } from './styles/GlobalStyle';
 
+// src/index.js hoặc App.js
+
+
 const LogoutRedirect = () => {
   const { user } = useContext(AuthContext);
   const location = useLocation();

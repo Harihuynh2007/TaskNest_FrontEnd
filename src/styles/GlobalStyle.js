@@ -20,7 +20,7 @@ export const GlobalStyle = createGlobalStyle`
     --brand-gradient: linear-gradient(135deg, #58aff6 0%, #3a7bd5 100%);
 
     /* Accent */
-    --accent-success: #33c481;
+    --accent-success: #4FC3F7;
 
     /* Search */
     --search-bg: #1a2030;
