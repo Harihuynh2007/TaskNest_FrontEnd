@@ -29,94 +29,95 @@ export default function InboxSubHeader({
   const liveId = useId();
 
   return (
-    <HeaderWrapper role="region" aria-label="Inbox toolbar">
-      <GlowEffect />
-      <Bar>
-        <Left>
-          <TitleGroup>
-            <InboxIconWrapper>
-              <MdInbox size={22} aria-hidden="true" focusable="false" />
-            </InboxIconWrapper>
-            <TitleWrapper>
-              <Title aria-label="Inbox">Inbox</Title>
-              {subtitle && (
-                <SubtitleWrapper>
-                  <SubtitleDot />
-                  <Subtitle title={subtitle}>{subtitle}</Subtitle>
-                </SubtitleWrapper>
+    <ReduceMotion>
+        <HeaderWrapper role="region" aria-label="Inbox toolbar">
+        <GlowEffect />
+        <Bar>
+          <Left>
+            <TitleGroup>
+              <InboxIconWrapper>
+                <MdInbox size={22} aria-hidden="true" focusable="false" />
+              </InboxIconWrapper>
+              <TitleWrapper>
+                <Title aria-label="Inbox">Inbox</Title>
+                {subtitle && (
+                  <SubtitleWrapper>
+                    <SubtitleDot />
+                    <Subtitle title={subtitle}>{subtitle}</Subtitle>
+                  </SubtitleWrapper>
+                )}
+              </TitleWrapper>
+              {typeof count === 'number' && (
+                <CountBadge aria-describedby={liveId}>
+                  <CountNumber>{count}</CountNumber>
+                </CountBadge>
               )}
-            </TitleWrapper>
-            {typeof count === 'number' && (
-              <CountBadge aria-describedby={liveId}>
-                <CountNumber>{count}</CountNumber>
-              </CountBadge>
-            )}
-          </TitleGroup>
-          <LiveStatus id={liveId} aria-live="polite">
-            {typeof count === 'number' ? `${count} items` : ''}
-          </LiveStatus>
-        </Left>
+            </TitleGroup>
+            <LiveStatus id={liveId} aria-live="polite">
+              {typeof count === 'number' ? `${count} items` : ''}
+            </LiveStatus>
+          </Left>
 
-        <Right>
-          <IconButton
-            type="button"
-            title="Feedback"
-            aria-label="Open feedback form"
-            onClick={() => setShowFeedback?.(true)}
-          >
-            <MdOutlineFeedback size={20} />
-            <ButtonRipple />
-          </IconButton>
+          <Right>
+            <IconButton
+              type="button"
+              title="Feedback"
+              aria-label="Open feedback form"
+              onClick={() => setShowFeedback?.(true)}
+            >
+              <MdOutlineFeedback size={20} />
+              <ButtonRipple />
+            </IconButton>
 
-          <IconButton
-            type="button"
-            ref={filterButtonRef}
-            title="Filter"
-            aria-label="Toggle inbox filters"
-            data-testid="inbox-filter-button"
-            onClick={() => setShowFilter?.((prev) => !prev)}
-            className="filter-btn"
-          >
-            <MdFilterList size={20} />
-            <ButtonRipple />
-          </IconButton>
+            <IconButton
+              type="button"
+              ref={filterButtonRef}
+              title="Filter"
+              aria-label="Toggle inbox filters"
+              data-testid="inbox-filter-button"
+              onClick={() => setShowFilter?.((prev) => !prev)}
+              className="filter-btn"
+            >
+              <MdFilterList size={20} />
+              <ButtonRipple />
+            </IconButton>
 
-          <IconButton
-            type="button"
-            title="More options"
-            aria-label="More options"
-            data-testid="inbox-menu-button"
-            onClick={() => onOpenMenu?.()}
-          >
-            <MdMoreHoriz size={22} />
-            <ButtonRipple />
-          </IconButton>
-        </Right>
-      </Bar>
-    </HeaderWrapper>
+            <IconButton
+              type="button"
+              title="More options"
+              aria-label="More options"
+              data-testid="inbox-menu-button"
+              onClick={() => onOpenMenu?.()}
+            >
+              <MdMoreHoriz size={22} />
+              <ButtonRipple />
+            </IconButton>
+          </Right>
+        </Bar>
+      </HeaderWrapper>
+    </ReduceMotion>
   );
 }
 
 // ===================== Enhanced Styles =====================
 
-const HeaderWrapper = styled.div`
+export const HeaderWrapper = styled.div`
   position: sticky;
   z-index: 100;
   width: 100%;
-  backdrop-filter: blur(12px) saturate(180%);
+  backdrop-filter: blur(12px) saturate(160%);
   background: linear-gradient(
     180deg,
-    color-mix(in oklab, var(--surface-elev, #0f1216) 75%, transparent) 0%,
-    color-mix(in oklab, var(--surface-elev, #0f1216) 65%, transparent) 100%
+    color-mix(in oklab, var(--surface-elev, #0f1216) 70%, transparent) 0%,
+    color-mix(in oklab, var(--surface-elev, #0f1216) 52%, transparent) 100%
   );
   border-bottom: 1px solid color-mix(in oklab, var(--stroke, #2a2f38) 60%, transparent);
-  box-shadow: 
+  box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.12),
     0 2px 4px -1px rgba(0, 0, 0, 0.08);
   position: relative;
   overflow: hidden;
-
-  /* Smooth entrance animation */
+  transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease, filter 0.2s ease;
   animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 
   @keyframes slideDown {
@@ -130,12 +131,27 @@ const HeaderWrapper = styled.div`
     }
   }
 
+  @media (hover: hover) {
+    &:hover {
+      background: linear-gradient(
+        180deg,
+        color-mix(in oklab, var(--surface-elev, #141922) 78%, transparent) 0%,
+        color-mix(in oklab, var(--surface-elev, #141922) 60%, transparent) 100%
+      );
+      box-shadow:
+        0 8px 18px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      transform: translateY(-1px);
+      filter: saturate(1.05) brightness(1.03);
+    }
+  }
+
   --inbox-subheader-h: 56px;
   min-height: var(--inbox-subheader-h);
-  margin-bottom: 8px; /* tạo “đệm” để Add card không bị dính sát */
+  margin-bottom: 8px;
 `;
 
-const GlowEffect = styled.div`
+export const GlowEffect = styled.div`
   position: absolute;
   top: 0;
   left: 20%;
@@ -148,10 +164,17 @@ const GlowEffect = styled.div`
     transparent 100%
   );
   filter: blur(8px);
-  opacity: 0.6;
+  opacity: 0.4;
+  transition: opacity 0.25s ease;
+
+  @media (hover: hover) {
+    ${HeaderWrapper}:hover & {
+      opacity: 0.7;
+    }
+  }
 `;
 
-const Bar = styled.div`
+export const Bar = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -165,25 +188,33 @@ const Bar = styled.div`
   }
 `;
 
-const Left = styled.div`
+export const Left = styled.div`
   display: flex;
   align-items: center;
   min-width: 0;
   flex: 1;
 `;
 
-const TitleGroup = styled.div`
+export const TitleGroup = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
   color: var(--ds-text, #e6edf3);
+  opacity: 0.88;
+  transition: opacity 0.2s ease;
+
+  @media (hover: hover) {
+    ${HeaderWrapper}:hover & {
+      opacity: 1;
+    }
+  }
 
   @media (max-width: 640px) {
     gap: 10px;
   }
 `;
 
-const InboxIconWrapper = styled.div`
+export const InboxIconWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -196,14 +227,14 @@ const InboxIconWrapper = styled.div`
     color-mix(in oklab, var(--brand-primary, #4aa8ff) 10%, transparent) 100%
   );
   color: var(--brand-primary, #4aa8ff);
-  box-shadow: 
+  box-shadow:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
     0 1px 3px rgba(0, 0, 0, 0.2);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
     transform: scale(1.05);
-    box-shadow: 
+    box-shadow:
       inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
       0 2px 6px rgba(74, 168, 255, 0.3);
   }
@@ -215,14 +246,14 @@ const InboxIconWrapper = styled.div`
   }
 `;
 
-const TitleWrapper = styled.div`
+export const TitleWrapper = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
 `;
 
-const Title = styled.h2`
+export const Title = styled.h2`
   margin: 0;
   font-size: 18px;
   font-weight: 700;
@@ -241,13 +272,13 @@ const Title = styled.h2`
   }
 `;
 
-const SubtitleWrapper = styled.div`
+export const SubtitleWrapper = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
 `;
 
-const SubtitleDot = styled.div`
+export const SubtitleDot = styled.div`
   width: 3px;
   height: 3px;
   border-radius: 50%;
@@ -255,18 +286,20 @@ const SubtitleDot = styled.div`
   opacity: 0.5;
 `;
 
-const Subtitle = styled.span`
+export const Subtitle = styled.span`
   color: var(--ds-subtle, #94a3b8);
+  opacity: 0.9;
   font-weight: 500;
   font-size: 14px;
   max-width: 30vw;
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
-  transition: color 0.2s ease;
+  transition: color 0.2s ease, opacity 0.2s ease;
 
   &:hover {
     color: color-mix(in oklab, var(--ds-subtle, #94a3b8) 100%, #fff 30%);
+    opacity: 1;
   }
 
   @media (max-width: 640px) {
@@ -275,7 +308,7 @@ const Subtitle = styled.span`
   }
 `;
 
-const CountBadge = styled.span`
+export const CountBadge = styled.span`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -292,28 +325,23 @@ const CountBadge = styled.span`
   );
   color: var(--badge-fg, #eaf2ff);
   border: 1px solid color-mix(in oklab, var(--brand-primary, #4aa8ff) 35%, transparent);
-  box-shadow: 
+  box-shadow:
     0 2px 4px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: fadeInScale 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 0.92;
+  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+
+  @media (hover: hover) {
+    ${HeaderWrapper}:hover & {
+      opacity: 1;
+    }
+  }
 
   &:hover {
     transform: scale(1.08);
-    box-shadow: 
+    box-shadow:
       0 3px 8px rgba(74, 168, 255, 0.3),
       inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  }
-
-  @keyframes fadeInScale {
-    from {
-      opacity: 0;
-      transform: scale(0.8);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
   }
 
   @media (max-width: 640px) {
@@ -324,24 +352,7 @@ const CountBadge = styled.span`
   }
 `;
 
-const CountNumber = styled.span`
-  position: relative;
-  z-index: 1;
-`;
-
-const LiveStatus = styled.span`
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-`;
-
-const Right = styled.div`
+export const Right = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
@@ -351,7 +362,7 @@ const Right = styled.div`
   }
 `;
 
-const ButtonRipple = styled.span`
+export const ButtonRipple = styled.span`
   position: absolute;
   inset: 0;
   border-radius: inherit;
@@ -365,7 +376,7 @@ const ButtonRipple = styled.span`
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 `;
 
-const IconButton = styled.button`
+export const IconButton = styled.button`
   --btn-size: 36px;
   display: inline-flex;
   align-items: center;
@@ -376,35 +387,38 @@ const IconButton = styled.button`
   border-radius: 10px;
   background: transparent;
   color: var(--ds-icon, #9aa4b2);
+  opacity: 0.72;
   cursor: pointer;
   outline: none;
   position: relative;
   overflow: hidden;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Icon transition */
   svg {
     position: relative;
     z-index: 1;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  &:hover {
-    color: var(--ds-text, #e6edf3);
-    background: color-mix(in oklab, #ffffff 14%, transparent);
-    box-shadow: 
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
-      0 2px 6px rgba(0, 0, 0, 0.15);
-    transform: translateY(-1px);
+  @media (hover: hover) {
+    &:hover {
+      opacity: 1;
+      color: var(--ds-text, #e6edf3);
+      background: color-mix(in oklab, #ffffff 14%, transparent);
+      box-shadow:
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+        0 2px 6px rgba(0, 0, 0, 0.15);
+      transform: translateY(-1px);
 
-    svg {
-      transform: scale(1.1);
+      svg {
+        transform: scale(1.1);
+      }
     }
   }
 
   &:active {
     transform: translateY(0) scale(0.96);
-    
+
     ${ButtonRipple} {
       opacity: 1;
       transform: scale(1);
@@ -413,18 +427,19 @@ const IconButton = styled.button`
   }
 
   &:focus-visible {
+    opacity: 1;
     outline: 2px solid var(--brand-primary, #4aa8ff);
     outline-offset: 2px;
-    box-shadow: 
+    box-shadow:
       0 0 0 4px color-mix(in oklab, var(--brand-primary, #4aa8ff) 20%, transparent),
       0 2px 6px rgba(0, 0, 0, 0.15);
   }
 
-  /* Active state for filter button */
   &.filter-btn[aria-expanded="true"] {
+    opacity: 1;
     background: color-mix(in oklab, var(--brand-primary, #4aa8ff) 18%, transparent);
     color: var(--brand-primary, #4aa8ff);
-    box-shadow: 
+    box-shadow:
       inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
       0 2px 6px rgba(74, 168, 255, 0.25);
   }
@@ -442,4 +457,37 @@ const IconButton = styled.button`
   @media (max-width: 360px) {
     --btn-size: 30px;
   }
+`;
+
+export const ReduceMotion = styled.div`
+  @media (prefers-reduced-motion: reduce) {
+    ${HeaderWrapper} {
+      animation: none;
+      transition: none;
+      transform: none !important;
+    }
+    ${IconButton} {
+      transition: none;
+      svg {
+        transition: none;
+      }
+    }
+  }
+`;
+
+export const CountNumber = styled.span`
+  position: relative;
+  z-index: 1;
+`;
+
+export const LiveStatus = styled.span`
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 `;
