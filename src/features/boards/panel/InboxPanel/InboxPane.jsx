@@ -258,6 +258,51 @@ export default function InboxPane({
             }}
             isInboxMode={true}
             onCardDeleted={handleCardDeleted}
+            onSelect={async (key, c) => {
+      switch (key) {
+        case 'open': {
+          const card = editPopup?.card;
+          setEditPopup(null);
+          if (card) setSelectedCard(card);
+          break;
+        }
+        case 'labels': {
+          toast?.('Labels: tính năng sắp có');
+          break;
+        }
+        case 'dates': {
+          toast?.('Dates: tính năng sắp có');
+          break;
+        }
+        case 'checklist': {
+          toast?.('Checklist: tính năng sắp có');
+          break;
+        }
+        case 'attachment': {
+          toast?.('Attachment: tính năng sắp có');
+          break;
+        }
+        case 'members': {
+          toast?.('Members: tính năng sắp có');
+          break;
+        }
+        case 'delete': {
+          try {
+            await cardApi.deleteCard(c.id);
+             if (typeof handleCardDeleted === 'function') handleCardDeleted(c.id);
+            toast?.success?.('Đã xoá thẻ');
+          } catch (err) {
+            console.error(err);
+            toast?.error?.('Xoá thẻ thất bại');
+          } finally {
+            setEditPopup(null);
+          }
+          break;
+        }
+        default:
+          break;
+      }
+    }}
           />
         )}
       </InnerContent>
