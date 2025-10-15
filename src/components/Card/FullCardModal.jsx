@@ -6,28 +6,18 @@ import { HiOutlineUserAdd } from 'react-icons/hi';
 import { MdChecklist } from 'react-icons/md';
 import { IoCloseOutline } from 'react-icons/io5';
 import { IoChevronDown } from 'react-icons/io5';
-import { HiOutlineMenuAlt2 } from 'react-icons/hi';
+
 import toast from 'react-hot-toast';
 import axios from '../../api/apiClient';
-import api from '../../api/apiClient'; 
 
-import * as cardApi from '../../api/cardApi'; // ✅ Fixed import
-
-// Import new components
-import Comment from './Comment/Comment';
-import CommentInput from './Comment/CommentInput';
+import * as cardApi from '../../api/cardApi'; 
 
 import AttachmentPopup from '../Attachment/AttachmentPopup';
-import AttachmentItem from '../Attachment/AttachmentItem';
-
-
 import AddToCardMenu from './AddToCardMenu';
-
 import CardDescription from './sections/CardDescription';
 import CardAttachments from './sections/CardAttachments';
 import CardChecklists from './sections/CardChecklists';
 import CardComments from './sections/CardComments';
-
 import CardMetaBar from './sections/CardMetaBar';
 
 import { getCardComments, updateCardDescription } from '../../api/cardApi';
@@ -83,7 +73,15 @@ export default function FullCardModal({
 
   const ActivityList = lazy(() => import('./activity/ActivityList'));
 
-  const fetchAttachments = async () => {
+  const setCardAndBubble = useCallback((updater) => {
+    setLocalCard(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      onCardUpdate?.(next);
+      return next;
+    });
+  },[onCardUpdate]);
+  
+  const fetchAttachments = useCallback(async () => {
     try {
       const res = await cardApi.getCardAttachments(card.id);
       setAttachments(res);
@@ -94,7 +92,7 @@ export default function FullCardModal({
     } catch (err) {
       console.error('Failed to load attachments:', err);
     }
-  };
+  }, [card.id, setCardAndBubble]);
 
   const [localCard, setLocalCard] = useState({
     ...card,
@@ -106,24 +104,14 @@ export default function FullCardModal({
     setLocalCard(prev => ({ ...prev, ...card, checklists: card.checklists || prev.checklists || [] }));
   }, [card]);
 
-  // ✅ Load attachments when modal opens
   useEffect(() => {
-    if (card?.id) {
-      fetchAttachments();
-    }
-  }, [card?.id]);
+    if (card?.id) fetchAttachments();
+  }, [card?.id, fetchAttachments]);
 
-  const setCardAndBubble = (updater) => {
-    setLocalCard(prev => {
-      const next = typeof updater === 'function' ? updater(prev) : updater;
-      onCardUpdate?.(next);
-      return next;
-    });
-  };
 
   // Nếu card ban đầu chưa có checklists, load 1 lần
   useEffect(() => {
-    if (!card.checklists || card.checklists.length === 0) {
+   if (!card.checklists || card.checklists.length === 0) {
       (async () => {
         try {
           const data = await getCardChecklists(card.id);
@@ -133,7 +121,7 @@ export default function FullCardModal({
         }
       })();
     }
-  }, [card.id]);
+  }, [card.id, card.checklists, setCardAndBubble]);
 
   // Tạo checklist từ popup
   const handleCreateChecklist = async ({ title }) => {
@@ -273,14 +261,8 @@ export default function FullCardModal({
       setLocalCard(backup); onCardUpdate?.(backup);
     }
   };
-  // Load comments khi modal mở
-  useEffect(() => {
-    if (card?.id) {
-      loadComments();
-    }
-  }, [card?.id]);
 
-  const loadComments = async () => {
+  const loadComments = useCallback(async () => {
     setLoadingComments(true);
     try {
       const commentsData = await getCardComments(card.id);
@@ -291,7 +273,12 @@ export default function FullCardModal({
     } finally {
       setLoadingComments(false);
     }
-  };
+  }, [card.id]);
+
+  // Load comments khi modal mở
+  useEffect(() => {
+    if (card?.id) loadComments();
+  }, [card?.id, loadComments]);
 
   const handleReply = (parentId, author) => {
     setReplyingTo({ id: parentId, author });
@@ -347,6 +334,7 @@ export default function FullCardModal({
     );
     return map;
   }, [comments]);
+
   const handleToggleComplete = async () => {
     const updated = !isComplete;
     setIsComplete(updated);
@@ -450,7 +438,6 @@ export default function FullCardModal({
     }
   };
 
-
   const handleRemoveCover = async (id) => {
     try {
       await cardApi.updateAttachment(id, { is_cover: false });
@@ -471,7 +458,6 @@ export default function FullCardModal({
       toast.error('Failed to remove cover');
     }
   };
-
 
   const handleDeleteAttachment = async (id) => {
     try {
@@ -507,13 +493,6 @@ export default function FullCardModal({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [handleClickOutside]);
-
-  // Mock current user nếu chưa có
-  const mockCurrentUser = currentUser || {
-    id: 1,
-    name: 'You',
-    avatar: null
-  };
 
   return (
   <Overlay ref={overlayRef}>
