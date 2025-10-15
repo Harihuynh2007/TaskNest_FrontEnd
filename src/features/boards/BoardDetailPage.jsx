@@ -8,7 +8,7 @@ import BoardPane from './panel/BoardPanel/BoardPane';
 
 import dayjs from 'dayjs';
 import BottomFloatingNav from './BottomFloatingNav';
-import FullCardModal from '../../components/Card/FullCardModal.jsx';
+import FullCardModal from '../../components/Card/FullCardModal/FullCardModal.jsx';
 import ConfirmationModal from '../../components/Card/common/ConfirmationModal.jsx';
 
 import { useNavigate } from 'react-router-dom';
