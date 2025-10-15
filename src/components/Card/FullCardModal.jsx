@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback,useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback,useMemo,  lazy, Suspense } from 'react';
 import styled from 'styled-components';
 import { BiLabel } from 'react-icons/bi';
 import { BsClock } from 'react-icons/bs';
@@ -28,6 +28,7 @@ import CardDescription from './sections/CardDescription';
 import CardAttachments from './sections/CardAttachments';
 import CardChecklists from './sections/CardChecklists';
 import CardComments from './sections/CardComments';
+import CardActivity from './sections/CardActivity';
 
 import { getCardComments, updateCardDescription } from '../../api/cardApi';
 import {
@@ -79,6 +80,8 @@ export default function FullCardModal({
   const [activityRefreshTick, setActivityRefreshTick] = useState(0);
 
   const [showDetails, setShowDetails] = useState(false);
+
+  const ActivityList = lazy(() => import('./activity/ActivityList'));
 
   const fetchAttachments = async () => {
     try {
@@ -649,7 +652,9 @@ export default function FullCardModal({
               </ActivityHeader>
               
               {showDetails && (
-                <ActivityList cardId={card.id} refreshKey={activityRefreshTick} />
+                <Suspense fallback={<div style={{color:'#6b778c', fontStyle:'italic'}}>Loading activity…</div>}>
+                  <ActivityList cardId={card.id} />
+                </Suspense>
               )}
             </Section>
         </Sidebar>
