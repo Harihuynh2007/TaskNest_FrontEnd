@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
-import CardItem from './Card/CardItem';
+import CardItem from './Card/sections/CardItem';
 import { Dropdown } from 'react-bootstrap';
 import { BsThreeDots } from 'react-icons/bs';
 

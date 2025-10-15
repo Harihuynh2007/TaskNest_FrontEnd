@@ -5,7 +5,7 @@ import { Droppable, Draggable } from '@hello-pangea/dnd';
 import InboxSubHeader from '../../../../components/InboxSubHeader';
 import CardEditPopup from '../../../../components/Card/CardEditPopup';
 import FullCardModal from '../../../../components/Card/FullCardModal';
-import CardItem from '../../../../components/Card/CardItem';
+import CardItem from '../../../../components/Card/sections/CardItem';
 import FeedbackPopup from '../../../../components/FeedbackPopup';
 import InboxFilterPopup from '../../../../components/filter/InboxFilterPopup';
 import useTrelloFilter from '../../../../components/hook/useTrelloFilter';
