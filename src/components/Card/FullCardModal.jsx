@@ -27,6 +27,7 @@ import AddToCardMenu from './AddToCardMenu';
 import CardDescription from './sections/CardDescription';
 import CardAttachments from './sections/CardAttachments';
 import CardChecklists from './sections/CardChecklists';
+import CardComments from './sections/CardComments';
 
 import { getCardComments, updateCardDescription } from '../../api/cardApi';
 import {
@@ -624,60 +625,21 @@ export default function FullCardModal({
         </MainColumn>
 
         <Sidebar>
-          <Section>
-            <SectionLabel>Add a comment</SectionLabel>
-            <CommentInput
-              cardId={card.id}
-              currentUser={currentUser}
-              // optimistic flow
-              onCommentAdded={handleCommentAdded}
-              onCommentReplaced={handleCommentReplaced}
-              onCommentRemove={handleCommentRemove}
-              // reply state
-              parentId={replyingTo?.id || null}
-              replyingTo={replyingTo}
-              onCancelReply={() => setReplyingTo(null)}
-              // placeholder tuỳ biến khi đang reply
-              placeholder={
-                replyingTo
-                  ? `Trả lời @${replyingTo.author?.name || replyingTo.author?.username || 'user'}...`
-                  : 'Write a comment...'
-              }
-            />
-            
-            
-            {loadingComments ? (
-              <LoadingText>Loading comments...</LoadingText>
-            ) : (
-              <CommentList>
-                {roots.map((root) => (
-                  <div key={root.id ?? root.temp_id}>
-                    <Comment
-                      comment={root}
-                      currentUserId={currentUser?.id}
-                      onUpdate={handleCommentUpdated}
-                      onDelete={handleCommentDeleted}
-                      // nút Reply ngay dưới comment gốc
-                      onReply={handleReply}
-                    />
-                    {(childrenMap[root.id] || []).map((rep) => (
-                      <ReplyRow key={rep.id ?? rep.temp_id}>
-                        <Comment
-                          comment={rep}
-                          currentUserId={currentUser?.id}
-                          onUpdate={handleCommentUpdated}
-                          onDelete={handleCommentDeleted}
-                          // cho phép reply vào gốc (một cấp): gọi onReply(root.id, author)
-                          onReply={(parentId, author) => 
-                            setReplyingTo({ id: parentId, author })}
-                        />
-                      </ReplyRow>
-                    ))}
-                  </div>
-                ))}
-              </CommentList>
-            )}
-          </Section>
+          <CardComments
+            cardId={card.id}
+            currentUser={currentUser}
+            comments={comments}
+            loading={loadingComments}
+            replyingTo={replyingTo}
+            onReply={handleReply}
+            onCancelReply={() => setReplyingTo(null)}
+            onCommentAdded={handleCommentAdded}
+            onCommentReplaced={handleCommentReplaced}
+            onCommentRemove={handleCommentRemove}
+            onCommentUpdated={handleCommentUpdated}
+            onCommentDeleted={handleCommentDeleted}
+          />
+
            <Section>
               <ActivityHeader>
                 <SectionLabel>Activity</SectionLabel>
