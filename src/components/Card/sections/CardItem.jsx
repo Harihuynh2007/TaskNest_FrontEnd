@@ -18,7 +18,7 @@ export default function CardItem({
   // ❌ Nếu không kéo → giữ nguyên chiều rộng (auto fit theo list/inbox layout)
   const cardStyle = useMemo(() => ({
     width: isDragging ? '240px' : '100%'
-  }), [isDragging]); // ✅ Chỉ tính lại khi isDragging thay đổi
+  }), [isDragging]); 
 
   return (
     <CardWrapper
