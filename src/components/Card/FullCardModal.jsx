@@ -20,7 +20,6 @@ import CommentInput from './Comment/CommentInput';
 import AttachmentPopup from '../Attachment/AttachmentPopup';
 import AttachmentItem from '../Attachment/AttachmentItem';
 
-import ActivityList from './activity/ActivityList';
 
 import AddToCardMenu from './AddToCardMenu';
 
@@ -28,7 +27,7 @@ import CardDescription from './sections/CardDescription';
 import CardAttachments from './sections/CardAttachments';
 import CardChecklists from './sections/CardChecklists';
 import CardComments from './sections/CardComments';
-import CardActivity from './sections/CardActivity';
+
 import CardMetaBar from './sections/CardMetaBar';
 
 import { getCardComments, updateCardDescription } from '../../api/cardApi';
@@ -698,6 +697,14 @@ export default function FullCardModal({
         onSelect={async (type) => {
           setShowAddMenu(false);
           switch (type) {
+            case 'labels': {
+            toast('Labels coming soon');
+            break;
+          }
+          case 'dates': {
+            toast('Dates coming soon');
+            break;
+          }
             case 'checklist': {
               setChecklistAnchor(addMenuAnchor);
               setShowChecklistPopup(true);
