@@ -29,6 +29,7 @@ import CardAttachments from './sections/CardAttachments';
 import CardChecklists from './sections/CardChecklists';
 import CardComments from './sections/CardComments';
 import CardActivity from './sections/CardActivity';
+import CardMetaBar from './sections/CardMetaBar';
 
 import { getCardComments, updateCardDescription } from '../../api/cardApi';
 import {
@@ -536,6 +537,15 @@ export default function FullCardModal({
           </CloseBtn>
         </HeaderRight>
       </HeaderBar>
+      
+      <CardMetaBar
+        labels={localCard?.labels || []}
+        dueDate={localCard?.due_date || null}
+        members={localCard?.members || []}
+        onClickLabels={undefined}   // để null/undefined: render-only
+        onClickDueDate={undefined}
+        onClickMembers={undefined}
+      />
 
       <ContentBody>
         <MainColumn>
