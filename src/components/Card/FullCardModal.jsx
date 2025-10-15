@@ -25,6 +25,7 @@ import ActivityList from './activity/ActivityList';
 import AddToCardMenu from './AddToCardMenu';
 
 import CardDescription from './sections/CardDescription';
+import CardAttachments from './sections/CardAttachments';
 
 import { getCardComments, updateCardDescription } from '../../api/cardApi';
 import {
@@ -602,25 +603,13 @@ export default function FullCardModal({
             onStartEdit={() => setIsEditingDesc(true)}
           />
 
-          {localCard.attachments?.length > 0 && (
-            <Section>
-              <SectionHeader>
-                <span>📎 Attachments</span>
-                <AddButton onClick={handleOpenAttachmentPopup}>Add</AddButton>
-              </SectionHeader>
-              <div>
-                {attachments.map((att) => (
-                  <AttachmentItem
-                    key={att.id}
-                    attachment={att}
-                    onSetCover={() => handleSetCover(att.id)}
-                    onRemoveCover={() => handleRemoveCover(att.id)}
-                    onDelete={() => handleDeleteAttachment(att.id)}
-                  />
-                ))}
-              </div>
-            </Section>
-          )}
+          <CardAttachments
+            attachments={attachments}
+            onAddClick={handleOpenAttachmentPopup}
+            onSetCover={handleSetCover}
+            onRemoveCover={handleRemoveCover}
+            onDelete={handleDeleteAttachment}
+          />
 
           {(localCard.checklists || []).map(cl => (
             <ChecklistSection
