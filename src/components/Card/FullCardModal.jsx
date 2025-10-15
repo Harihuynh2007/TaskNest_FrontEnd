@@ -26,6 +26,7 @@ import AddToCardMenu from './AddToCardMenu';
 
 import CardDescription from './sections/CardDescription';
 import CardAttachments from './sections/CardAttachments';
+import CardChecklists from './sections/CardChecklists';
 
 import { getCardComments, updateCardDescription } from '../../api/cardApi';
 import {
@@ -611,17 +612,14 @@ export default function FullCardModal({
             onDelete={handleDeleteAttachment}
           />
 
-          {(localCard.checklists || []).map(cl => (
-            <ChecklistSection
-              key={cl.id}
-              checklist={cl}
-              onChangeTitle={handleChecklistTitle}
-              onAddItem={handleAddItem}
-              onToggleItem={handleToggleItem}
-              onDeleteItem={handleDeleteItem}
-              onDeleteChecklist={handleDeleteChecklist}
-            />
-          ))}
+          <CardChecklists
+            checklists={localCard.checklists || []}
+            onChangeTitle={handleChecklistTitle}
+            onAddItem={handleAddItem}
+            onToggleItem={handleToggleItem}
+            onDeleteItem={handleDeleteItem}
+            onDeleteChecklist={handleDeleteChecklist}
+          />
 
         </MainColumn>
 
