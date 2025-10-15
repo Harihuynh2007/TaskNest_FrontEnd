@@ -24,6 +24,8 @@ import ActivityList from './activity/ActivityList';
 
 import AddToCardMenu from './AddToCardMenu';
 
+import CardDescription from './sections/CardDescription';
+
 import { getCardComments, updateCardDescription } from '../../api/cardApi';
 import {
   getCardChecklists,
@@ -589,45 +591,16 @@ export default function FullCardModal({
             </ActionSectionBody>
           </ActionSectionGrid>
 
-          <DescriptionSection>
-            <DescriptionIconWrapper>
-              <HiOutlineMenuAlt2 size={20} />
-            </DescriptionIconWrapper>
-            <DescriptionContent>
-              <SectionHeading>Description</SectionHeading>
-              {isEditingDesc ? (
-                <EditorBox>
-                  <Textarea
-                    value={tempDesc}
-                    onChange={(e) => setTempDesc(e.target.value)}
-                    placeholder="Add a more detailed description..."
-                    disabled={saveState.saving}
-                  />
-                  <ButtonRow>
-                    <SaveBtn 
-                      onClick={handleSaveDescription}
-                      disabled={saveState.saving}
-                    >
-                      {saveState.saving ? 'Saving...' : 'Save'}
-                    </SaveBtn>
-                    <CancelBtn 
-                      onClick={handleCancelDescription}
-                      disabled={saveState.saving}
-                    >
-                      Cancel
-                    </CancelBtn>
-                  </ButtonRow>
-                </EditorBox>
-              ) : (
-                <PreviewBox onClick={() => setIsEditingDesc(true)}>
-                  {description ? 
-                    <DescriptionText>{description}</DescriptionText> : 
-                    <PlaceholderText>Add a more detailed description...</PlaceholderText>
-                  }
-                </PreviewBox>
-              )}
-            </DescriptionContent>
-          </DescriptionSection>
+          <CardDescription
+            description={description}
+            isEditing={isEditingDesc}
+            tempDesc={tempDesc}
+            onTempChange={setTempDesc}
+            onSave={handleSaveDescription}
+            onCancel={handleCancelDescription}
+            saving={saveState.saving}
+            onStartEdit={() => setIsEditingDesc(true)}
+          />
 
           {localCard.attachments?.length > 0 && (
             <Section>
