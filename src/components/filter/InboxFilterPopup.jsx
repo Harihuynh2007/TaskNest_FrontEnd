@@ -35,24 +35,24 @@ export default function InboxFilterPopup({
   onClose,
   position,
   setKeyword,
-  toggleArrayItem,          // for 'created'
+  toggleArrayItem,          
   toggleStatusCheckbox,
   toggleDueWithConstraint,
   setDueRangeSingle
 }) {
-  // ===== Logic improvements (không đổi API) =====
+  
   const wrapperRef = useRef(null);
   const inputRef = useRef(null);
   const previouslyFocused = useRef(null);
 
-  // Debounce keyword → không spam setKeyword
+  
   const [debouncedKeyword, setDebouncedKeyword] = useState(filter.keyword || '');
   useEffect(() => {
     const timer = setTimeout(() => setKeyword(debouncedKeyword), 300);
     return () => clearTimeout(timer);
   }, [debouncedKeyword, setKeyword]);
 
-  // ESC để đóng + trap focus + restore focus
+  
   useEffect(() => {
     previouslyFocused.current = document.activeElement;
     inputRef.current?.focus({ preventScroll: true });
