@@ -1,317 +1,260 @@
-import React, { useEffect, useRef, useState,useCallback  } from 'react';
-import styled from 'styled-components';
-import { BiLabel } from 'react-icons/bi';
-import { HiOutlineUserAdd } from 'react-icons/hi';
-import { BsCardText, BsClock, BsArrowsMove, BsFiles, BsLink45Deg, BsArchive, BsTextLeft  } from 'react-icons/bs';
-import LabelPopup from '../../components/Label/LabelPopup';
-import ConfirmationModal from './common/ConfirmationModal';
-import Portal from './common/Portal';
-import { toast } from 'react-hot-toast';
+import React, { useEffect, useMemo, useRef, useCallback } from "react";
+import styled from "styled-components";
+import { FiEdit3, FiTrash2, FiUsers, FiClock, FiMaximize2 } from "react-icons/fi";
+import { BiLabel } from "react-icons/bi";
+import { MdChecklist } from "react-icons/md";
+import { FiPaperclip } from "react-icons/fi";
 
-import { fetchBoardLabels } from '../../api/boardApi';
-import { deleteCard } from '../../api/cardApi';
-import { updateCardDescription } from '../../api/cardApi';
-
-
+/**
+ * CardEditPopup
+ *
+ * Props (giữ tương thích, có thể bớt/đổi theo dự án của bạn):
+ * - card: object (bắt buộc)
+ * - anchorRect: DOMRect của nút mở popup (bắt buộc)
+ * - onClose: () => void (bắt buộc)
+ * - onOpenFullCard: (card) => void
+ * - onDelete: (card) => Promise|void
+ * - onRename: (card) => void   // nếu bạn có flow rename nhanh
+ *
+ * - onEditMembers?: (card) => void
+ * - onEditDueDate?: (card) => void
+ * - onEditLabels?: (card) => void
+ * - onAddChecklist?: (card) => void
+ * - onAddAttachment?: (card) => void
+ *
+ * Lưu ý:
+ * - Không đổi pixel layout tổng của container xung quanh (đặt tuyệt đối theo anchorRect).
+ * - Nếu thiếu callback, tự fallback toast: window.toast?.info('Tính năng sắp có')
+ */
 export default function CardEditPopup({
-  anchorRect,
-  cardText,
-  onClose,
-  onChange,
-  onSave,
-  onOpenFullCard,
   card,
-  listId,
-  boardId,
-  updateCardLabels,
-  onCardDeleted,
-  isInboxMode = false,
-  onCardUpdate,
+  anchorRect,
+  onClose,
+  onOpenFullCard,
+  onDelete,
+  onRename,
+  onSelect,
+  onEditMembers,
+  onEditDueDate,
+  onEditLabels,
+  onAddChecklist,
+  onAddAttachment,
 }) {
-  const labelButtonRef = useRef();
-  const popupRef = useRef();
-  const textareaRef = useRef();
-  const [text, setText] = useState(cardText);
-  const [showLabelPopup, setShowLabelPopup] = useState(false);
-  const [labels, setLabels] = useState([]);
-  const [loadingLabels, setLoadingLabels] = useState(false);
-  const [labelError, setLabelError] = useState(null);
-  const [labelAnchorRect, setLabelAnchorRect] = useState(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [saveState, setSaveState] = useState({ saving: false, error: null });
-  
+  const popupRef = useRef(null);
+  const itemRefs = useRef([]);
 
+  const items = useMemo(
+    () => [
+      { key: "open", icon: <FiMaximize2 />, label: "Open card", sub: "View full details" },
+      { key: "rename", icon: <FiEdit3 />, label: "Rename", sub: "Quick edit title" },
+      { key: "labels", icon: <BiLabel />, label: "Labels", sub: "Organize & prioritize" },
+      { key: "checklist", icon: <MdChecklist />, label: "Checklist", sub: "Add subtasks" },
+      { key: "attachment", icon: <FiPaperclip />, label: "Attachment", sub: "Attach links & files" },
+      { key: "members", icon: <FiUsers />, label: "Members", sub: "Assign members" },
+      { key: "dates", icon: <FiClock />, label: "Dates", sub: "Start/due & reminders" },
+      { key: "delete", icon: <FiTrash2 />, label: "Delete", sub: "Move card to trash", danger: true },
+    ],
+    []
+  );
+
+  // Tính vị trí và clamp viewport (không đổi pixel container cha)
+  const positionStyle = useMemo(() => {
+    const GAP = 8;
+    const width = 280;
+    let top = anchorRect?.bottom + window.scrollY + GAP;
+    let left = (anchorRect?.left ?? 0);
+
+    const maxLeft = window.innerWidth - width - GAP;
+    if (left > maxLeft) left = Math.max(GAP, maxLeft);
+
+    const approxHeight = 360;
+    const fitsBelow = top + approxHeight < window.scrollY + window.innerHeight;
+    if (!fitsBelow) {
+      top = (anchorRect?.top ?? 0) + window.scrollY - approxHeight - GAP;
+      if (top < window.scrollY + GAP) top = window.scrollY + GAP;
+    }
+    return { top, left, width };
+  }, [anchorRect]);
+
+  // Click outside để đóng
   useEffect(() => {
-    if (showLabelPopup && labelButtonRef.current) {
-      requestAnimationFrame(() => {
-        const rect = labelButtonRef.current.getBoundingClientRect();
-        setLabelAnchorRect(rect);
-      });
+    const onDown = (e) => {
+      if (popupRef.current && !popupRef.current.contains(e.target)) onClose?.();
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [onClose]);
+
+  // Không auto-focus item đầu → tránh auto highlight; chỉ highlight khi :hover hoặc :focus-visible
+  const callOrToast = useCallback((fn) => {
+    if (typeof fn === "function") return fn(card);
+    if (window?.toast?.info) window.toast.info("Tính năng sắp có");
+  }, [card]);
+
+  const handleSelect = useCallback(async (key) => {
+    if (typeof onSelect === "function") {
+      onSelect(key, card);
+      onClose?.();
+      return;
     }
-  }, [showLabelPopup]);
-
-  useEffect(() => {
-    // Chỉ fetch labels nếu có boardId
-    if (boardId) {
-      const loadLabels = async () => {
-        setLoadingLabels(true);
-        try {
-          // ✅ Gọi API với boardId
-          const res = await fetchBoardLabels(boardId);
-          setLabels(res.data || []);
-        } catch (err) {
-          console.error('❌ Failed to fetch labels:', err);
-          setLabelError('Failed to load labels');
-        } finally {
-          setLoadingLabels(false);
-        }
-      };
-      loadLabels();
+    switch (key) {
+      case "open":
+        onOpenFullCard?.(card);
+        break;
+      case "rename":
+        callOrToast(onRename);
+        break;
+      case "labels":
+        callOrToast(onEditLabels);
+        break;
+      case "checklist":
+        callOrToast(onAddChecklist);
+        break;
+      case "attachment":
+        callOrToast(onAddAttachment);
+        break;
+      case "members":
+        callOrToast(onEditMembers);
+        break;
+      case "dates":
+        callOrToast(onEditDueDate);
+        break;
+      case "delete":
+        if (typeof onDelete === "function") await onDelete(card);
+        break;
+      default:
+        break;
     }
-  }, [boardId]); 
+    onClose?.();
+  }, [card, onSelect, onOpenFullCard, onRename, onEditLabels, onAddChecklist, onAddAttachment, onEditMembers, onEditDueDate, onDelete, onClose, callOrToast]);
 
-  useEffect(() => {
-    function handleClickOutside(e) {
-      if (showDeleteConfirm) {
-        return;
-      }
-
-      if (popupRef.current && !popupRef.current.contains(e.target)) {
-        onClose();
-      }
+  // Keyboard trên toàn menu: ESC đóng, ↑/↓ di chuyển focus (focus item đầu nếu chưa focus)
+  const onKeyDownMenu = useCallback((e) => {
+    const idx = itemRefs.current.findIndex((el) => el === document.activeElement);
+    if (e.key === "Escape") {
+      e.preventDefault();
+      onClose?.();
+      return;
     }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [onClose,showDeleteConfirm]);
-
-  useEffect(() => {
-    textareaRef.current?.focus();
-  }, []);
-
-  const handleSave = () => {
-    onSave();
-    if (updateCardLabels) {
-      updateCardLabels(card.id, card.labels || []);
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const next = idx === -1 ? 0 : (idx + 1) % items.length;
+      itemRefs.current[next]?.focus?.();
+      return;
     }
-    onClose();
-  };
-
-  const handleDeleteCard = async () => {
-    setShowDeleteConfirm(false); 
-
-    try {
-      await deleteCard(card.id);
-      toast.success('Card deleted successfully');
-      if (onCardDeleted) {
-        onCardDeleted(card.id);
-      }
-      onClose();
-    } catch (err) {
-      console.error('❌ Failed to delete card:', err);
-      // Inform user of the failure
-      toast.error('Failed to delete card. Please check connection and try again.');
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const prev = idx === -1 ? items.length - 1 : (idx - 1 + items.length) % items.length;
+      itemRefs.current[prev]?.focus?.();
+      return;
     }
-  };
-
-  
-  const handleToggleLabel = useCallback((labelId) => {
-    updateCardLabels(card.id, (prevLabels) => 
-      prevLabels.includes(labelId)
-        ? prevLabels.filter(id => id !== labelId)
-        : [...prevLabels, labelId]
-    );
-  }, [card.id, updateCardLabels]);
-
-  if (!card) {
-    return null;
-  }
-
+  }, [items.length, onClose]);
 
   return (
-    <Portal>
-      <Dialog
-        ref={popupRef}
-        style={{
-          top: anchorRect.bottom + window.scrollY + 8,
-          left: Math.min(anchorRect.left + 6, window.innerWidth - 320),
-          visibility: showDeleteConfirm ? 'hidden' : 'visible',
-        }}
-      >
-        <Form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
-          <CardTextArea
-            ref={textareaRef}
-            value={text}
-            onChange={(e) => {
-              setText(e.target.value);
-              onChange(e.target.value);
+    <Wrap
+      ref={popupRef}
+      role="menu"
+      aria-label="Card quick actions"
+      style={positionStyle}
+      onKeyDown={onKeyDownMenu}
+    >
+      <Hdr>Quick actions</Hdr>
+      <List>
+        {items.map((it, i) => (
+          <Item
+            key={it.key}
+            ref={(el) => (itemRefs.current[i] = el)}
+            role="menuitem"
+            tabIndex={0}
+            data-danger={it.danger ? "true" : "false"}
+            onClick={() => handleSelect(it.key)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleSelect(it.key);
+              }
             }}
-            placeholder="Enter card title"
-          />
-          <SaveButton type="submit">Save</SaveButton>
-        </Form>
-
-        <MenuList>
-          <MenuItem onClick={() => { onClose(); onOpenFullCard(); }}>
-            <BsCardText />
-            <span>Open card</span>
-          </MenuItem>
-
-          {!isInboxMode && (
-            <>
-              <MenuItem
-                ref={labelButtonRef}
-                onClick={() => {
-                  setShowLabelPopup(true);
-                }}
-              >
-                <BiLabel />
-                <span>Edit labels</span>
-              </MenuItem>
-
-              <MenuItem onClick={() => alert('Change members')}>
-                <HiOutlineUserAdd />
-                <span>Change members</span>
-              </MenuItem>
-            </>
-          )}
-
-          <MenuItem onClick={() => alert('Edit dates')}>
-            <BsClock />
-            <span>Edit dates</span>
-          </MenuItem>
-          <MenuItem onClick={() => alert('Move')}>
-            <BsArrowsMove />
-            <span>Move</span>
-          </MenuItem>
-          <MenuItem onClick={() => alert('Copy')}>
-            <BsFiles />
-            <span>Copy card</span>
-          </MenuItem>
-          <MenuItem onClick={() => alert('Copy link')}>
-            <BsLink45Deg />
-            <span>Copy link</span>
-          </MenuItem>
-          <MenuItem onClick={() => alert('Archive')}>
-            <BsArchive />
-            <span>Archive</span>
-          </MenuItem>
-          <MenuItemDelete onClick={() => setShowDeleteConfirm(true)}>
-            <BsArchive />
-            <span>Delete Card</span>
-          </MenuItemDelete>
-          
-        </MenuList>
-      </Dialog>
-
-      {showLabelPopup && (
-        <LabelPopup
-          anchorRect={labelAnchorRect}
-          labels={labels}
-          selectedLabelIds={card.labels || []}
-          onToggleLabel={handleToggleLabel}
-          onEditLabel={(label) => alert(`Edit label ${label.name}`)}
-          onClose={() => {
-            setShowLabelPopup(false);
-            setLabelAnchorRect(null);
-          }}
-          boardId={boardId}
-          loadingLabels={loadingLabels}
-          labelError={labelError}
-        />
-      )}
-
-
-      {/* ✅ BƯỚC 3.6: RENDER MODAL XÁC NHẬN */}
-      <ConfirmationModal
-        show={showDeleteConfirm}
-        onClose={() => setShowDeleteConfirm(false)}
-        onConfirm={handleDeleteCard}
-        title="Delete Card?"
-        body={`Are you sure you want to permanently delete the card "${card.name}"? This action cannot be undone.`}
-        confirmText="Delete Card"
-        confirmVariant="danger"
-      />
-    </Portal>
+            title={it.label}
+          >
+            <IconWrap>{it.icon}</IconWrap>
+            <Txt>
+              <b>{it.label}</b>
+              <small>{it.sub}</small>
+            </Txt>
+          </Item>
+        ))}
+      </List>
+    </Wrap>
   );
 }
 
-const Dialog = styled.div`
+/* ================= Styled ================= */
+
+const Wrap = styled.div`
   position: absolute;
-  width: 320px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 12px 24px rgba(0,0,0,0.2);
-  padding: 12px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
   z-index: 2000;
+  padding: 8px 0;
+  backdrop-filter: saturate(120%) blur(6px);
 `;
 
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
-`;
-
-const CardTextArea = styled.textarea`
-  width: 100%;
-  font-size: 14px;
-  padding: 8px;
-  border: 1px solid #dfe1e6;
-  border-radius: 4px;
-  resize: none;
-  outline: none;
-`;
-
-const SaveButton = styled.button`
-  align-self: flex-start;
-  background: #0c66e4;
-  color: white;
+const Hdr = styled.div`
   font-weight: 600;
   font-size: 14px;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.2s ease;
+  color: #0f172a;
+  padding: 10px 16px;
+  border-bottom: 1px solid #e2e8f0;
 `;
 
-const MenuList = styled.ul`
-  list-style: none;
-  margin: 0;
-  padding: 0;
-`;
-
-const MenuItem = styled.li`
+const List = styled.div`
   display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  color: #172b4d;
-  background-color: #f1f2f4;
-  margin-bottom: 4px;
+  flex-direction: column;
+  padding: 4px 0;
+`;
 
-  &:hover {
-    background-color: #e9f2ff;
+const Item = styled.button`
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: #0f172a;
+  border-radius: 10px;
+  margin: 2px 8px;
+
+  &[data-danger="true"] {
+    color: #b42318;
   }
 
+  &:hover, &:focus-visible {
+    outline: none;
+    background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+    color: #fff;
+  }
+`;
+
+const IconWrap = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
   svg {
     width: 18px;
     height: 18px;
-    flex-shrink: 0;
+    color: currentColor;
+    opacity: 0.9;
   }
 `;
 
-const MenuItemDelete = styled(MenuItem)`
-  color: #c9372c; // Màu đỏ
-  
-  &:hover {
-    background-color: #ffebe6; // Màu đỏ nhạt khi hover
-    color: #ae2a19;
-  }
+const Txt = styled.div`
+  display: flex;
+  flex-direction: column;
+  b { font-size: 14px; font-weight: 600; line-height: 1.15; }
+  small { font-size: 12px; color: currentColor; opacity: 0.8; }
 `;
-
