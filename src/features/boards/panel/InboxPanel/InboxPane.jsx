@@ -17,6 +17,7 @@ import { toast } from 'react-hot-toast';
 import useInboxThemeColor from './useInboxThemeColor';
 import InboxThemePicker from './InboxThemePicker';
 import InboxThemeButton from './InboxThemeButton';
+import InboxMenu from "./inbox-menu/InboxMenu";
 
 dayjs.extend(isoWeek);
 dayjs.extend(isSameOrBefore);
@@ -36,9 +37,15 @@ export default function InboxPane({
   toggleComplete,
   handleSaveCard,
 }) {
+  
   const [showFeedback, setShowFeedback] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
 
+  const [showMenu, setShowMenu] = useState(false);
+  const menuButtonRef = useRef(null);
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+
+  
   const {
     inboxColor,
     previewColor,
@@ -58,6 +65,21 @@ export default function InboxPane({
     resetFilter,
     setDueRangeSingle,
   } = useTrelloFilter();
+
+  const handleOpenMenu = () => {
+    if (menuButtonRef.current) {
+      const rect = menuButtonRef.current.getBoundingClientRect();
+
+      // căn chỉnh để nằm ngay dưới icon, lệch phải 1 chút
+      setMenuPos({
+        top: rect.bottom + window.scrollY + 6,
+        left: rect.left + window.scrollX - 200 + rect.width,
+      });
+
+      setShowMenu(true);
+    }
+  };
+
 
   const handleCheckClick = async (cardId, next) => {
     setCards(prev =>
@@ -139,6 +161,7 @@ export default function InboxPane({
     return matchKeyword && matchStatus && matchDue && matchCreated;
   });
 
+
   useEffect(() => {
     if (showFilter && filterButtonRef.current) {
       const rect = filterButtonRef.current.getBoundingClientRect();
@@ -149,12 +172,50 @@ export default function InboxPane({
     }
   }, [showFilter]);
 
+  useEffect(() => {
+    if (!showMenu || !menuButtonRef.current) return;
+
+    // 🔹 Hàm cập nhật vị trí popover theo icon
+    const updatePosition = () => {
+      const rect = menuButtonRef.current.getBoundingClientRect();
+      const menuWidth = 260;
+      const menuHeight = 220;
+
+      // Clamp để tránh tràn khỏi viewport
+      const top = Math.min(
+        rect.bottom + window.scrollY + 6,
+        window.scrollY + window.innerHeight - menuHeight - 10
+      );
+      const left = Math.min(
+        rect.left + window.scrollX - 200 + rect.width,
+        window.scrollX + window.innerWidth - menuWidth - 10
+      );
+
+      setMenuPos({ top, left });
+    };
+
+    // Gọi ngay khi menu mở để set vị trí lần đầu
+    updatePosition();
+
+    // Lắng nghe resize & scroll
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    // Cleanup khi menu đóng
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [showMenu, menuButtonRef]);
+
   return (
     <PaneWrapper $background={effectiveColor}>
       <InboxSubHeader
         setShowFeedback={setShowFeedback}
         setShowFilter={setShowFilter}
         filterButtonRef={filterButtonRef}
+        onOpenMenu={handleOpenMenu}
+        menuButtonRef={menuButtonRef} 
       />
       
 
@@ -305,6 +366,35 @@ export default function InboxPane({
     }}
           />
         )}
+
+
+        {showMenu && (
+          <InboxMenu
+            position={menuPos}
+            style={{ pointerEvents: showMenu ? "auto" : "none" }}
+            onClose={() => setShowMenu(false)}
+            onSelect={(key) => {
+              switch (key) {
+                case "sort":
+                  toast("Sort logic sẽ xử lý ở đây");
+                  break;
+                case "filter":
+                  setShowFilter(true);
+                  break;
+                case "ai":
+                  toast("AI Smart Assistant đang chạy...");
+                  break;
+                case "settings":
+                  toast("Mở phần Settings");
+                  break;
+                default:
+                  break;
+              }
+              setShowMenu(false);
+            }}
+          />
+        )}
+
       </InnerContent>
     </PaneWrapper>
   );
@@ -317,6 +407,7 @@ const PaneWrapper = styled.div`
   flex-direction: column;
   overflow-y: auto;
 `;
+
 
 const InnerContent = styled.div`
   width: 100%;

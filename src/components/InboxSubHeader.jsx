@@ -25,6 +25,7 @@ export default function InboxSubHeader({
   onOpenMenu,
   subtitle,
   count,
+  menuButtonRef,
 }) {
   const liveId = useId();
 
@@ -87,6 +88,7 @@ export default function InboxSubHeader({
               title="More options"
               aria-label="More options"
               data-testid="inbox-menu-button"
+              ref={menuButtonRef}
               onClick={() => onOpenMenu?.()}
             >
               <MdMoreHoriz size={22} />
