@@ -686,7 +686,7 @@ const AddListButtons = styled.div`
 `;
 
 const AddBtn = styled.button`
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
   color: white;
   padding: 8px 16px;
   font-weight: 600;
