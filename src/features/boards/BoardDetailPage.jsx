@@ -16,7 +16,7 @@ import { updateList, deleteList  } from '../../api/listApi.js';
 import { getBoard, updateBoard } from '../../api/boardApi.js';
 import { DragDropContext } from '@hello-pangea/dnd';
 
-import { fetchInboxCards, updateCard, createInboxCard } from '../../api/cardApi'; 
+import { fetchInboxCards, updateCard, createInboxCard,batchUpdateCards } from '../../api/cardApi'; 
 
 import { AuthContext } from '../../contexts/AuthContext.jsx';
 
@@ -282,7 +282,7 @@ export default function BoardDetailPage() {
 
   
   const onDragEnd = async (result) => {
-    const { source, destination, draggableId, type } = result;
+    const { source, destination, type } = result;
     if (!destination) return;
 
     let movedCard;
@@ -314,11 +314,12 @@ export default function BoardDetailPage() {
           setCards(newCards);
 
           // Cập nhật position cho tất cả thẻ trong Inbox
-          await Promise.all(
-            newCards.map((card, index) =>
-              updateCard(card.id, { position: index })
-            )
-          );
+          await batchUpdateCards(newCards.map((c, i) => ({
+            id: c.id,
+            list: null,
+            position: i
+          })));
+
         } else {
           // Reorder trong cùng một list
           const listId = parseInt(source.droppableId.replace('list-', ''));

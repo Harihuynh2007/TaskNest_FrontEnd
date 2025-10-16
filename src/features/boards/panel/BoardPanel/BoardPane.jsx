@@ -8,7 +8,8 @@ import CardEditPopup from '../../../../components/Card/CardEditPopup';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 import { createList, fetchLists, updateList, deleteList } from '../../../../api/listApi';
-import { createCardInList, fetchCardsByList, updateCard,deleteCard  } from '../../../../api/cardApi';
+import { createCardInList, fetchCardsByList, updateCard, deleteCard, batchUpdateCards } from '../../../../api/cardApi';
+
 
 import ConfirmationModal from '../../../../components/Card/common/ConfirmationModal';
 import BoardFilterPopup from '../../../../components/filter/BoardFilterPopup';
