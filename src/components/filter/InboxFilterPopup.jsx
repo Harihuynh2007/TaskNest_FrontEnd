@@ -1,6 +1,7 @@
 // components/InboxFilterPopup.jsx — synced color + improved filter logic (no rename)
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
+import ReactDOM from "react-dom";
 
 // === Blue Gradient Design System ===
 const BLUE = '#3b82f6';
@@ -135,13 +136,13 @@ export default function InboxFilterPopup({
     }
   };
 
-  return (
+  return ReactDOM.createPortal (
     <Wrapper
       ref={wrapperRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="inbox-filter-title"
-      style={{ top: coords.top, left: coords.left }}
+      style={{ top: coords.top, left: coords.left, position: "fixed" }}
     >
       <Header>
         <Title id="inbox-filter-title">Filter</Title>
@@ -247,18 +248,19 @@ export default function InboxFilterPopup({
           </div>
         </CheckboxGroup>
       </Section>
-    </Wrapper>
+    </Wrapper>,
+    document.body
   );
 }
 
 /* ==================== STYLES (dark-premium synced) ==================== */
 const slideIn = keyframes`
-  from { opacity: 0; transform: translateY(8px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateX(20px) scale(0.95); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
 `;
 
 const Wrapper = styled.div`
-  position: absolute;
+  position: fixed;
   width: 340px;
   max-height: 80vh;
   background: rgba(17, 24, 39, 0.95);
@@ -270,7 +272,8 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   overflow: auto;
-  animation: ${slideIn} .24s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: ${slideIn} 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
   top: 0; left: 0;
 `;
 

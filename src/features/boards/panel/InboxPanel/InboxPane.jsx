@@ -163,14 +163,38 @@ export default function InboxPane({
 
 
   useEffect(() => {
-    if (showFilter && filterButtonRef.current) {
+    if (!showFilter || !filterButtonRef.current) return;
+
+    const updateFilterPos = () => {
       const rect = filterButtonRef.current.getBoundingClientRect();
-      setPopupPos({
-        top: rect.top + window.scrollY,
-        left: rect.left + window.scrollX - 304 - 8,
-      });
-    }
+      const popupWidth = 340; // đúng với InboxFilterPopup
+      const popupHeight = 400;
+      const margin = 6;
+
+      const top = Math.min(
+        rect.bottom + window.scrollY + margin,
+        window.scrollY + window.innerHeight - popupHeight - margin
+      );
+
+      const left = Math.min(
+        rect.left + window.scrollX - popupWidth - 12,
+        window.scrollX + window.innerWidth - popupWidth - margin
+      );
+
+      setPopupPos({ top, left });
+    };
+
+    updateFilterPos();
+
+    window.addEventListener("resize", updateFilterPos);
+    window.addEventListener("scroll", updateFilterPos, true);
+
+    return () => {
+      window.removeEventListener("resize", updateFilterPos);
+      window.removeEventListener("scroll", updateFilterPos, true);
+    };
   }, [showFilter]);
+
 
   useEffect(() => {
     if (!showMenu || !menuButtonRef.current) return;
