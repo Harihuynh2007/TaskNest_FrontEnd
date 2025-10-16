@@ -136,7 +136,9 @@ function ListColumn({
                 </Draggable>
               );
             })}
-            {provided.placeholder}
+
+            {provided.placeholder && <PlaceholderFix ref={provided.innerRef} />}
+
             
             {/* ✅ Thêm card mới */}
             {isInputActive ? (
@@ -236,9 +238,11 @@ const CardList = styled.ul`
   gap: 8px;
   min-height: 40px;
 
+  max-height: 72vh;
+
   background: ${({ $isDraggingOver }) =>
     $isDraggingOver
-      ? 'linear-gradient(135deg, rgba(59,130,246,.10), rgba(6,182,212,.10))'
+      ? 'linear-gradient(135deg, rgba(59,130,246,.18), rgba(6,182,212,.18))'
       : 'transparent'};
 
   border-radius: 10px;
@@ -356,9 +360,6 @@ const CancelButton = styled.button.attrs({ title: 'Cancel' })`
   }
 `;
 
-
-
-
 // đặt gần cuối file ListColumn.jsx, chung chỗ các styled components khác
 const Menu = styled(Dropdown.Menu)`
   min-width: 304px;
@@ -409,5 +410,13 @@ const UpsellCard = styled.div`
   border-radius: 10px; color: #CBD5E1;
   font-size: 12px; line-height: 1.45;
   a { color: #93c5fd; text-decoration: underline; }
+`;
+
+const PlaceholderFix = styled.div`
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  position: absolute !important;
+  pointer-events: none;
 `;
 

@@ -1,6 +1,6 @@
 import React, { useState,useMemo,useCallback  } from 'react';
 import styled from 'styled-components';
-
+import { motion } from 'framer-motion';
 
 export default function CardItem({
   card,
@@ -13,12 +13,44 @@ export default function CardItem({
   onCardClick = () => {},
 }) {
   const [hovered, setHovered] = useState(false);
-  
+  const [dragWidth, setDragWidth] = useState(null);
+
   // ✅ Nếu đang kéo → xác định vùng hiện tại bằng draggingOver
   // ❌ Nếu không kéo → giữ nguyên chiều rộng (auto fit theo list/inbox layout)
-  const cardStyle = useMemo(() => ({
-    width: isDragging ? '240px' : '100%'
-  }), [isDragging]); 
+  const cardStyle = useMemo(() => {
+    // Xác định vùng droppable hiện tại
+    const isOverInbox = draggingOver === 'inbox';
+    const isOverList = draggingOver?.startsWith?.('list-');
+
+    // Tính kích thước mục tiêu
+    let targetWidth = '100%';
+    if (isDragging) {
+      if (isOverInbox) targetWidth = '600px';
+      else if (isOverList) targetWidth = '260px';
+      else targetWidth = dragWidth || '100%';
+    }
+
+    return {
+      width: isDragging ? targetWidth : '100%',
+      zIndex: isDragging ? 9999 : 'auto',
+      transform: isDragging ? 'scale(1.05)' : 'none',
+      boxShadow: isDragging
+        ? '0 8px 20px rgba(59,130,246,0.4)'
+        : '0 1px 3px rgba(0,0,0,0.1)',
+      background: isDragging
+        ? 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)'
+        : '#fff',
+      color: isDragging ? '#fff' : '#172b4d',
+      border: isDragging
+        ? '1px solid rgba(255,255,255,0.25)'
+        : '1px solid transparent',
+      transition: isDragging
+        ? 'width 0.25s ease, transform 0.15s ease, box-shadow 0.15s ease'
+        : 'all 0.15s ease',
+    };
+  }, [isDragging, dragWidth, draggingOver]);
+
+
 
   return (
     <CardWrapper
@@ -27,6 +59,11 @@ export default function CardItem({
       style={cardStyle}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onMouseDown={(e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        setDragWidth(`${rect.width}px`);
+      }}
+
       onClick={() => onCardClick(card)}
       role="button"
       aria-label={`Thẻ ${card.name || card.title || 'không tiêu đề'}`}
@@ -93,17 +130,14 @@ const CardWrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
-  border: ${({ $isDragging }) =>
-    $isDragging ? '2px solid #0c66e4' : '1px solid transparent'};
-  box-shadow: ${({ $isDragging }) =>
-    $isDragging ? '0 4px 12px rgba(0,0,0,0.2)' : '0 1px 3px rgba(0,0,0,0.1)'};
   cursor: pointer;
   opacity: ${({ $isDragging }) => ($isDragging ? 0.8 : 1)};
   transform: ${({ $isDragging }) => ($isDragging ? 'scale(1.02)' : 'none')}; // Slight scale for visual feedback
   transition: box-shadow 0.2s ease, transform 0.2s ease; // Remove width from transition
 
   &:hover {
-    border: 2px solid #0c66e4;
+    border: 1px solid rgba(59,130,246,0.6);
+    box-shadow: 0 4px 12px rgba(59,130,246,0.3);
   }
 `;
 
