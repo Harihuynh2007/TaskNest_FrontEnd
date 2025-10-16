@@ -8,7 +8,7 @@ import CardEditPopup from '../../../../components/Card/CardEditPopup';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 import { createList, fetchLists, updateList, deleteList } from '../../../../api/listApi';
-import { createCardInList, fetchCardsByList, updateCard } from '../../../../api/cardApi';
+import { createCardInList, fetchCardsByList, updateCard,deleteCard  } from '../../../../api/cardApi';
 
 import ConfirmationModal from '../../../../components/Card/common/ConfirmationModal';
 import BoardFilterPopup from '../../../../components/filter/BoardFilterPopup';
@@ -328,6 +328,16 @@ export default function BoardPane({
             );
             setEditPopup(null);
           }}
+          onDelete={async (card) => {
+            try {
+              await deleteCard(card.id);  // ✅ Gọi API xóa
+              handleCardDeleted(card.id); // ✅ Cập nhật UI
+              toast.success('✅ Card deleted!');
+            } catch (err) {
+              console.error('❌ Failed to delete card:', err);
+              toast.error('Failed to delete card');
+            }
+          }}
           onClose={() => setEditPopup(null)}
           onOpenFullCard={() => {
             setEditPopup(null);
@@ -378,6 +388,7 @@ export default function BoardPane({
                       setActiveCardInput={setActiveCardInput}
                       onAddCard={handleAddCard}
                       onListDeleted={onListDeleted}
+                      onCardDeleted={handleCardDeleted} 
                       onEditClick={(e, card, index) => {
                         const rect = e.currentTarget.getBoundingClientRect();
                         setEditPopup({ anchorRect: rect, index, text: card.name, card, listId: list.id });

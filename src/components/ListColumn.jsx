@@ -19,6 +19,7 @@ function ListColumn({
   onCheckClick,
   onCardClick,
   onListDeleted,
+  onCardDeleted,
   hideEmptyCards = false,
 }) {
   const handleInputChange = (e) => {
@@ -39,14 +40,20 @@ function ListColumn({
       <Header $textColor={$textColor}>
         <HeaderTitle>{list.name}</HeaderTitle>
 
-        <Dropdown align="end" flip={false}>
+        <Dropdown align="start" flip={false}>
           <Dropdown.Toggle as={MenuButton} id={`dropdown-list-${list.id}`}>
             <BsThreeDots />
           </Dropdown.Toggle>
+
           <Menu
-            container={document.body}
-            renderOnMount
-            popperConfig={{ strategy: 'fixed' }}
+            popperConfig={{
+              strategy: 'absolute',
+              modifiers: [
+                { name: 'offset', options: { offset: [0, 8] }},
+                { name: 'preventOverflow', options: { boundary: 'viewport', padding: 8 }},
+                
+              ]
+            }}
           >
             <MenuHeader>
               List actions
@@ -122,6 +129,7 @@ function ListColumn({
                         onEditClick={(e) => onEditClick(e, card, index)}
                         onCheckClick={() => onCheckClick(card.id)}
                         onCardClick={onCardClick}
+                        onCardDeleted={onCardDeleted}
                       />
                     </li>
                   )}
