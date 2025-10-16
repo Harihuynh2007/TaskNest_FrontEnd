@@ -1,4 +1,3 @@
-// src/api/apiClient.js
 import axios from 'axios';
 import { TokenManager } from './tokenManager';
 
@@ -8,9 +7,7 @@ const api = axios.create({
   baseURL: `${API_BASE_URL}/api`,
   withCredentials: false,
   timeout: 15000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
 
 let isRefreshing = false;
@@ -18,11 +15,8 @@ let failedQueue = [];
 
 const processQueue = (error, token = null) => {
   failedQueue.forEach(({ resolve, reject }) => {
-    if (error) {
-      reject(error);
-    } else {
-      resolve(token);
-    }
+    if (error) reject(error);
+    else resolve(token);
   });
   failedQueue = [];
 };
@@ -32,22 +26,18 @@ const clearAuthAndNotify = () => {
   window.dispatchEvent(new CustomEvent('unauthorized'));
 };
 
-const storeToken = (token) => {
-  TokenManager.setTokens(token);
-  api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+const storeToken = (accessToken, refreshToken) => {
+  TokenManager.setTokens(accessToken, refreshToken);
+  api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
 };
 
 api.interceptors.request.use(
   (config) => {
     const token = TokenManager.getAccessToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
+    if (token) config.headers.Authorization = `Bearer ${token}`;
     if (process.env.NODE_ENV === 'development') {
       console.log(`🚀 [API Request] ${config.method?.toUpperCase()} ${config.url}`);
     }
-
     return config;
   },
   (error) => Promise.reject(error)
@@ -62,14 +52,13 @@ api.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
+    const status = error.response?.status;
 
     if (process.env.NODE_ENV === 'development') {
-      console.error(
-        `❌ [API Error] ${error.response?.status || 'Network'} ${error.config?.url}`
-      );
+      console.error(`❌ [API Error] ${status || 'Network'} ${error.config?.url}`);
     }
 
-    if (error.response?.status !== 401 || !TokenManager.getRefreshToken()) {
+    if (status !== 401 || !TokenManager.getRefreshToken()) {
       return Promise.reject(error);
     }
 
@@ -94,20 +83,13 @@ api.interceptors.response.use(
 
     try {
       const refreshToken = TokenManager.getRefreshToken();
-      const res = await axios.post(`${API_BASE_URL}/api/token/refresh/`, {
-        refresh: refreshToken,
-      });
+      const res = await axios.post(`${API_BASE_URL}/api/auth/token/refresh/`, { refresh: refreshToken });
+      const newAccess = res.data.access || res.data.token;
 
-      const newAccessToken = res.data.access;
-      if (!newAccessToken) {
-        throw new Error('No access token received');
-      }
-
-      storeToken(newAccessToken);
-      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-
-      processQueue(null, newAccessToken);
-
+      if (!newAccess) throw new Error('No access token received');
+      storeToken(newAccess, refreshToken);
+      originalRequest.headers.Authorization = `Bearer ${newAccess}`;
+      processQueue(null, newAccess);
       return api(originalRequest);
     } catch (refreshError) {
       processQueue(refreshError, null);
