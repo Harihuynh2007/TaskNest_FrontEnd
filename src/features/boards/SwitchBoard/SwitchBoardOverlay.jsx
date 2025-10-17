@@ -2,66 +2,85 @@ import { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import FocusLock from 'react-focus-lock';
-import { useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { FaSearch, FaTimes } from 'react-icons/fa';
-import { WorkspaceContext } from '../../../contexts';
+import { WorkspaceContext } from '../../../contexts/WorkspaceContext.jsx';
 import * as workspaceApi from '../../../api/workspaceApi';
 
 export default function SwitchBoardOverlay({ isOpen, onClose }) {
-  const { workspaces, currentWorkspaceId, setCurrentWorkspaceId } = useContext(WorkspaceContext);
+    const { boardId } = useParams();
 
-  const [boards, setBoards] = useState([]);
-  const [loadingBoards, setLoadingBoards] = useState(false);
-  const [search, setSearch] = useState('');
+    const { workspaces, currentWorkspaceId, setCurrentWorkspaceId } = useContext(WorkspaceContext);
 
-  const overlayRef = useRef(null);
-  const inputRef = useRef(null);
-  const navigate = useNavigate();
+    const [boards, setBoards] = useState([]);
+    const [loadingBoards, setLoadingBoards] = useState(false);
+    const [search, setSearch] = useState('');
+
+    const overlayRef = useRef(null);
+    const inputRef = useRef(null);
+    const navigate = useNavigate();
+
+    const [isTransitioning, setIsTransitioning] = useState(false);
 
   // ------------------ Fetch Boards ------------------
-  const fetchBoards = useCallback(async (workspaceId) => {
-    if (!workspaceId) return;
-    setLoadingBoards(true);
-    try {
-      const res = await workspaceApi.fetchBoardsInWorkspace(workspaceId);
-      setBoards(res.data || []);
-    } catch (err) {
-      console.error('❌ Fetch boards failed:', err);
-      setBoards([]);
-    } finally {
-      setLoadingBoards(false);
-    }
-  }, []);
+    const fetchBoards = useCallback(async (workspaceId) => {
+        if (!workspaceId) return;
+        setLoadingBoards(true);
+        try {
+        const res = await workspaceApi.fetchBoardsInWorkspace(workspaceId);
+        setBoards(res.data || []);
+        } catch (err) {
+        console.error('❌ Fetch boards failed:', err);
+        setBoards([]);
+        } finally {
+        setLoadingBoards(false);
+        }
+    }, []);
 
-  useEffect(() => {
-    if (isOpen && currentWorkspaceId) {
-      fetchBoards(currentWorkspaceId);
-      setTimeout(() => inputRef.current?.focus(), 150);
-    }
-  }, [isOpen, currentWorkspaceId, fetchBoards]);
+    useEffect(() => {
+        if (isOpen && currentWorkspaceId) {
+        fetchBoards(currentWorkspaceId);
+        setTimeout(() => inputRef.current?.focus(), 150);
+        }
+    }, [isOpen, currentWorkspaceId, fetchBoards]);
 
-  // ------------------ Keyboard & Close ------------------
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKey = (e) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [isOpen, onClose]);
+    // ------------------ Keyboard & Close ------------------
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleKey = (e) => e.key === 'Escape' && onClose();
+        window.addEventListener('keydown', handleKey);
+        return () => window.removeEventListener('keydown', handleKey);
+    }, [isOpen, onClose]);
 
-  const handleBackdropClick = (e) => {
-    if (e.target === overlayRef.current) onClose();
-  };
+    const handleBackdropClick = (e) => {
+        if (e.target === overlayRef.current) onClose();
+    };
 
-  // ------------------ Filter ------------------
-  const filteredBoards = boards.filter((b) =>
-    b.name.toLowerCase().includes(search.toLowerCase())
-  );
+    // ------------------ Filter ------------------
+    const filteredBoards = boards.filter((b) =>
+        b.name.toLowerCase().includes(search.toLowerCase())
+    );
 
-  // ------------------ Navigate ------------------
-  const handleBoardClick = (boardId) => {
-    onClose();
-    navigate(`/boards/${boardId}`);
-  };
+    // ------------------ Navigate ------------------
+    const handleBoardClick = async (board) => {
+        console.log('Clicked board:', board);
+
+        if (!board) return;
+
+        if (board.id === Number(boardId)) {
+            onClose();
+            return;
+        }
+
+        setIsTransitioning(true);
+        onClose();
+
+        await new Promise((r) => setTimeout(r, 150));
+        
+        navigate(`/workspaces/${board.workspace?.id || currentWorkspaceId}/boards/${board.id}`);
+    };
+
+
 
   return (
     <AnimatePresence>
@@ -119,7 +138,11 @@ export default function SwitchBoardOverlay({ isOpen, onClose }) {
                   <EmptyText>No boards found</EmptyText>
                 ) : (
                   filteredBoards.map((b) => (
-                    <BoardCard key={b.id} $bg={b.background || b.cover_url} onClick={() => handleBoardClick(b.id)}>
+                    <BoardCard 
+                    key={b.id} 
+                    $bg={b.background || b.cover_url} 
+                    onClick={() => handleBoardClick(b)}
+                    >
                       <div className="overlay" />
                       <span>{b.name}</span>
                     </BoardCard>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext  } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
 import InboxPane from './panel/InboxPanel/InboxPane.jsx';
@@ -13,7 +13,6 @@ import SwitchBoardOverlay from './SwitchBoard/SwitchBoardOverlay.jsx';
 import FullCardModal from '../../components/Card/FullCardModal/FullCardModal.jsx';
 import ConfirmationModal from '../../components/Card/common/ConfirmationModal.jsx';
 
-import { useNavigate } from 'react-router-dom';
 import { updateList, deleteList  } from '../../api/listApi.js';
 import { getBoard, updateBoard } from '../../api/boardApi.js';
 import { DragDropContext } from '@hello-pangea/dnd';
@@ -37,6 +36,7 @@ const LS_KEYS = (boardId) => ({
   auto: `board:${boardId}:autoWeekday`,
   palette: `board:${boardId}:weekPalette`
 });
+
 
 export default function BoardDetailPage() {
   const navigate = useNavigate();
