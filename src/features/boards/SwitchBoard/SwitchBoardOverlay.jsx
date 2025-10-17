@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useContext } from 'react';
+import { useState, useEffect, useRef, useCallback, useContext, useCache } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import FocusLock from 'react-focus-lock';
@@ -9,6 +9,8 @@ import * as workspaceApi from '../../../api/workspaceApi';
 
 export default function SwitchBoardOverlay({ isOpen, onClose }) {
     const { boardId } = useParams();
+
+    const boardCache = useRef({});
 
     const { workspaces, currentWorkspaceId, setCurrentWorkspaceId } = useContext(WorkspaceContext);
 
@@ -25,9 +27,17 @@ export default function SwitchBoardOverlay({ isOpen, onClose }) {
   // ------------------ Fetch Boards ------------------
     const fetchBoards = useCallback(async (workspaceId) => {
         if (!workspaceId) return;
+
+        if (useCache && boardCache.current[workspaceId]) {
+            setBoards(boardCache.current[workspaceId]);
+            return;
+        }
+
         setLoadingBoards(true);
         try {
         const res = await workspaceApi.fetchBoardsInWorkspace(workspaceId);
+        const fetchedBoards = res.data || [];
+        boardCache.current[workspaceId] = fetchedBoards;
         setBoards(res.data || []);
         } catch (err) {
         console.error('❌ Fetch boards failed:', err);
