@@ -1,96 +1,75 @@
-import { useState, useEffect, useRef, useCallback, useContext, useCache } from 'react';
+import { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import FocusLock from 'react-focus-lock';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaSearch, FaTimes } from 'react-icons/fa';
-import { WorkspaceContext } from '../../../contexts/WorkspaceContext.jsx';
+import { WorkspaceContext } from '../../../contexts/WorkspaceContext';
 import * as workspaceApi from '../../../api/workspaceApi';
 
 export default function SwitchBoardOverlay({ isOpen, onClose }) {
-    const { boardId } = useParams();
+  const { workspaces, currentWorkspaceId, setCurrentWorkspaceId } = useContext(WorkspaceContext);
+  const { boardId } = useParams();
+  const navigate = useNavigate();
+  const [boards, setBoards] = useState([]);
+  const [loadingBoards, setLoadingBoards] = useState(false);
+  const [search, setSearch] = useState('');
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [viewMode, setViewMode] = useState('grid');
+  const overlayRef = useRef(null);
+  const inputRef = useRef(null);
+  const boardCache = useRef({});
 
-    const boardCache = useRef({});
+  const fetchBoards = useCallback(async (workspaceId, useCache = true) => {
+    if (!workspaceId) return;
+    if (useCache && boardCache.current[workspaceId]) {
+      setBoards(boardCache.current[workspaceId]);
+      return;
+    }
+    setLoadingBoards(true);
+    try {
+      const res = await workspaceApi.fetchBoardsInWorkspace(workspaceId);
+      const fetchedBoards = res.data || [];
+      boardCache.current[workspaceId] = fetchedBoards;
+      setBoards(fetchedBoards);
+    } catch (err) {
+      console.error('❌ Fetch boards failed:', err);
+      setBoards([]);
+    } finally {
+      setLoadingBoards(false);
+    }
+  }, []);
 
-    const { workspaces, currentWorkspaceId, setCurrentWorkspaceId } = useContext(WorkspaceContext);
+  useEffect(() => {
+    if (isOpen && currentWorkspaceId) {
+      fetchBoards(currentWorkspaceId);
+      setTimeout(() => inputRef.current?.focus(), 150);
+    }
+  }, [isOpen, currentWorkspaceId, fetchBoards]);
 
-    const [boards, setBoards] = useState([]);
-    const [loadingBoards, setLoadingBoards] = useState(false);
-    const [search, setSearch] = useState('');
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKey = (e) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [isOpen, onClose]);
 
-    const overlayRef = useRef(null);
-    const inputRef = useRef(null);
-    const navigate = useNavigate();
+  const handleBackdropClick = (e) => {
+    if (e.target === overlayRef.current) onClose();
+  };
 
-    const [isTransitioning, setIsTransitioning] = useState(false);
+  const filteredBoards = boards.filter((b) =>
+    b.name.toLowerCase().includes(search.toLowerCase())
+  );
 
-  // ------------------ Fetch Boards ------------------
-    const fetchBoards = useCallback(async (workspaceId) => {
-        if (!workspaceId) return;
-
-        if (useCache && boardCache.current[workspaceId]) {
-            setBoards(boardCache.current[workspaceId]);
-            return;
-        }
-
-        setLoadingBoards(true);
-        try {
-        const res = await workspaceApi.fetchBoardsInWorkspace(workspaceId);
-        const fetchedBoards = res.data || [];
-        boardCache.current[workspaceId] = fetchedBoards;
-        setBoards(res.data || []);
-        } catch (err) {
-        console.error('❌ Fetch boards failed:', err);
-        setBoards([]);
-        } finally {
-        setLoadingBoards(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        if (isOpen && currentWorkspaceId) {
-        fetchBoards(currentWorkspaceId);
-        setTimeout(() => inputRef.current?.focus(), 150);
-        }
-    }, [isOpen, currentWorkspaceId, fetchBoards]);
-
-    // ------------------ Keyboard & Close ------------------
-    useEffect(() => {
-        if (!isOpen) return;
-        const handleKey = (e) => e.key === 'Escape' && onClose();
-        window.addEventListener('keydown', handleKey);
-        return () => window.removeEventListener('keydown', handleKey);
-    }, [isOpen, onClose]);
-
-    const handleBackdropClick = (e) => {
-        if (e.target === overlayRef.current) onClose();
-    };
-
-    // ------------------ Filter ------------------
-    const filteredBoards = boards.filter((b) =>
-        b.name.toLowerCase().includes(search.toLowerCase())
-    );
-
-    // ------------------ Navigate ------------------
-    const handleBoardClick = async (board) => {
-        console.log('Clicked board:', board);
-
-        if (!board) return;
-
-        if (board.id === Number(boardId)) {
-            onClose();
-            return;
-        }
-
-        setIsTransitioning(true);
-        onClose();
-
-        await new Promise((r) => setTimeout(r, 150));
-        
-        navigate(`/workspaces/${board.workspace?.id || currentWorkspaceId}/boards/${board.id}`);
-    };
-
-
+  const handleBoardClick = async (board) => {
+    if (!board) return;
+    if (board.id === Number(boardId)) return onClose();
+    setIsTransitioning(true);
+    onClose();
+    await new Promise((r) => setTimeout(r, 150));
+    navigate(`/workspaces/${board.workspace?.id || board.workspace_id || currentWorkspaceId}/boards/${board.id}`);
+  };
 
   return (
     <AnimatePresence>
@@ -111,7 +90,6 @@ export default function SwitchBoardOverlay({ isOpen, onClose }) {
               exit={{ y: 30, opacity: 0 }}
               transition={{ duration: 0.25 }}
             >
-              {/* Header */}
               <Header>
                 <div className="search-bar">
                   <FaSearch className="icon" />
@@ -122,12 +100,19 @@ export default function SwitchBoardOverlay({ isOpen, onClose }) {
                     onChange={(e) => setSearch(e.target.value)}
                   />
                 </div>
+                <button
+                  className="view-toggle"
+                  onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                  aria-label={viewMode === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
+                  title={viewMode === 'grid' ? 'List view' : 'Grid view'}
+                >
+                  {viewMode === 'grid' ? '📋' : '🔳'}
+                </button>
                 <button className="close-btn" onClick={onClose}>
                   <FaTimes />
                 </button>
               </Header>
 
-              {/* Tabs */}
               <Tabs>
                 {workspaces.map((ws) => (
                   <TabButton
@@ -140,25 +125,61 @@ export default function SwitchBoardOverlay({ isOpen, onClose }) {
                 ))}
               </Tabs>
 
-              {/* Grid */}
-              <Grid>
-                {loadingBoards ? (
-                  <LoadingText>Loading boards...</LoadingText>
-                ) : filteredBoards.length === 0 ? (
-                  <EmptyText>No boards found</EmptyText>
+              <AnimatePresence mode="wait">
+                {viewMode === 'grid' ? (
+                  <motion.div
+                    key="grid"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    <Grid>
+                      {loadingBoards ? (
+                        <LoadingText>Loading boards...</LoadingText>
+                      ) : filteredBoards.length === 0 ? (
+                        <EmptyText>No boards found</EmptyText>
+                      ) : (
+                        filteredBoards.map((b) => (
+                          <BoardCard
+                            key={b.id}
+                            $bg={b.background || b.cover_url}
+                            onClick={() => handleBoardClick(b)}
+                          >
+                            <div className="overlay" />
+                            <span>{b.name}</span>
+                          </BoardCard>
+                        ))
+                      )}
+                    </Grid>
+                  </motion.div>
                 ) : (
-                  filteredBoards.map((b) => (
-                    <BoardCard 
-                    key={b.id} 
-                    $bg={b.background || b.cover_url} 
-                    onClick={() => handleBoardClick(b)}
-                    >
-                      <div className="overlay" />
-                      <span>{b.name}</span>
-                    </BoardCard>
-                  ))
+                  <motion.div
+                    key="list"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    <List>
+                      {loadingBoards ? (
+                        <LoadingText>Loading boards...</LoadingText>
+                      ) : filteredBoards.length === 0 ? (
+                        <EmptyText>No boards found</EmptyText>
+                      ) : (
+                        filteredBoards.map((b) => (
+                          <ListItem key={b.id} onClick={() => handleBoardClick(b)}>
+                            <span className="board-name">{b.name}</span>
+                            {b.workspace?.name && (
+                              <span className="workspace-name">{b.workspace.name}</span>
+                            )}
+                          </ListItem>
+                        ))
+                      )}
+                    </List>
+                  </motion.div>
                 )}
-              </Grid>
+              </AnimatePresence>
             </Panel>
           </FocusLock>
         </Backdrop>
@@ -167,7 +188,6 @@ export default function SwitchBoardOverlay({ isOpen, onClose }) {
   );
 }
 
-/* ---------------- Styled Components ---------------- */
 const Backdrop = styled.div`
   position: fixed;
   inset: 0;
@@ -214,6 +234,20 @@ const Header = styled.div`
       outline: none;
       color: #e1e3e6;
       font-size: 14px;
+    }
+  }
+
+  .view-toggle {
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    color: #8a93a2;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: color 0.2s ease, transform 0.2s ease;
+    &:hover {
+      color: #3b82f6;
+      transform: scale(1.1);
     }
   }
 
@@ -287,6 +321,36 @@ const BoardCard = styled.div`
   }
 `;
 
+const List = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const ListItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #e1e3e6;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .board-name {
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .workspace-name {
+    font-size: 13px;
+    color: #8a93a2;
+    margin-left: 8px;
+  }
+`;
+
 const LoadingText = styled.div`
   text-align: center;
   color: #8a93a2;
@@ -297,4 +361,3 @@ const LoadingText = styled.div`
 const EmptyText = styled(LoadingText)`
   color: #6b7280;
 `;
-
