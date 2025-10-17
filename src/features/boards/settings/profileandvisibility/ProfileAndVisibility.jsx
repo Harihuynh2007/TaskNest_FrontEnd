@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import styled, { css } from "styled-components";
 import axiosClient from "../../../../api/apiClient";
 import { useNavigate,useLocation } from "react-router-dom";
-
+import AvatarChangeModal from "./AvatarChangeModal";
 /** ===================== Design Tokens ===================== */
 const tokens = {
   radius: { sm: "8px", md: "12px", lg: "16px", full: "9999px" },
@@ -119,7 +119,9 @@ const Card = styled.section`
   border: 1px solid ${tokens.color.line};
   border-radius: ${tokens.radius.lg};
   box-shadow: ${tokens.shadow.md};
-  overflow: clip;
+  overflow: visible; 
+  position: relative; 
+  z-index: 1;
   backdrop-filter: saturate(130%) blur(6px);
   margin-bottom: 20px;
 `;
@@ -135,14 +137,20 @@ const CardBody = styled.div` padding: 20px; `;
 
 const Banner = styled.div`
   position: relative;
+  z-index: 1;
+  overflow: visible; 
   height: 140px;
   background: linear-gradient(135deg, ${tokens.color.accent} 0%, ${tokens.color.accentHover} 100%);
-  display: grid; place-items: center;
+  display: grid;
+  place-items: center;
   img { width: 100%; height: 100%; object-fit: cover; }
 `;
 
+
 const BannerOverlay = styled.div`
-  position: absolute; inset: 0; background: linear-gradient(180deg, #0000, #0006);
+  position: absolute; 
+  inset: 0; 
+  background: linear-gradient(180deg, #0000, #0006);
 `;
 
 const BannerAction = styled.label`
@@ -156,8 +164,20 @@ const BannerAction = styled.label`
   &:focus-visible { ${focusRing} }
 `;
 
-const BannerPlaceholder = styled.div` color: #ffffffcc; font-size: 14px; z-index: 1; `;
-const AvatarRow = styled.div` display: flex; align-items: center; gap: 16px; margin-top: -32px; `;
+const BannerPlaceholder = styled.div` 
+  color: #ffffffcc; 
+  font-size: 14px; 
+  z-index: 1; 
+`;
+
+const AvatarRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: -32px; /* nhẹ nhàng nổi lên từ banner */
+  position: relative;
+  z-index: 3; 
+`;
 
 const Avatar = styled.div`
   width: 80px; height: 80px; border-radius: ${tokens.radius.full};
@@ -238,6 +258,7 @@ const SRLive = styled.div.attrs({ role: "status", "aria-live": "polite" })`
 /** ===================== Component ===================== */
 export default function ProfileAndVisibility() {
   const navigate = useNavigate();
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
 
   const [form, setForm] = useState({
     display_name: "",
@@ -412,6 +433,7 @@ export default function ProfileAndVisibility() {
                 Đổi banner
               </BannerAction>
             </Banner>
+
             <CardBody>
               <AvatarRow>
                 <Avatar aria-label="Avatar">
@@ -422,14 +444,18 @@ export default function ProfileAndVisibility() {
                   )}
                 </Avatar>
                 <Row>
-                  <UploadBtn>
-                    <input type="file" accept="image/*" onChange={handleAvatarChange} />
-                    Đổi avatar
-                  </UploadBtn>
+                  <UploadBtn onClick={() => setShowAvatarModal(true)}>Đổi avatar</UploadBtn>
+                  {showAvatarModal && (
+                    <AvatarChangeModal
+                      onClose={() => setShowAvatarModal(false)}
+                      onUpdated={() => setSaved(true)}
+                    />
+                  )}
                   {saved && <InlineMsg $type="success">Đã lưu</InlineMsg>}
                   {error && <InlineMsg $type="error">{error}</InlineMsg>}
                 </Row>
               </AvatarRow>
+
             </CardBody>
           </Card>
 
