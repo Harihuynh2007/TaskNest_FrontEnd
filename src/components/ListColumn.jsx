@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import styled from 'styled-components';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 import CardItem from './Card/sections/CardItem';
 import { Dropdown } from 'react-bootstrap';
 import { BsThreeDots } from 'react-icons/bs';
+import { updateList } from '../api/listApi';
 
 function ListColumn({
   list,
@@ -22,15 +23,41 @@ function ListColumn({
   onCardDeleted,
   hideEmptyCards = false,
 }) {
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [newTitle, setNewTitle] = useState(list.name);
+
   const handleInputChange = (e) => {
     setCardInputs((prev) => ({ ...prev, [list.id]: e.target.value }));
   };
 
   const handleAddCard = (e) => {
-    e.preventDefault(); // ✅ ngăn reload khi submit form
-    onAddCard(list.id); // giữ nguyên logic của bạn
+    e.preventDefault();
+    onAddCard(list.id);
   };
 
+  const handleRenameSubmit = useCallback(async () => {
+    const trimmed = newTitle.trim();
+    if (!trimmed || trimmed === list.name) {
+      setIsRenaming(false);
+      setNewTitle(list.name);
+      return;
+    }
+    try {
+      await updateList(list.id, { name: trimmed });
+    } finally {
+      setIsRenaming(false);
+    }
+  }, [list.id, newTitle, list.name]);
+
+  const handleRenameKey = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleRenameSubmit();
+    } else if (e.key === 'Escape') {
+      setIsRenaming(false);
+      setNewTitle(list.name);
+    }
+  };
 
   const isInputActive = activeCardInput === list.id;
   const hasCards = Array.isArray(list.cards) && list.cards.length > 0;
@@ -38,7 +65,36 @@ function ListColumn({
   return (
     <Wrapper $background={$background}>
       <Header $textColor={$textColor}>
-        <HeaderTitle>{list.name}</HeaderTitle>
+        {isRenaming ? (
+          <input
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            onBlur={handleRenameSubmit}
+            onKeyDown={handleRenameKey}
+            autoFocus
+            className="rename-input"
+            style={{
+              flex: 1,
+              padding: '4px 8px',
+              borderRadius: '8px',
+              background: 'rgba(2,6,23,.7)',
+              border: '1px solid rgba(59,130,246,.4)',
+              color: '#E5E7EB',
+              fontSize: '16px',
+              fontWeight: '600',
+              outline: 'none',
+            }}
+          />
+        ) : (
+          <HeaderTitle
+            tabIndex={0}
+            title="Click to rename list"
+            onClick={() => setIsRenaming(true)}
+            onKeyDown={(e) => e.key === 'Enter' && setIsRenaming(true)}
+          >
+            {list.name}
+          </HeaderTitle>
+        )}
 
         <Dropdown align="start" flip={false}>
           <Dropdown.Toggle as={MenuButton} id={`dropdown-list-${list.id}`}>
@@ -51,20 +107,19 @@ function ListColumn({
               modifiers: [
                 { name: 'offset', options: { offset: [0, 8] }},
                 { name: 'preventOverflow', options: { boundary: 'viewport', padding: 8 }},
-                
               ]
             }}
           >
             <MenuHeader>
               List actions
               <CloseX onClick={(e)=> {
-                // đóng menu khi bấm X
                 const btn = document.getElementById(`dropdown-list-${list.id}`);
                 btn && btn.click();
               }}>×</CloseX>
             </MenuHeader>
 
             <MenuItem onClick={() => setActiveCardInput(list.id)}>Add card</MenuItem>
+            <MenuItem onClick={() => setIsRenaming(true)}>Rename list</MenuItem>
             <MenuItem onClick={() => {/* TODO: copy */}}>Copy list</MenuItem>
             <MenuItem onClick={() => {/* TODO: move */}}>Move list</MenuItem>
             <MenuItem onClick={() => {/* TODO: watch */}}>Watch</MenuItem>
@@ -99,22 +154,17 @@ function ListColumn({
         </Dropdown>
       </Header>
 
-      {/* ✅ Vùng thả cho các card */}
       <Droppable droppableId={`list-${list.id}`} type="CARD">
         {(provided, snapshot) => (
           <CardList
             ref={provided.innerRef}
             {...provided.droppableProps}
-            $isDraggingOver={snapshot.isDraggingOver} // dùng transient prop
+            $isDraggingOver={snapshot.isDraggingOver}
           >
             {list.cards?.map((card, index) => {
               const safeId = card?.id ?? `temp-${index}`;
               return (
-                <Draggable
-                  key={`card-${safeId}`}
-                  draggableId={`card-${safeId}`}
-                  index={index}
-                >
+                <Draggable key={`card-${safeId}`} draggableId={`card-${safeId}`} index={index}>
                   {(provided, snapshot) => (
                     <li
                       ref={provided.innerRef}
@@ -139,8 +189,6 @@ function ListColumn({
 
             {provided.placeholder && <PlaceholderFix ref={provided.innerRef} />}
 
-            
-            {/* ✅ Thêm card mới */}
             {isInputActive ? (
               <li>
                 <CardComposerForm onSubmit={handleAddCard}>
@@ -167,6 +215,7 @@ function ListColumn({
 }
 
 export default React.memo(ListColumn);
+
 
 // 💅 Styled components
 const HeaderTitle = styled.div`
