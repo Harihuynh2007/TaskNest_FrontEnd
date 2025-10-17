@@ -38,53 +38,50 @@ export default function BottomFloatingNav({ activeTabs, toggleTab, activeCount }
 }
 
 
-const NavWrapper = styled.div`
+const NavWrapper = styled.nav`
   position: fixed;
   bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  
-  background: var(--surface-2, #222834);
-  border: 1px solid var(--panel-border, #3a414f);
-  color: var(--text-primary, #e1e3e6);
-
+  background: rgba(34, 40, 52, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 999px;
-  padding: 6px 12px;
-  gap: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-  z-index: 999;
+  padding: 8px 14px;
+  gap: 10px;
+  z-index: 1001;
 `;
+
 
 const NavItem = styled.button`
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
-  padding: 6px 10px;
+  padding: 8px 12px;
   font-weight: 600;
+  font-size: 14px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  color: ${({ $isActive }) => ($isActive ? 'var(--brand-primary, #58aff6)' : 'var(--text-secondary, #8a93a2)')};
-  background: ${({ $isActive }) => ($isActive ? 'var(--surface-3, #2c3341)' : 'transparent')};
-  box-shadow: ${({ $isActive }) => ($isActive ? 'inset 0 -2px 0 var(--brand-primary, #58aff6)' : 'none')};
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
-  transition: 0.2s;
+  color: ${({ $isActive }) => ($isActive ? '#fff' : '#8a93a2')};
+  background: ${({ $isActive }) =>
+    $isActive ? 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)' : 'transparent'};
+  box-shadow: ${({ $isActive }) =>
+    $isActive ? '0 0 10px rgba(59,130,246,0.3)' : 'none'};
 
   &:hover {
-    ${({ disabled }) =>
-      disabled
-        ? `
-      background: #f1f1f1;
-      color: #a0a0a0;
-      cursor: not-allowed;
-      box-shadow: none;
-    `
-        : `
-      background: var(--surface-3, #2c3341);
+    background: ${({ $isActive }) =>
+      $isActive
+        ? 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)'
+        : 'rgba(255,255,255,0.05)'};
+  }
 
-    `
+  &:focus-visible {
+    outline: 2px solid rgba(59,130,246,0.7);
+    outline-offset: 2px;
   }
 
   span {

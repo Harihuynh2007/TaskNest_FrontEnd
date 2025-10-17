@@ -8,6 +8,8 @@ import BoardPane from './panel/BoardPanel/BoardPane';
 
 import dayjs from 'dayjs';
 import BottomFloatingNav from './BottomFloatingNav';
+import SwitchBoardOverlay from './SwitchBoard/SwitchBoardOverlay.jsx';
+
 import FullCardModal from '../../components/Card/FullCardModal/FullCardModal.jsx';
 import ConfirmationModal from '../../components/Card/common/ConfirmationModal.jsx';
 
@@ -593,7 +595,16 @@ export default function BoardDetailPage() {
         <DragDropContext onDragEnd={onDragEnd}>
             {renderPanes()}
         </DragDropContext>
-        <BottomFloatingNav activeTabs={activeTabs} toggleTab={toggleTab} activeCount={activeTabs.length} />
+        <BottomFloatingNav 
+          activeTabs={activeTabs} 
+          toggleTab={toggleTab} 
+          activeCount={activeTabs.length} 
+        />
+
+        <SwitchBoardOverlay
+          isOpen={activeTabs.includes('switch')}
+          onClose={() => toggleTab('switch')}
+        />
       </BoardWrapper>
 
       <ConfirmationModal
