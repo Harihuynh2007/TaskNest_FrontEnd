@@ -1,8 +1,19 @@
-// src/components/common/DueDatePicker.jsx
+// src/components/Card/Due/DueDatePicker.jsx
 import React, { useState, useEffect } from 'react';
-import { format, parseISO } from 'date-fns';
-import { PickerContainer, Label, DateInput, TimeInput } from './././DueDatePopup.styles';
+import { format } from 'date-fns';
+import { PickerContainer, Label, DateInput, TimeInput } from './DueDatePopup.styles';
 
+/**
+ * Date & Time picker component
+ * Dùng chung cho cả Start date và Due date.
+ * @param {object} props
+ * @param {string} label
+ * @param {string | null} value - ISO string
+ * @param {(iso: string | null) => void} onChange
+ * @param {boolean} withTime
+ * @param {string} minDate
+ * @param {string} maxDate
+ */
 export default function DueDatePicker({
   label = 'Date',
   value,
@@ -25,6 +36,15 @@ export default function DueDatePicker({
     }
   }, [value]);
 
+  const triggerChange = (d, t) => {
+    if (!d) {
+      onChange?.(null);
+      return;
+    }
+    const iso = t ? new Date(`${d}T${t}:00Z`).toISOString() : new Date(d).toISOString();
+    onChange?.(iso);
+  };
+
   const handleDateChange = (e) => {
     const newDate = e.target.value;
     setDateValue(newDate);
@@ -37,28 +57,24 @@ export default function DueDatePicker({
     triggerChange(dateValue, newTime);
   };
 
-  const triggerChange = (d, t) => {
-    if (!d) return onChange?.(null);
-    const iso = t ? new Date(`${d}T${t}:00Z`).toISOString() : new Date(d).toISOString();
-    onChange?.(iso);
-  };
-
   return (
     <PickerContainer>
       {label && <Label>{label}</Label>}
-      <div style={{ display: 'flex', gap: '6px' }}>
+      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
         <DateInput
           type="date"
           value={dateValue}
           onChange={handleDateChange}
           min={minDate}
           max={maxDate}
+          aria-label={`${label} date`}
         />
         {withTime && (
           <TimeInput
             type="time"
             value={timeValue}
             onChange={handleTimeChange}
+            aria-label={`${label} time`}
           />
         )}
       </div>

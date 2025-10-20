@@ -6,6 +6,9 @@ import { MdChecklist } from 'react-icons/md';
 import { IoCloseOutline, IoChevronDown } from 'react-icons/io5';
 import toast from 'react-hot-toast';
 import client from '../../../api/apiClient';
+import DueDatePopup from '../Due/DueDatePopup';
+
+
 
 import * as cardApi from '../../../api/apiClient';
 import {
@@ -84,6 +87,9 @@ export default function FullCardModal({
   const [attachmentAnchor, setAttachmentAnchor] = useState(null);
   const [addMenuAnchor, setAddMenuAnchor] = useState(null);
   const [membersAnchor, setMembersAnchor] = useState(null);
+
+  const [showDueDatePopup, setShowDueDatePopup] = useState(false);
+  const [dueDateAnchor, setDueDateAnchor] = useState(null);
 
   // Refs
   const overlayRef = useRef();
@@ -543,6 +549,8 @@ export default function FullCardModal({
           onClickDueDate={undefined}
           onClickMembers={undefined}
         />
+        
+        
 
         {/* Content */}
         <S.ContentBody>
@@ -588,9 +596,17 @@ export default function FullCardModal({
                   <BiLabel /> Labels
                 </S.ActionButton>
                 
-                <S.ActionButton aria-label="Add dates">
+                <S.ActionButton
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setDueDateAnchor(rect);
+                    setShowDueDatePopup(true);
+                  }}
+                  aria-label="Add dates"
+                >
                   <BsClock /> Dates
                 </S.ActionButton>
+
                 
                 <S.ActionButton
                   onClick={(e) => {
@@ -717,6 +733,19 @@ export default function FullCardModal({
         </S.PopupOverlay>
       )}
       
+      {showDueDatePopup && dueDateAnchor && (
+        <DueDatePopup
+          card={localCard}
+          anchorRect={dueDateAnchor}
+          onClose={() => setShowDueDatePopup(false)}
+          onUpdated={(updatedFields) => {
+            setCardAndBubble(prev => ({ ...prev, ...updatedFields }));
+            toast.success('Dates updated');
+          }}
+        />
+      )}
+
+
       {showAddMenu && addMenuAnchor && (
         <AddToCardMenu
           anchorRect={addMenuAnchor}

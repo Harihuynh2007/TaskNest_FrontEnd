@@ -1,9 +1,12 @@
+// src/components/Card/Due/DueDatePopup.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import FocusLock from 'react-focus-lock';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { updateCard } from '../../../api/cardApi';
 import DueDatePicker from './DueDatePicker';
+import useDueDateForm from './useDueDateForm';
+
 import {
   PopupContainer,
   Arrow,
@@ -15,6 +18,8 @@ import {
   ButtonRow,
   SaveButton,
   RemoveButton,
+  QuickButtonsRow,
+  QuickBtn,
 } from './DueDatePopup.styles';
 
 export default function DueDatePopup({ card, onClose, onUpdated, anchorRect }) {
@@ -28,7 +33,6 @@ export default function DueDatePopup({ card, onClose, onUpdated, anchorRect }) {
   const [recurrence, setRecurrence] = useState(card.recurrence || 'never');
   const [loading, setLoading] = useState(false);
 
-  // Parse time from card.due_date (ISO → yyyy-MM-dd + HH:mm)
   useEffect(() => {
     if (card.due_date) {
       const dt = new Date(card.due_date);
@@ -53,36 +57,20 @@ export default function DueDatePopup({ card, onClose, onUpdated, anchorRect }) {
     return () => document.removeEventListener('keydown', handleKey);
   }, [onClose]);
 
-  // Delay mount until anchorRect ready (prevent popup jump)
   useEffect(() => {
     if (anchorRect) setMounted(true);
   }, [anchorRect]);
 
   if (!anchorRect || !mounted) return null;
 
-  // =======================
-  // Save & Remove handlers
-  // =======================
   const handleSave = async () => {
+    const payload = buildPayload();
     setLoading(true);
+    onUpdated?.(payload);
+    onClose(); // optimistic close
+
     try {
-      const dueISO =
-        dueDate && dueTime
-          ? new Date(`${dueDate}T${dueTime}:00Z`).toISOString()
-          : dueDate
-          ? new Date(dueDate).toISOString()
-          : null;
-
-      const payload = {
-        start_date: startDate || null,
-        due_date: dueISO,
-        due_reminder_offset: reminder ? parseInt(reminder) : null,
-        recurrence,
-      };
-
       await updateCard(card.id, payload);
-      onUpdated && onUpdated(payload);
-      onClose();
     } catch (err) {
       console.error('Failed to update due date:', err);
     } finally {
@@ -91,15 +79,14 @@ export default function DueDatePopup({ card, onClose, onUpdated, anchorRect }) {
   };
 
   const handleRemove = async () => {
+    if (!window.confirm('Remove due date?')) return;
     setLoading(true);
+    const payload = { start_date: null, due_date: null, due_reminder_offset: null };
+    onUpdated?.(payload);
+    onClose();
+
     try {
-      await updateCard(card.id, {
-        start_date: null,
-        due_date: null,
-        due_reminder_offset: null,
-      });
-      onUpdated && onUpdated({ start_date: null, due_date: null });
-      onClose();
+      await updateCard(card.id, payload);
     } catch (err) {
       console.error('Failed to remove due date:', err);
     } finally {
@@ -107,9 +94,28 @@ export default function DueDatePopup({ card, onClose, onUpdated, anchorRect }) {
     }
   };
 
-  // =======================
-  // Render UI
-  // =======================
+  const buildPayload = () => {
+    const dueISO =
+      dueDate && dueTime
+        ? new Date(`${dueDate}T${dueTime}:00Z`).toISOString()
+        : dueDate
+        ? new Date(dueDate).toISOString()
+        : null;
+
+    return {
+      start_date: startDate || null,
+      due_date: dueISO,
+      due_reminder_offset: reminder ? parseInt(reminder) : null,
+      recurrence,
+    };
+  };
+
+  const handleQuickSelect = (days) => {
+    const d = addDays(new Date(), days);
+    setDueDate(format(d, 'yyyy-MM-dd'));
+    setDueTime('09:00');
+  };
+
   return (
     <AnimatePresence>
       <FocusLock>
@@ -122,15 +128,18 @@ export default function DueDatePopup({ card, onClose, onUpdated, anchorRect }) {
         >
           <PopupContainer ref={ref} anchorRect={anchorRect} role="dialog" aria-label="Set due date">
             <Arrow anchorRect={anchorRect} />
-            <PopupHeader>Dates</PopupHeader>
+            <PopupHeader>
+              Dates{' '}
+              {dueDate && (
+                <span style={{ color: '#60a5fa', fontSize: 13, marginLeft: 6 }}>
+                  ({format(new Date(`${dueDate}T${dueTime || '00:00'}:00Z`), 'dd MMM, HH:mm')})
+                </span>
+              )}
+            </PopupHeader>
+
             <PopupContent>
               <FieldGroup>
-                <DueDatePicker
-                  label="Start date"
-                  value={startDate}
-                  onChange={(v) => setStartDate(v)}
-                  withTime={false}
-                />
+                <DueDatePicker label="Start date" value={startDate} onChange={setStartDate} withTime={false} />
               </FieldGroup>
 
               <FieldGroup>
@@ -149,6 +158,12 @@ export default function DueDatePopup({ card, onClose, onUpdated, anchorRect }) {
                   withTime
                 />
               </FieldGroup>
+
+              <QuickButtonsRow>
+                <QuickBtn onClick={() => handleQuickSelect(0)}>Today</QuickBtn>
+                <QuickBtn onClick={() => handleQuickSelect(1)}>Tomorrow</QuickBtn>
+                <QuickBtn onClick={() => handleQuickSelect(7)}>Next week</QuickBtn>
+              </QuickButtonsRow>
 
               <FieldGroup>
                 <Label>Reminder</Label>
