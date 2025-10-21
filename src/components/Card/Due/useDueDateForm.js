@@ -1,14 +1,12 @@
 // src/components/Card/Due/useDueDateForm.js
 import { useState, useCallback, useEffect } from 'react';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { updateCard } from '../../../api/cardApi';
 
 /**
- * Custom hook quản lý logic của DueDatePopup.
- * Tách biệt state & side-effects khỏi UI component.
- *
- * @param {object} card - đối tượng card gốc
- * @param {(payload: object) => void} onUpdated - callback cập nhật lên cha
+ * Quản lý logic của DueDatePopup — tách toàn bộ khỏi UI
+ * @param {object} card
+ * @param {(payload: object) => void} onUpdated
  */
 export default function useDueDateForm(card, onUpdated) {
   const [startDate, setStartDate] = useState(card.start_date || '');
@@ -19,7 +17,7 @@ export default function useDueDateForm(card, onUpdated) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // đồng bộ khi card thay đổi
+  /** Đồng bộ khi card thay đổi */
   useEffect(() => {
     if (card.due_date) {
       const dt = new Date(card.due_date);
@@ -48,12 +46,11 @@ export default function useDueDateForm(card, onUpdated) {
     };
   }, [startDate, dueDate, dueTime, reminder, recurrence]);
 
-  /** Gửi API lưu dữ liệu (có optimistic update) */
+  /** Lưu dữ liệu (optimistic update) */
   const save = useCallback(async () => {
     const payload = buildPayload();
     setLoading(true);
     setError(null);
-
     try {
       onUpdated?.(payload);
       await updateCard(card.id, payload);
@@ -67,12 +64,12 @@ export default function useDueDateForm(card, onUpdated) {
     }
   }, [buildPayload, card.id, onUpdated]);
 
-  /** Xóa due date */
+  /** Xoá ngày */
   const remove = useCallback(async () => {
+    if (!window.confirm('Remove due date?')) return false;
     setLoading(true);
     setError(null);
     const payload = { start_date: null, due_date: null, due_reminder_offset: null };
-
     try {
       onUpdated?.(payload);
       await updateCard(card.id, payload);
@@ -86,20 +83,18 @@ export default function useDueDateForm(card, onUpdated) {
     }
   }, [card.id, onUpdated]);
 
-  /** Cập nhật date nhanh (Today / Tomorrow / Next week) */
-  const quickSelect = useCallback(
-    (newDate, newTime = '09:00') => {
-      setDueDate(format(new Date(newDate), 'yyyy-MM-dd'));
-      setDueTime(newTime);
-    },
-    []
-  );
+  /** Cập nhật nhanh (Today/Tomorrow/Next week) */
+  const quickSelect = useCallback((days) => {
+    const d = addDays(new Date(), days);
+    setDueDate(format(d, 'yyyy-MM-dd'));
+    setDueTime('09:00');
+  }, []);
 
-  /** Reset lỗi sau 3 giây */
+  /** Reset lỗi sau 3s */
   useEffect(() => {
     if (error) {
-      const timer = setTimeout(() => setError(null), 3000);
-      return () => clearTimeout(timer);
+      const t = setTimeout(() => setError(null), 3000);
+      return () => clearTimeout(t);
     }
   }, [error]);
 

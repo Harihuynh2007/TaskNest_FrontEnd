@@ -193,16 +193,6 @@ export default function BoardDetailPage() {
     loadInboxCards();
   }, [boardId]);
   
-  useEffect(() => {
-    if (!autoWeekday) return;
-    setTodayIndex(dayjs().day());
-    const now = dayjs();
-    const next = now.add(1, 'day').startOf('day');
-    const t = setTimeout(() => setTodayIndex(dayjs().day()), next.diff(now, 'millisecond'));
-    return () => clearTimeout(t);
-  }, [autoWeekday, todayIndex]);
-
-  
 
   // useEffect(() => {
 //   console.log('Attempting to connect to WebSocket for board:', boardId);
@@ -482,8 +472,8 @@ export default function BoardDetailPage() {
     if (!cardToUpdate) return;
     
     try {
-      const updatedCardFromApi = await updateCard(cardId, { completed: !cardToUpdate.completed });
-      updateCardInState(updatedCardFromApi); // DÙNG HÀM TRUNG TÂM
+      const { data } = await updateCard(cardId, { completed: !cardToUpdate.completed });
+      updateCardInState(data);
     } catch (err) {
       console.error('❌ Lỗi cập nhật completed:', err);
     }
@@ -555,7 +545,6 @@ export default function BoardDetailPage() {
     status: card.status || 'doing',
     position: card.position ?? 0,
     labels: card.labels || [],
-    // Thêm các trường khác nếu cần
   });
 
   // TẠO HÀM CẬP NHẬT TRUNG TÂM
@@ -583,13 +572,9 @@ export default function BoardDetailPage() {
   if (loading) return <div>Loading board...</div>;
 
 
-
   return (
     <>
       {editPopup && <DarkOverlay />}
-      {selectedCard && (
-        <FullCardModal card={selectedCard} onClose={() => setSelectedCard(null)} />
-      )}
 
       <BoardWrapper $background={resolvedBackground}>
         <DragDropContext onDragEnd={onDragEnd}>
