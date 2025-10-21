@@ -129,6 +129,23 @@ export default function DueDatePopup({ card, onClose, onUpdated, anchorRect }) {
           <PopupContainer ref={ref} anchorRect={anchorRect} role="dialog" aria-label="Set due date">
             <Arrow anchorRect={anchorRect} />
             <PopupHeader>
+              {card?.due_date && new Date(card.due_date) < new Date() && (
+                <div style={{ color: '#f87171', fontSize: 12, marginBottom: 6 }}>
+                  ⚠ Overdue by{' '}
+                  {Math.max(
+                    1,
+                    Math.floor(
+                      (new Date() - new Date(card.due_date)) / (1000 * 60 * 60 * 24)
+                    )
+                  )}{' '}
+                  {Math.floor(
+                    (new Date() - new Date(card.due_date)) / (1000 * 60 * 60 * 24)
+                  ) > 1
+                    ? 'days'
+                    : 'day'}
+                </div>
+              )}
+
               Dates{' '}
               {dueDate && (
                 <span style={{ color: '#60a5fa', fontSize: 13, marginLeft: 6 }}>
