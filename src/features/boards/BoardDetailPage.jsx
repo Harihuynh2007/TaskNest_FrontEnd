@@ -306,11 +306,9 @@ export default function BoardDetailPage() {
           setCards(newCards);
 
           // Cập nhật position cho tất cả thẻ trong Inbox
-          await batchUpdateCards(newCards.map((c, i) => ({
-            id: c.id,
-            list: null,
-            position: i
-          })));
+          for (let i = 0; i < newCards.length; i++) {
+            await updateCard(newCards[i].id, { list: null, position: i });
+          }
 
         } else {
           // Reorder trong cùng một list
