@@ -7,7 +7,7 @@ import { IoCloseOutline, IoChevronDown } from 'react-icons/io5';
 import toast from 'react-hot-toast';
 import client from '../../../api/apiClient';
 import DueDatePopup from '../Due/DueDatePopup';
-
+import InlineDateBlock from '../Due/InlineDateBlock';
 
 
 import * as cardApi from '../../../api/apiClient';
@@ -550,7 +550,12 @@ export default function FullCardModal({
           onClickMembers={undefined}
         />
         
-        
+        {(localCard.start_date || localCard.due_date) && (
+          <InlineDateBlock
+            card={localCard}
+            onUpdated={(patch) => setLocalCard((prev) => ({ ...prev, ...patch }))}
+          />
+        )}
 
         {/* Content */}
         <S.ContentBody>
@@ -744,7 +749,6 @@ export default function FullCardModal({
           }}
         />
       )}
-
 
       {showAddMenu && addMenuAnchor && (
         <AddToCardMenu
