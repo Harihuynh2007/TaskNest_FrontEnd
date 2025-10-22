@@ -153,7 +153,7 @@ export async function addCardMember(cardId, userId) {
   return res.data; 
 }
 
-export async function removeCardMember(cardId, userId) {
-  const res = await api.delete(`/cards/${cardId}/memberships/${userId}/`);
+export async function removeCardMember(cardId, membershipId) {
+  const res = await api.delete(`/cards/${cardId}/memberships/${membershipId}/`);
   return res.data;
 }
