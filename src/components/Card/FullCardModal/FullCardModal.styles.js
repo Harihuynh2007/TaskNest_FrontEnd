@@ -827,6 +827,8 @@ export const SlideIn = styled.div`
   }
 `;
 
+
+
 // ============= ACCESSIBILITY ENHANCEMENTS =============
 // High contrast mode support
 /* @media (prefers-contrast: high) - Moved inside components above */
