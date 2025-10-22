@@ -42,6 +42,7 @@ import CardChecklists from '../sections/CardChecklists';
 import CardComments from '../sections/CardComments';
 import CardMetaBar from '../sections/CardMetaBar';
 import CheckListPopup from '../../ChecklistCard/CheckListPopup';
+import MemberCardPopup from '../../member/MemberCardPopup';
 
 // Styled Components
 import * as S from './FullCardModal.styles';
@@ -516,6 +517,10 @@ export default function FullCardModal({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [handleClickOutside]);
 
+  // ✅ Xác định card thuộc Board hay Inbox
+  const isBoardCard = !!(card.board || card.board_id || card.list);
+
+
   // ============= RENDER =============
   return (
     <S.Overlay ref={overlayRef}>
@@ -624,10 +629,35 @@ export default function FullCardModal({
                   <MdChecklist /> Checklist
                 </S.ActionButton>
                 
-                <S.ActionButton aria-label="Add members">
-                  <HiOutlineUserAdd /> Members
-                </S.ActionButton>
-
+                {isBoardCard ? (
+                  <S.ActionButton
+                    onClick={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setMembersAnchor(rect);
+                      setShowMembersPopup(true);
+                    }}
+                    aria-label="Add members"
+                    title="Add or remove members"
+                  >
+                    <HiOutlineUserAdd /> Members
+                  </S.ActionButton>
+                ) : (
+                  <S.ActionButton
+                    disabled
+                    aria-label="Private card (no members)"
+                    title="Private cards can’t have members."
+                    style={{
+                      opacity: 0.6,
+                      cursor: "not-allowed"
+                    }}
+                    onClick={() => {
+                      toast("🔒 Private cards can’t have members.");
+                    }}
+                  >
+                    <HiOutlineUserAdd /> Members
+                  </S.ActionButton>
+                )}
+                
                 <S.ActionButton
                   onClick={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
@@ -784,6 +814,21 @@ export default function FullCardModal({
           }}
         />
       )}
+
+      {isBoardCard && showMembersPopup && membersAnchor && (
+        <MemberCardPopup
+          anchorRect={membersAnchor}
+          onClose={() => setShowMembersPopup(false)}
+          cardId={card.id}
+          boardId={card.board || card.board_id}
+          assigned={localCard.members?.map((m) => m.id) || []}
+          onUpdated={(members) => {
+            setCardAndBubble((prev) => ({ ...prev, members }));
+            toast.success("Members updated");
+          }}
+        />
+      )}
+
     </S.Overlay>
   );
 }
