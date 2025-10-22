@@ -140,3 +140,20 @@ export const getCardActivity = async (cardId, params = {}) => {
   const response = await api.get(`/cards/${cardId}/activities/`, { params });
   return response.data;
 };
+
+
+// ----- Card members -----
+export async function fetchCardMembers(cardId) {
+  const res = await api.get(`/cards/${cardId}/memberships/`);
+  return res.data;
+}
+
+export async function addCardMember(cardId, userId) {
+  const res = await api.post(`/cards/${cardId}/memberships/`, { user_id: userId });
+  return res.data; 
+}
+
+export async function removeCardMember(cardId, userId) {
+  const res = await api.delete(`/cards/${cardId}/memberships/${userId}/`);
+  return res.data;
+}
