@@ -9,6 +9,8 @@ export const auth = {
   changePassword: () => '/auth/change-password/',
   searchUsers:    () => '/auth/users/search/',
   refreshToken:   () => '/token/refresh/',
+  forgotPassword: () => '/auth/forgot-password/',
+  resetPassword:  () => '/auth/reset-password/',
 };
 
 export const workspaces = {

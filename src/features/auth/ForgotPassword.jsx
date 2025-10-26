@@ -1,130 +1,145 @@
-// src/components/auth/ForgotPasswordPage.jsx
-
-import React, { useState } from 'react';
-import { Container, Row, Col, Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
+// src/features/auth/ForgotPassword.jsx
+import React, { useState, useEffect } from 'react';
+import { Form, Button, Spinner } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import api from '../../api/apiClient';
+import { auth } from '../../api/apiRoutes';
+import './AuthStyles.css';
 
-export default function ForgotPasswordPage({ baseUrl = '' }) {
+export default function ForgotPassword() {
   const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
-  const [status, setStatus] = useState('idle'); // 'idle' | 'success' | 'error'
-  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState('idle');
+  const [message, setMessage] = useState('');
+  const [disabled, setDisabled] = useState(false);
 
-  // Simple email validation
-  const validateEmail = (value) => {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(value);
-  };
+  const isValidEmail = (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setStatus('idle');
+    setMessage('');
 
-    // Client-side validation
-    if (!email) {
-      setError('Email is required');
-      return;
-    }
-    if (!validateEmail(email)) {
-      setError('Invalid email format');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      setLoading(true);
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/api/auth/forgot-password/`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
-        }
-      );
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data?.error || 'Failed to send reset email');
-      }
-
-      setStatus('success');
-      setEmail('');
-    } catch (err) {
-      console.error(err);
+    if (!email.trim()) {
       setStatus('error');
-      setError(err.message);
+      setMessage('Please enter your email.');
+      return;
     }
-  }
+    if (!isValidEmail(email)) {
+      setStatus('error');
+      setMessage('Invalid email format.');
+      return;
+    }
+
+    setStatus('sending');
+    try {
+      await api.post(auth.forgotPassword(), { email });
+      setStatus('sent');
+      setMessage('If this email exists, a reset link has been sent.');
+      setDisabled(true);
+      setTimeout(() => setDisabled(false), 5000);
+    } catch (err) {
+      const msg =
+        err.response?.data?.error ||
+        err.response?.data?.detail ||
+        err.message ||
+        'Network error. Please try again.';
+      setStatus('error');
+      setMessage(msg);
+    }
+  };
+
+  useEffect(() => {
+    if (status === 'sent' || status === 'error') {
+      const timer = setTimeout(() => setMessage(''), 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [status]);
 
   return (
-    <Container fluid className="min-vh-100 d-flex justify-content-center align-items-center bg-light px-3">
-      <Row className="w-100 justify-content-center">
-        <Col xs={12} sm={8} md={6} lg={4}>
-          <Card className="p-4 shadow">
-            <h4 className="text-center mb-3">Forgot Password</h4>
+    <div className="auth-container">
+      <motion.div
+        className="auth-card"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+      >
+        <div className="auth-illustration">
+          <img src="/forgot-password-illustration.png" alt="Reset Password" />
+          <h2>Reset your password</h2>
+          <p>We’ll send a secure link to your email so you can set a new one.</p>
+        </div>
 
-            {status === 'success' && (
-              <Alert variant="success">
-                If this email exists, we'll send you a reset link.
-              </Alert>
-            )}
-            {status === 'error' && (
-              <Alert variant="danger">
-                Something went wrong. Please try again.
-              </Alert>
-            )}
+        <div className="auth-form-side">
+          <h3 className="auth-title">Forgot Password</h3>
 
-            <Form noValidate onSubmit={handleSubmit}>
-              <Form.Group controlId="forgotEmail" className="mb-3">
-                <Form.Label>We'll send a recovery link to</Form.Label>
-                <Form.Control
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  isInvalid={!!error}
-                  disabled={loading}
-                  required
-                />
-                <Form.Control.Feedback type="invalid">
-                  {error}
-                </Form.Control.Feedback>
-              </Form.Group>
+          <Form noValidate onSubmit={handleSubmit}>
+            <Form.Group className="mb-3" controlId="forgotEmail">
+              <Form.Label>Email address</Form.Label>
+              <Form.Control
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={status === 'sending' || disabled}
+                className="auth-input"
+                autoFocus
+              />
+            </Form.Group>
 
+            <div className="d-grid mb-3">
               <Button
-                variant="primary"
                 type="submit"
-                className="w-100 mb-3"
-                disabled={loading}
-                aria-label="Send password reset link"
+                className="auth-btn"
+                disabled={status === 'sending' || disabled}
+                aria-label="Send reset email"
               >
-                {loading ? (
+                {status === 'sending' ? (
                   <>
-                    <Spinner
-                      as="span"
-                      animation="border"
-                      size="sm"
-                      role="status"
-                      aria-hidden="true"
-                      className="me-2"
-                    />
+                    <Spinner as="span" animation="border" size="sm" className="me-2" />
                     Sending...
                   </>
                 ) : (
                   'Send Reset Link'
                 )}
               </Button>
-            </Form>
-
-            <div className="text-center">
-              <Link to="/login" className="d-block">
-                Return to Log In
-              </Link>
             </div>
-          </Card>
-        </Col>
-      </Row>
-    </Container>
+          </Form>
+
+          <AnimatePresence>
+            {status === 'sent' && (
+              <motion.div
+                key="success"
+                className="auth-alert success"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                ✅ {message}
+                <p className="small mt-2">
+                  Please check your inbox (and spam folder).  
+                  This link will expire in 1 hour.
+                </p>
+              </motion.div>
+            )}
+            {status === 'error' && (
+              <motion.div
+                key="error"
+                className="auth-alert error"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                ⚠️ {message}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="text-center mt-3">
+            <Link to="/login" className="auth-link">← Back to Login</Link>
+          </div>
+        </div>
+      </motion.div>
+    </div>
   );
 }

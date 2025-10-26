@@ -1,80 +1,19 @@
-// src/components/auth/AuthForm.jsx
-
-import React, { useState, useContext, useReducer } from 'react';
+// src/features/auth/AuthForm.jsx
+import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import {
-  Container, Row, Col, Card, Form, Button, InputGroup, Spinner, Modal
-} from 'react-bootstrap';
+import { Form, Button, InputGroup, Spinner, Modal } from 'react-bootstrap';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { AuthContext } from '../../contexts/AuthContext';
-import { validateField } from './utils/validation';
+import { useAuthForm } from './hooks/useAuthForm';
 import OAuthButtonGroup from './OAuthButtonGroup';
+import './AuthStyles.css';
 
-// -------------------
-// useReducer cho form state
-// -------------------
-const initialState = {
-  email: '',
-  password: '',
-  confirm: '',
-  remember: false,
-  errors: { email: '', password: '', confirm: '' },
-  touched: { email: false, password: false, confirm: false },
-};
-
-const formReducer = (state, action) => {
-  switch (action.type) {
-    case 'FIELD_CHANGE':
-      return { ...state, [action.fieldName]: action.payload };
-    case 'SET_ERROR':
-      return { ...state, errors: { ...state.errors, [action.fieldName]: action.payload } };
-    case 'SET_TOUCHED':
-      return { ...state, touched: { ...state.touched, [action.fieldName]: true } };
-    case 'SUBMIT_VALIDATE':
-      return { ...state, errors: action.payload, touched: { email: true, password: true, confirm: true } };
-    case 'RESET':
-      return initialState;
-    default:
-      return state;
-  }
-};
-
-// -------------------
-// Component
-// -------------------
 export default function AuthForm({ mode = 'login' }) {
   const navigate = useNavigate();
   const isLogin = mode === 'login';
   const { login, signup } = useContext(AuthContext);
 
-  const [state, dispatch] = useReducer(formReducer, initialState);
-  const { email, password, confirm, remember, errors, touched } = state;
-
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [apiError, setApiError] = useState('');
-
-  // -------------------
-  // Field handlers
-  // -------------------
-  const handleFieldChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    const fieldValue = type === 'checkbox' ? checked : value;
-
-    dispatch({ type: 'FIELD_CHANGE', fieldName: name, payload: fieldValue });
-
-    if (touched[name]) {
-      const error = validateField(name, fieldValue, password);
-      dispatch({ type: 'SET_ERROR', fieldName: name, payload: error });
-    }
-  };
-
-  const handleBlur = (e) => {
-    const { name, value } = e.target;
-    dispatch({ type: 'SET_TOUCHED', fieldName: name });
-    const error = validateField(name, value, password);
-    dispatch({ type: 'SET_ERROR', fieldName: name, payload: error });
-  };
 
   // -------------------
   // Save account locally
@@ -95,158 +34,175 @@ export default function AuthForm({ mode = 'login' }) {
     }
   };
 
-  // -------------------
-  // Submit handler
-  // -------------------
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const emailError = validateField('email', email);
-    const passwordError = validateField('password', password);
-    const confirmError = isLogin ? '' : validateField('confirm', confirm, password);
-
-    dispatch({ type: 'SUBMIT_VALIDATE', payload: { email: emailError, password: passwordError, confirm: confirmError } });
-
-    if (emailError || passwordError || confirmError) return;
-
-    setLoading(true);
-    setApiError('');
-
-    try {
-      if (isLogin) {
-        await login(email, password);
-        handleSaveAccount(email);
-        navigate('/boards');
-      } else {
-        await signup(email, password);
-        navigate('/login?registered=true');
-      }
-    } catch (err) {
-      setApiError(err.message);
-    } finally {
-      setLoading(false);
+  const handleAuthSubmit = async ({ email, password }) => {
+    if (isLogin) {
+      await login(email, password);
+      handleSaveAccount(email);
+      navigate('/boards');
+    } else {
+      await signup(email, password);
+      navigate('/login?registered=true');
     }
   };
 
-  // -------------------
-  // JSX UI (giữ nguyên)
-  // -------------------
+  const {
+    formData,
+    errors,
+    touched,
+    isSubmitting,
+    apiError,
+    handleFieldChange,
+    handleBlur,
+    handleSubmit,
+    clearApiError,
+  } = useAuthForm(mode, handleAuthSubmit);
+
+  const { email, password, confirm, remember } = formData;
+
   return (
-    <>
-      <Container fluid className="min-vh-100 d-flex align-items-center justify-content-center bg-light px-3">
-        <Row className="w-100 justify-content-center">
-          <Col xs={12} md={10} lg={8} xl={6}>
-            <Card className="shadow-lg overflow-hidden">
-              <Row className="g-0">
-                {/* Illustration side */}
-                <Col md={6} className="d-none d-md-flex flex-column justify-content-center align-items-center bg-white p-4">
-                  <img src="/login-illustration.png" alt="Welcome" className="img-fluid mb-3" style={{ maxWidth: '80%' }} />
-                  <h2 className="mb-3">Welcome {isLogin ? 'Back!' : 'Aboard!'}</h2>
-                  <p className="text-muted text-center">
-                    {isLogin
-                      ? 'Log in to continue to your account.'
-                      : 'Create an account to get started.'}
-                  </p>
-                </Col>
+    <div className="auth-container">
+      <div className="auth-card">
+        {/* Illustration section */}
+        <div className="auth-illustration">
+          <img src="/login-illustration.png" alt="TaskNest" />
+          <h2>Welcome {isLogin ? 'back' : 'aboard'}!</h2>
+          <p>{isLogin ? 'Sign in to continue organizing your work.' : 'Create your account to start managing tasks smarter.'}</p>
+        </div>
 
-                {/* Form side */}
-                <Col xs={12} md={6} className="p-4">
-                  <h3 className="mb-4 text-center">{isLogin ? 'Login' : 'Sign Up'}</h3>
-                  <Form noValidate onSubmit={handleSubmit}>
-                    <Form.Group className="mb-3" controlId="authEmail">
-                      <Form.Label>Email address</Form.Label>
-                      <Form.Control
-                        type="email"
-                        name="email"
-                        value={email}
-                        onChange={handleFieldChange}
-                        onBlur={handleBlur}
-                        isInvalid={touched.email && !!errors.email}
-                        autoComplete="username"
-                        required
-                      />
-                      <Form.Control.Feedback type="invalid">{errors.email}</Form.Control.Feedback>
-                    </Form.Group>
+        {/* Form section */}
+        <div className="auth-form-side">
+          <h3 className="auth-title">{isLogin ? 'Login' : 'Sign Up'}</h3>
 
-                    <Form.Group className="mb-3" controlId="authPassword">
-                      <Form.Label>Password</Form.Label>
-                      <InputGroup>
-                        <Form.Control
-                          type={showPassword ? 'text' : 'password'}
-                          name="password"
-                          value={password}
-                          onChange={handleFieldChange}
-                          onBlur={handleBlur}
-                          isInvalid={touched.password && !!errors.password}
-                          autoComplete={isLogin ? 'current-password' : 'new-password'}
-                          required
-                        />
-                        <Button variant="outline-secondary" onClick={() => setShowPassword(prev => !prev)}>
-                          {showPassword ? <FaEyeSlash /> : <FaEye />}
-                        </Button>
-                        <Form.Control.Feedback type="invalid">{errors.password}</Form.Control.Feedback>
-                      </InputGroup>
-                    </Form.Group>
+          <Form noValidate onSubmit={handleSubmit}>
+            {/* Email */}
+            <Form.Group className="mb-3" controlId="authEmail">
+              <Form.Label>Email address</Form.Label>
+              <Form.Control
+                type="email"
+                name="email"
+                value={email}
+                onChange={handleFieldChange}
+                onBlur={handleBlur}
+                isInvalid={touched.email && !!errors.email}
+                autoComplete="username"
+                disabled={isSubmitting}
+                required
+                className="auth-input"
+              />
+              <Form.Control.Feedback type="invalid">{errors.email}</Form.Control.Feedback>
+            </Form.Group>
 
-                    {!isLogin && (
-                      <Form.Group className="mb-3" controlId="authConfirmPassword">
-                        <Form.Label>Confirm Password</Form.Label>
-                        <InputGroup>
-                          <Form.Control
-                            type={showPassword ? 'text' : 'password'}
-                            name="confirm"
-                            value={confirm}
-                            onChange={handleFieldChange}
-                            onBlur={handleBlur}
-                            isInvalid={touched.confirm && !!errors.confirm}
-                            autoComplete="new-password"
-                            required
-                          />
-                          <Button variant="outline-secondary" onClick={() => setShowPassword(prev => !prev)}>
-                            {showPassword ? <FaEyeSlash /> : <FaEye />}
-                          </Button>
-                          <Form.Control.Feedback type="invalid">{errors.confirm}</Form.Control.Feedback>
-                        </InputGroup>
-                      </Form.Group>
-                    )}
+            {/* Password */}
+            <Form.Group className="mb-3" controlId="authPassword">
+              <Form.Label>Password</Form.Label>
+              <InputGroup>
+                <Form.Control
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={password}
+                  onChange={handleFieldChange}
+                  onBlur={handleBlur}
+                  isInvalid={touched.password && !!errors.password}
+                  autoComplete={isLogin ? 'current-password' : 'new-password'}
+                  disabled={isSubmitting}
+                  required
+                  className="auth-input"
+                />
+                <Button
+                  variant="link"
+                  type="button"
+                  className="toggle-eye"
+                  onClick={() => setShowPassword(prev => !prev)}
+                  disabled={isSubmitting}
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </Button>
+                <Form.Control.Feedback type="invalid">{errors.password}</Form.Control.Feedback>
+              </InputGroup>
+            </Form.Group>
 
-                    {isLogin && (
-                      <div className="d-flex justify-content-between align-items-center mb-3">
-                        <Form.Check type="checkbox" label="Remember me" name="remember" checked={remember} onChange={handleFieldChange} />
-                        <Link to="/forgot-password">Forgot password?</Link>
-                      </div>
-                    )}
+            {/* Confirm password (register only) */}
+            {!isLogin && (
+              <Form.Group className="mb-3" controlId="authConfirmPassword">
+                <Form.Label>Confirm Password</Form.Label>
+                <InputGroup>
+                  <Form.Control
+                    type={showPassword ? 'text' : 'password'}
+                    name="confirm"
+                    value={confirm}
+                    onChange={handleFieldChange}
+                    onBlur={handleBlur}
+                    isInvalid={touched.confirm && !!errors.confirm}
+                    autoComplete="new-password"
+                    disabled={isSubmitting}
+                    required
+                    className="auth-input"
+                  />
+                  <Button
+                    variant="link"
+                    type="button"
+                    className="toggle-eye"
+                    onClick={() => setShowPassword(prev => !prev)}
+                    disabled={isSubmitting}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </Button>
+                  <Form.Control.Feedback type="invalid">{errors.confirm}</Form.Control.Feedback>
+                </InputGroup>
+              </Form.Group>
+            )}
 
-                    <div className="d-grid mb-3">
-                      <Button variant="primary" type="submit" disabled={loading}>
-                        {loading ? <><Spinner as="span" animation="border" size="sm" className="me-2" />Please wait...</> : isLogin ? 'Login' : 'Sign Up'}
-                      </Button>
-                    </div>
+            {/* Remember & Forgot */}
+            {isLogin && (
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <Form.Check
+                  type="checkbox"
+                  label="Remember me"
+                  name="remember"
+                  checked={remember}
+                  onChange={handleFieldChange}
+                  disabled={isSubmitting}
+                />
+                <Link to="/forgot-password" className="auth-link">Forgot password?</Link>
+              </div>
+            )}
 
-                    {isLogin && <OAuthButtonGroup />}
+            {/* Submit */}
+            <div className="d-grid mb-3">
+              <Button type="submit" className="auth-btn" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Spinner as="span" animation="border" size="sm" className="me-2" /> Processing...
+                  </>
+                ) : (
+                  isLogin ? 'Login' : 'Sign Up'
+                )}
+              </Button>
+            </div>
 
-                    <p className="text-center mb-0">
-                      {isLogin ? "Don't have an account? " : 'Already have an account? '}
-                      <Link to={isLogin ? '/register' : '/login'} className="fw-bold">{isLogin ? 'Create one' : 'Login'}</Link>
-                    </p>
-                  </Form>
-                </Col>
-              </Row>
-            </Card>
-          </Col>
-        </Row>
-      </Container>
+            {/* OAuth (login only) */}
+            {isLogin && <OAuthButtonGroup />}
 
-      {/* Error Modal */}
-      <Modal show={!!apiError} onHide={() => setApiError('')}>
-        <Modal.Header closeButton>
-          <Modal.Title>Đã xảy ra lỗi</Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ whiteSpace: 'pre-wrap' }}>{apiError}</Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setApiError('')}>Đóng</Button>
-        </Modal.Footer>
+            {/* Switch mode */}
+            <p className="text-center switch-link">
+              {isLogin ? "Don't have an account? " : 'Already have an account? '}
+              <Link to={isLogin ? '/register' : '/login'} className="fw-bold gradient-text">
+                {isLogin ? 'Sign up' : 'Login'}
+              </Link>
+            </p>
+          </Form>
+        </div>
+      </div>
+
+      {/* Error modal */}
+      <Modal show={!!apiError} onHide={clearApiError} centered>
+        <Modal.Body className="auth-error-modal">
+          <h5>⚠️ Something went wrong</h5>
+          <p>{apiError}</p>
+          <Button variant="secondary" onClick={clearApiError}>Close</Button>
+        </Modal.Body>
       </Modal>
-    </>
+    </div>
   );
 }
