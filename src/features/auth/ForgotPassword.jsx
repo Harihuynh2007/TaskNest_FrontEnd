@@ -33,22 +33,29 @@ export default function ForgotPasswordPage({ baseUrl = '' }) {
 
     setLoading(true);
     try {
-      // TODO: replace with real API call
-      // await fetch(`${baseUrl}/auth/forgot-password`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email }),
-      // });
-      // simulate API delay
-      await new Promise(res => setTimeout(res, 1000));
+      setLoading(true);
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/auth/forgot-password/`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data?.error || 'Failed to send reset email');
+      }
+
       setStatus('success');
       setEmail('');
     } catch (err) {
       console.error(err);
       setStatus('error');
+      setError(err.message);
     }
-    setLoading(false);
-  };
+  }
 
   return (
     <Container fluid className="min-vh-100 d-flex justify-content-center align-items-center bg-light px-3">

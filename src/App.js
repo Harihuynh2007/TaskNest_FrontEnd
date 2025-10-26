@@ -4,7 +4,6 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthContext } from './contexts/AuthContext';
 
 import AuthForm from './features/auth/AuthForm';
-import ForgotPassword from './features/auth/ForgotPassword';
 import BoardsPage from './features/boards/BoardsPage';
 import TemplatesPage from './features/templates/TemplatesPage';
 import HomePage from './features/home/HomePage';
@@ -16,6 +15,9 @@ import BoardsMainContent from './features/boards/BoardsMainContent';
 import Settings from './features/boards/settings/Setting.jsx';
 
 import { GlobalStyle } from './styles/GlobalStyle';
+import ResetPassword from './features/auth/ResetPassword';
+import ForgotPassword from './features/auth/ForgotPassword';
+
 
 const LogoutRedirect = () => {
   const { user } = useContext(AuthContext);
@@ -36,6 +38,9 @@ function App() {
         <Route path="/login" element={<AuthForm mode="login" />} />
         <Route path="/register" element={<AuthForm mode="register" />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
+
 
         {/* App routes with header */}
         <Route
