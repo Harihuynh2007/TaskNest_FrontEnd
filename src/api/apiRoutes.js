@@ -10,7 +10,16 @@ export const auth = {
   searchUsers:    () => '/auth/users/search/',
   refreshToken:   () => '/token/refresh/',
   forgotPassword: () => '/auth/forgot-password/',
+  validateResetToken: () => '/auth/validate-reset-token/',
   resetPassword:  () => '/auth/reset-password/',
+
+  enableMFA: () => '/auth/mfa/enable/',
+  verifyMFASetup: () => '/auth/mfa/verify-setup/',
+  mfaStatus: () => '/auth/mfa/status/',
+  disableMFA: () => '/auth/mfa/disable/',
+  verifyMFALogin: () => '/auth/mfa/verify/',
+  sessions: () => '/auth/sessions/',
+  revokeAllSessions: () => '/auth/sessions/revoke-all/',
 };
 
 export const workspaces = {

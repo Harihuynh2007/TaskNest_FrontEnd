@@ -212,3 +212,46 @@ export const logout = async () => {
     window.dispatchEvent(new CustomEvent('unauthorized'));
   }
 };
+
+
+// MFA Endpoints
+export const enableMFA = async () => {
+  const res = await api.post(auth.enableMFA());
+  return res.data; // { qr_code_url, secret }
+};
+
+export const verifyMFASetup = async (code) => {
+  const res = await api.post(auth.verifyMFASetup(), { code });
+  return res.data; // { backup_codes: [] }
+};
+
+export const getMFAStatus = async () => {
+  const res = await api.get(auth.mfaStatus());
+  return res.data; // { enabled: boolean }
+};
+
+export const disableMFA = async (password) => {
+  const res = await api.post(auth.disableMFA(), { password });
+  return res.data;
+};
+
+export const verifyMFALogin = async (code) => {
+  const res = await api.post(auth.verifyMFALogin(), { code });
+  return res.data;
+};
+
+// Session Management
+export const getActiveSessions = async () => {
+  const res = await api.get(auth.sessions());
+  return res;
+};
+
+export const revokeSession = async (sessionId) => {
+  const res = await api.delete(`${auth.sessions()}${sessionId}/`);
+  return res.data;
+};
+
+export const revokeAllSessions = async () => {
+  const res = await api.post(auth.revokeAllSessions());
+  return res.data;
+};
