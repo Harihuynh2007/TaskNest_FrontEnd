@@ -1,10 +1,11 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState,useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { FiUserPlus, FiZap, FiFilter, FiShare2, FiMoreHorizontal } from 'react-icons/fi';
 import { FaStar, FaRegStar } from 'react-icons/fa';
 import { GoOrganization } from 'react-icons/go';
 import { Dropdown } from 'react-bootstrap';
 import { AuthContext } from '../contexts/AuthContext';
+import BoardMenuPopup from '../features/boards/panel/BoardPanel/components/BoardMenuPopup';
 
 export default function BoardSubHeaderRight({
   setShowFilter,
@@ -14,6 +15,11 @@ export default function BoardSubHeaderRight({
   isStarred,
   onToggleStar
 }) {
+  
+  const [menuPos, setMenuPos] = useState({ left: 0, top: 0 });
+  const [showMenu, setShowMenu] = useState(false);
+  const menuButtonRef = useRef(null);
+
   const CustomToggle = React.forwardRef(({ children, onClick }, ref) => (
     <IconButton
       ref={ref}
@@ -85,28 +91,25 @@ export default function BoardSubHeaderRight({
           <span>Share</span>
         </ShareButton>
 
-        <Dropdown>
-          <Dropdown.Toggle as={CustomToggle}>
-            <FiMoreHorizontal />
-          </Dropdown.Toggle>
+        <IconButton
+          ref={menuButtonRef}
+          title="More actions"
+          onClick={() => setShowMenu(true)}
+        >
+          <FiMoreHorizontal />
+        </IconButton>
 
-          <StyledDropdownMenu align="end">
-            <Dropdown.Header>Board Actions</Dropdown.Header>
-            <StyledDropdownItem>
-              <span>📊</span> About this board
-            </StyledDropdownItem>
-            <StyledDropdownItem>
-              <span>📈</span> Activity
-            </StyledDropdownItem>
-            <StyledDropdownItem>
-              <span>⚙️</span> Settings
-            </StyledDropdownItem>
-            <Dropdown.Divider />
-            <DangerDropdownItem onClick={onCloseBoard}>
-              <span>🗑️</span> Close board
-            </DangerDropdownItem>
-          </StyledDropdownMenu>
-        </Dropdown>
+        {showMenu && (
+          <BoardMenuPopup
+            anchorEl={menuButtonRef.current}
+            onClose={() => setShowMenu(false)}
+            onOpenInvite={onOpenInvite}
+            onCloseBoard={onCloseBoard}
+            onToggleStar={onToggleStar}
+            setShowFilter={setShowFilter}
+            isStarred={isStarred}
+          />
+        )}
       </RightSpan>
     </Wrapper>
   );
