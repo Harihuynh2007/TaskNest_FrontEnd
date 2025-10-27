@@ -1,20 +1,19 @@
-// src/components/sort/SortCardPopup.jsx
 import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import FocusLock from 'react-focus-lock';
 import { motion, AnimatePresence } from 'framer-motion';
+import { FiX } from 'react-icons/fi';
 
-export default function SortCardPopup({ anchorEl, onClose, onSelect, onBack  }) {
+export default function SortCardPopup({ anchorEl, onClose, onSelect, onBack }) {
   const ref = useRef(null);
   const [pos, setPos] = useState({ top: 0, left: 0 });
-
 
   const updatePosition = useCallback(() => {
     if (!anchorEl) return;
     const rect = anchorEl.getBoundingClientRect();
-    const popupWidth = 260;
-    const popupHeight = 260;
+    const popupWidth = 300;
+    const popupHeight = 340;
     const margin = 8;
 
     const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
@@ -29,13 +28,10 @@ export default function SortCardPopup({ anchorEl, onClose, onSelect, onBack  }) 
       window.scrollX + window.innerWidth - popupWidth - margin
     );
     setPos({ top, left });
-  }, [anchorEl]); 
+  }, [anchorEl]);
 
-
-  // Cập nhật ngay khi mount
   useLayoutEffect(updatePosition, [anchorEl]);
-  // Theo dõi resize/scroll
-  
+
   useEffect(() => {
     const fn = () => updatePosition();
     window.addEventListener('resize', fn);
@@ -46,7 +42,7 @@ export default function SortCardPopup({ anchorEl, onClose, onSelect, onBack  }) 
     };
   }, [updatePosition]);
 
-  // Click outside + ESC
+  // ✅ Click outside + ESC
   useEffect(() => {
     const onDown = (e) => {
       if (ref.current && !ref.current.contains(e.target)) onClose();
@@ -79,34 +75,35 @@ export default function SortCardPopup({ anchorEl, onClose, onSelect, onBack  }) 
           as={motion.div}
           role="dialog"
           aria-label="Sort cards"
-          initial={{ opacity: 0, scale: 0.96, y: -4 }}
+          initial={{ opacity: 0, scale: 0.96, y: -6 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96, y: -4 }}
-          transition={{ duration: 0.16 }}
+          exit={{ opacity: 0, scale: 0.96, y: -6 }}
+          transition={{ duration: 0.18 }}
           style={{ top: pos.top, left: pos.left }}
         >
           <Header>
-            <IconBtn
-              aria-label="Go back"
-              onClick={() => {
-                if (onBack) onBack(); // ✅ quay lại menu
-                else onClose();       // fallback nếu không truyền onBack
-              }}
-            >
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M15 6L9 12L15 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </IconBtn>
+            {onBack ? (
+              <BackBtn aria-label="Go back" onClick={onBack}>
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M15 6L9 12L15 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </BackBtn>
+            ) : (
+              <span style={{ width: 32 }} />
+            )}
 
             <Title>Sort cards</Title>
+
             <IconBtn aria-label="Close" onClick={onClose}>
-              <svg viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <FiX />
             </IconBtn>
           </Header>
 
           <List>
             {sorts.map(s => (
-              <Item key={s.key} onClick={() => onSelect(s.key)}>{s.label}</Item>
+              <Item key={s.key} onClick={() => onSelect(s.key)}>
+                {s.label}
+              </Item>
             ))}
           </List>
         </Box>
@@ -117,16 +114,17 @@ export default function SortCardPopup({ anchorEl, onClose, onSelect, onBack  }) 
   return createPortal(body, document.body);
 }
 
-// ---- styled ----
+/* ---------------- STYLES ---------------- */
 const Box = styled.div`
   position: absolute;
   z-index: 3000;
-  width: 260px;
-  background: var(--surface-2, #1f2633);
+  width: 300px;
+  background: rgba(17, 25, 40, 0.95);
+  backdrop-filter: blur(18px) saturate(180%);
   border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 12px;
+  border-radius: 14px;
   box-shadow: 0 12px 32px rgba(0,0,0,0.45);
-  backdrop-filter: blur(10px);
+  color: #e2e8f0;
   overflow: hidden;
 `;
 
@@ -134,8 +132,7 @@ const Header = styled.div`
   display: grid;
   grid-template-columns: 32px 1fr 32px;
   align-items: center;
-  gap: 4px;
-  padding: 8px;
+  padding: 10px 12px;
   background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
   color: #e2e8f0;
 `;
@@ -161,21 +158,33 @@ const IconBtn = styled.button`
   svg { width: 18px; height: 18px; }
 `;
 
+const BackBtn = styled(IconBtn)`
+  svg { width: 20px; height: 20px; }
+`;
+
 const List = styled.ul`
   list-style: none;
-  margin: 0; padding: 8px 0;
+  margin: 0;
+  padding: 8px 0 10px;
 `;
 
 const Item = styled.li`
   margin: 2px 8px;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 14px;
+  font-weight: 500;
   color: #cbd5e1;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
   &:hover, &:focus-visible {
-    background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
-    color: #fff; outline: none;
+    background: rgba(59,130,246,0.15);
+    color: #3b82f6;
+    transform: translateX(3px);
+    outline: none;
   }
 `;
