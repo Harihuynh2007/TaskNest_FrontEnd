@@ -12,17 +12,19 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [workspaces, setWorkspaces] = useState([]);
-
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaTempToken, setMfaTempToken] = useState(null);
+  
   const fetchUserDetails = useCallback(async () => {
     try {
-
       const { data } = await api.get('/auth/me/');
       setUser({
         id: data.id,
         email: data.email,
         username: data.username,
         role: data.role || 'user',
-        profile: data.profile, 
+        profile: data.profile,
+        mfa_enabled: data.mfa_enabled || false, // NEW
       });
     } catch (err) {
       console.error('Failed to fetch user:', err);
@@ -35,7 +37,7 @@ export function AuthProvider({ children }) {
 
   const preloadWorkspaces = useCallback(async () => {
     try {
-      const res = await fetchWorkspaces(); // this should return array of workspaces
+      const res = await fetchWorkspaces();
       setWorkspaces(res.data || []);
     } catch (err) {
       console.error('Failed to preload workspaces:', err);
@@ -56,16 +58,10 @@ export function AuthProvider({ children }) {
   // Lắng nghe sự kiện cập nhật profile từ các trang khác
   useEffect(() => {
     const handleUserUpdate = () => {
-      console.log("AuthContext: Received 'auth:user-updated' event. Refetching user details...");
-      fetchUserDetails(); // Gọi lại hàm fetch user để lấy dữ liệu mới nhất
+      fetchUserDetails();
     };
-
     window.addEventListener('auth:user-updated', handleUserUpdate);
-
-    // Dọn dẹp listener khi component unmount
-    return () => {
-      window.removeEventListener('auth:user-updated', handleUserUpdate);
-    };
+    return () => window.removeEventListener('auth:user-updated', handleUserUpdate);
   }, [fetchUserDetails]);
   
   //apiClient phát window.dispatchEvent('unauthorized') → Tránh kẹt “ghost session” khi refresh token hết hạn.
@@ -80,38 +76,67 @@ export function AuthProvider({ children }) {
   }, []);
 
 
-  const login = useCallback(async (email, password) => {
+  const login = useCallback(async (email, password, remember = false) => {
     const data = await authLogin({ email, password });
-    const { token: access, refresh } = data;
+    
+    // CRITICAL: Check if MFA required
+    if (data.mfa_required) {
+      setMfaRequired(true);
+      setMfaTempToken(data.temp_token);
+      return { mfaRequired: true };
+    }
 
-    TokenManager.setTokens(access, refresh);
+    const { token: access, refresh } = data;
+    TokenManager.setTokens(access, refresh, remember); // Pass remember flag
 
     api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
 
-    await fetchUserDetails();      // 1. Fetch user
-    await preloadWorkspaces();     // 2. Preload workspaces
-    return true;
+    await fetchUserDetails();
+    await preloadWorkspaces();
+    return { success: true };
   }, [fetchUserDetails, preloadWorkspaces]);
 
+  const completeMFALogin = useCallback(async (code) => {
+    try {
+      const res = await api.post('/auth/mfa/verify/', { 
+        temp_token: mfaTempToken, 
+        code 
+      });
+      
+      const { token: access, refresh } = res.data;
+      const remember = localStorage.getItem('persist_session') === 'true';
+      TokenManager.setTokens(access, refresh, remember);
+      
+      api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
+      
+      setMfaRequired(false);
+      setMfaTempToken(null);
+      
+      await fetchUserDetails();
+      await preloadWorkspaces();
+      return { success: true };
+    } catch (err) {
+      throw new Error(err.response?.data?.error || 'Invalid MFA code');
+    }
+  }, [mfaTempToken, fetchUserDetails, preloadWorkspaces]);
+  
   const loginWithGoogle = useCallback(async (googleToken) => {
-    // Gọi API google-login của backend
     const res = await api.post('/auth/google-login/', { token: googleToken });
     const { token: access, refresh, user: userData } = res.data;
 
-    // Lưu token và cập nhật state
-    TokenManager.setTokens(access, refresh);
+    TokenManager.setTokens(access, refresh, true); // Default remember for OAuth
     api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
     
-    // Cập nhật user state trực tiếp từ response để UI nhanh hơn
     setUser({
       id: userData.id,
       email: userData.email,
       username: userData.username,
       role: userData.role,
-      profile: userData.profile, // BE google-login trả kèm user -> có profile lồng bên trong
+      profile: userData.profile,
+      mfa_enabled: userData.mfa_enabled || false,
     });
     
-    await preloadWorkspaces(); // Tải workspace
+    await preloadWorkspaces();
     return res;
   }, [preloadWorkspaces]);
 
@@ -134,15 +159,14 @@ export function AuthProvider({ children }) {
     return authLogout()
       .then(() => {
         TokenManager.clearTokens();
-
         delete api.defaults.headers.common['Authorization'];
-
         setUser(null);
         setWorkspaces([]);
+        setMfaRequired(false);
+        setMfaTempToken(null);
       })
       .catch(error => {
         console.error('Logout error:', error);
-        // Vẫn dọn dẹp localStorage dù có lỗi
         TokenManager.clearTokens();
         delete api.defaults.headers.common['Authorization'];
         setUser(null);
@@ -151,8 +175,15 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{
-      user, loading, login, logout, signup, workspaces, 
-      loginWithGoogle 
+      user, 
+      loading, 
+      login, 
+      logout, 
+      signup, 
+      workspaces, 
+      loginWithGoogle,
+      mfaRequired,
+      completeMFALogin,
     }}>
       {children}
     </AuthContext.Provider>
