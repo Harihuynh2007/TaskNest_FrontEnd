@@ -7,6 +7,7 @@ import {
   FaChevronDown, FaSignOutAlt, FaQuestionCircle, FaPlus, FaExchangeAlt,
   FaCog, FaIdBadge, FaUser, FaKeyboard, FaMoon, FaSun
 } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { AuthContext } from '../contexts/AuthContext';
 import { WorkspaceContext } from '../contexts/WorkspaceContext';
@@ -15,8 +16,9 @@ import InviteWorkspaceModal from './Workspace/InviteWorkspaceModal';
 import * as workspaceApi from '../api/workspaceApi';
 
 /* =========================
-   Styled (dark-premium ready)
+   Styled (dark-premium ready + responsive)
    ========================= */
+
 const ToggleBtn = styled(Dropdown.Toggle)`
   background: transparent !important;
   border: 1px solid var(--panel-border, #3a465e) !important;
@@ -24,10 +26,23 @@ const ToggleBtn = styled(Dropdown.Toggle)`
   border-radius: 999px !important;
   display: inline-flex; align-items: center; gap: 8px;
   color: var(--header-text, #e6e9ee) !important;
+  transition: background 0.2s ease, border 0.2s ease;
+  position: relative;
 
   &:hover, &:focus {
     background: var(--header-hover, #1b2435) !important;
     color: var(--header-text, #e6e9ee) !important;
+  }
+
+  /* Ẩn mũi tên mặc định của Bootstrap */
+  &::after {
+    display: none !important;
+  }
+
+  /* Khi màn hình nhỏ: giảm padding, ẩn chữ, chỉ còn avatar */
+  @media (max-width: 480px) {
+    padding: 4px 6px !important;
+    gap: 6px;
   }
 `;
 
@@ -39,6 +54,18 @@ const Menu = styled(Dropdown.Menu)`
   border-radius: 12px;
   box-shadow: 0 14px 32px rgba(0,0,0,.38);
   line-height: 1.2;
+  z-index: 9999;
+
+  /* Ngăn menu tràn ra ngoài viewport */
+  @media (max-width: 480px) {
+    position: fixed !important;
+    right: 8px !important;
+    top: auto !important;
+    bottom: 64px;
+    left: 8px !important;
+    width: auto !important;
+    min-width: unset;
+  }
 `;
 
 const SectionTitle = styled.div`
@@ -59,6 +86,8 @@ const Item = styled(Dropdown.Item)`
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
+  transition: background 0.15s ease;
+
   &:hover, &:focus {
     background: var(--surface-3, #232d3e) !important;
     color: var(--text-primary, #e6e9ee) !important;
@@ -66,7 +95,6 @@ const Item = styled(Dropdown.Item)`
   svg { opacity: .9; }
 `;
 
-/* Button action reset để tránh bootstrap biến thành pill sáng */
 const ActionItem = styled.button`
   all: unset;
   box-sizing: border-box;
@@ -76,6 +104,8 @@ const ActionItem = styled.button`
   border-radius: 10px;
   color: var(--text-primary, #e6e9ee);
   cursor: pointer;
+  transition: background 0.15s ease;
+
   &:hover, &:focus-visible {
     background: var(--surface-3, #232d3e);
     outline: none;
@@ -89,11 +119,17 @@ const AccountHeader = styled.div`
   align-items: center; margin: 4px 4px 6px;
   .name { font-weight: 800; color: var(--text-primary, #e6e9ee); }
   .email { font-size: 12px; color: var(--text-secondary, #9aa5b5); }
+
+  @media (max-width: 480px) {
+    flex-direction: row;
+    .email { display: none; }
+  }
 `;
 
 const Avatar = styled(Image)`
   width: 32px; height: 32px; border-radius: 50%;
-  object-fit: cover; flex-shrink: 0; border: 1px solid var(--panel-border, #3a465e);
+  object-fit: cover; flex-shrink: 0; 
+  border: 1px solid var(--panel-border, #3a465e);
 `;
 
 const Dot = styled.span`
@@ -106,6 +142,11 @@ const ToggleChip = styled.span`
   padding: 2px 8px; border-radius: 999px;
   background: var(--surface-3, #232d3e); color: var(--text-secondary, #9aa5b5);
   font-size: 12px; font-weight: 700;
+
+  /* Ẩn chữ ở màn hình nhỏ, chỉ giữ dot */
+  @media (max-width: 480px) {
+    display: none;
+  }
 `;
 
 /* =========================
@@ -163,13 +204,11 @@ export default function UserDropdown({ align = 'end', onToggleTheme: onToggleThe
   const { setCurrentWorkspaceId, refreshWorkspaces } = useContext(WorkspaceContext);
   const [open, setOpen] = useState(false);
 
-  // Modals
   const [showCreate, setShowCreate] = useState(false);
-  const [justCreated, setJustCreated] = useState(null); // {id, name}
+  const [justCreated, setJustCreated] = useState(null);
 
   const navigate = useNavigate();
 
-  // Theme toggle fallback (nếu không truyền prop)
   const isDark = typeof window !== 'undefined'
     ? document.body.getAttribute('data-theme') !== 'light'
     : true;
@@ -196,7 +235,6 @@ export default function UserDropdown({ align = 'end', onToggleTheme: onToggleThe
   const account = menu.find(m => m.type === 'account') || {};
   const handleSelect = useCallback(() => setOpen(false), []);
 
-  // Handle Create Workspace submit (được gọi từ CreateWorkspaceModal)
   const handleContinueCreate = useCallback(async ({ name, type, description }) => {
     try {
       const { data } = await workspaceApi.createWorkspace({
@@ -204,12 +242,10 @@ export default function UserDropdown({ align = 'end', onToggleTheme: onToggleThe
         type,
         description
       });
-      // cập nhật context
       setCurrentWorkspaceId?.(data.id);
       await refreshWorkspaces?.();
       setShowCreate(false);
       setJustCreated({ id: data.id, name: data.name });
-      // chuyển tới trang boards
       navigate('/boards', { replace: true });
     } catch (e) {
       console.error('Create workspace error', e);
@@ -226,49 +262,59 @@ export default function UserDropdown({ align = 'end', onToggleTheme: onToggleThe
           <FaChevronDown size={12} />
         </ToggleBtn>
 
-        <Menu>
-          {/* Account header */}
-          <AccountHeader>
-            <Avatar src={account.avatar} alt="avatar" roundedCircle />
-            <div>
-              <div className="name">{account.name || 'User'}</div>
-              {account.email ? <div className="email">{account.email}</div> : null}
-            </div>
-          </AccountHeader>
+        {/* Animate Dropdown Menu */}
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              key="dropdown-menu"
+              initial={{ opacity: 0, scale: 0.96, y: -4 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: -4 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+            >
+              <Menu>
+                <AccountHeader>
+                  <Avatar src={account.avatar} alt="avatar" roundedCircle />
+                  <div>
+                    <div className="name">{account.name || 'User'}</div>
+                    {account.email ? <div className="email">{account.email}</div> : null}
+                  </div>
+                </AccountHeader>
 
-          {/* Items */}
-          {menu.map((m, idx) => {
-            if (m.type === 'account') return null;
-            if (m.type === 'divider') return <Divider key={`div-${idx}`} />;
-            if (m.type === 'section') return <SectionTitle key={`sec-${m.label}`}>{m.label}</SectionTitle>;
+                {menu.map((m, idx) => {
+                  if (m.type === 'account') return null;
+                  if (m.type === 'divider') return <Divider key={`div-${idx}`} />;
+                  if (m.type === 'section') return <SectionTitle key={`sec-${m.label}`}>{m.label}</SectionTitle>;
 
-            const content = (
-              <>
-                {m.icon}
-                <span>{m.label}</span>
-              </>
-            );
+                  const content = (
+                    <>
+                      {m.icon}
+                      <span>{m.label}</span>
+                    </>
+                  );
 
-            if (m.href) {
-              // External or internal
-              return m.href.startsWith('http') || m.target === '_blank' ? (
-                <Item as="a" href={m.href} target={m.target || '_self'} rel="noopener noreferrer" key={`a-${idx}`}>
-                  {content}
-                </Item>
-              ) : (
-                <Item as={Link} to={m.href} key={`link-${idx}`}>
-                  {content}
-                </Item>
-              );
-            }
+                  if (m.href) {
+                    return m.href.startsWith('http') || m.target === '_blank' ? (
+                      <Item as="a" href={m.href} target={m.target || '_self'} rel="noopener noreferrer" key={`a-${idx}`}>
+                        {content}
+                      </Item>
+                    ) : (
+                      <Item as={Link} to={m.href} key={`link-${idx}`}>
+                        {content}
+                      </Item>
+                    );
+                  }
 
-            return (
-              <ActionItem onClick={m.onClick} key={`btn-${idx}`} type="button">
-                {content}
-              </ActionItem>
-            );
-          })}
-        </Menu>
+                  return (
+                    <ActionItem onClick={m.onClick} key={`btn-${idx}`} type="button">
+                      {content}
+                    </ActionItem>
+                  );
+                })}
+              </Menu>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </Dropdown>
 
       {/* Create Workspace */}
