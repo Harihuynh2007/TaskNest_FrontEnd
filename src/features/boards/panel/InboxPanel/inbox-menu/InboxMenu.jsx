@@ -1,22 +1,62 @@
-// src/features/boards/panes/inbox-menu/InboxMenu.jsx
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState, useCallback, useLayoutEffect } from "react";
 import { motion } from "framer-motion";
 import styled from "styled-components";
 import { ChevronRight, Brain, Filter, Settings, SortAsc } from "lucide-react";
 import ReactDOM from "react-dom";
 
-export default function InboxMenu({ position, onClose, onSelect }) {
+export default function InboxMenu({ anchorEl, onClose, onSelect }) {
   const menuRef = useRef(null);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
 
-  // Đóng menu khi click ra ngoài
+  // ✅ Tính toán vị trí popup dựa trên anchorEl
+  const updatePosition = useCallback(() => {
+    if (!anchorEl) return;
+    const rect = anchorEl.getBoundingClientRect();
+    const popupWidth = 260;
+    const popupHeight = 220;
+    const margin = 8;
+
+    const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
+    const top = clamp(
+      rect.bottom + window.scrollY + margin,
+      window.scrollY + margin,
+      window.scrollY + window.innerHeight - popupHeight - margin
+    );
+    const left = clamp(
+      rect.right + window.scrollX - popupWidth,
+      window.scrollX + margin,
+      window.scrollX + window.innerWidth - popupWidth - margin
+    );
+
+    setPos({ top, left });
+  }, [anchorEl]);
+
+  useLayoutEffect(updatePosition, [anchorEl]);
+
+  useEffect(() => {
+    const fn = () => updatePosition();
+    window.addEventListener("resize", fn);
+    window.addEventListener("scroll", fn, true);
+    return () => {
+      window.removeEventListener("resize", fn);
+      window.removeEventListener("scroll", fn, true);
+    };
+  }, [updatePosition]);
+
+  // ✅ Đóng khi click ra ngoài hoặc bấm ESC
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         onClose?.();
       }
     };
+    const handleEsc = (e) => e.key === "Escape" && onClose?.();
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEsc);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEsc);
+    };
   }, [onClose]);
 
   const items = [
@@ -35,9 +75,9 @@ export default function InboxMenu({ position, onClose, onSelect }) {
       exit={{ opacity: 0, scale: 0.95, y: -6 }}
       transition={{ duration: 0.18 }}
       style={{
-        position: "absolute",
-        top: position?.top || 100,
-        left: position?.left || 100,
+        position: "fixed",
+        top: pos.top,
+        left: pos.left,
       }}
       role="menu"
       aria-label="Inbox options"
@@ -65,6 +105,7 @@ export default function InboxMenu({ position, onClose, onSelect }) {
   return ReactDOM.createPortal(menuEl, document.body);
 }
 
+/* ✅ Giữ nguyên phần styled hiện có vì đã đúng chuẩn TaskNest */
 const MenuContainer = styled.div`
   position: fixed;
   width: 260px;
@@ -83,7 +124,6 @@ const MenuContainer = styled.div`
     margin: 0;
   }
 `;
-
 
 const MenuItem = styled.li`
   display: flex;
