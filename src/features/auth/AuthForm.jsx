@@ -34,9 +34,16 @@ export default function AuthForm({ mode = 'login' }) {
     }
   };
 
-  const handleAuthSubmit = async ({ email, password }) => {
+  const handleAuthSubmit = async ({ email, password, remember }) => {
     if (isLogin) {
-      await login(email, password);
+      // CRITICAL: Pass remember flag for token persistence
+      const result = await login(email, password, remember);
+      
+      // Handle MFA flow (context will set mfaRequired)
+      if (result.mfaRequired) {
+        return; // MFAVerify component will be shown by App.js
+      }
+
       handleSaveAccount(email);
       navigate('/boards');
     } else {
@@ -62,19 +69,16 @@ export default function AuthForm({ mode = 'login' }) {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        {/* Illustration section */}
         <div className="auth-illustration">
           <img src="/login-illustration.png" alt="TaskNest" />
           <h2>Welcome {isLogin ? 'back' : 'aboard'}!</h2>
-          <p>{isLogin ? 'Sign in to continue organizing your work.' : 'Create your account to start managing tasks smarter.'}</p>
+          <p>{isLogin ? 'Sign in to continue' : 'Create your account'}</p>
         </div>
 
-        {/* Form section */}
         <div className="auth-form-side">
           <h3 className="auth-title">{isLogin ? 'Login' : 'Sign Up'}</h3>
 
           <Form noValidate onSubmit={handleSubmit}>
-            {/* Email */}
             <Form.Group className="mb-3" controlId="authEmail">
               <Form.Label>Email address</Form.Label>
               <Form.Control
@@ -92,7 +96,6 @@ export default function AuthForm({ mode = 'login' }) {
               <Form.Control.Feedback type="invalid">{errors.email}</Form.Control.Feedback>
             </Form.Group>
 
-            {/* Password */}
             <Form.Group className="mb-3" controlId="authPassword">
               <Form.Label>Password</Form.Label>
               <InputGroup>
@@ -108,20 +111,14 @@ export default function AuthForm({ mode = 'login' }) {
                   required
                   className="auth-input"
                 />
-                <Button
-                  variant="link"
-                  type="button"
-                  className="toggle-eye"
-                  onClick={() => setShowPassword(prev => !prev)}
-                  disabled={isSubmitting}
-                >
+                <Button variant="link" type="button" className="toggle-eye"
+                  onClick={() => setShowPassword(prev => !prev)} disabled={isSubmitting}>
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </Button>
                 <Form.Control.Feedback type="invalid">{errors.password}</Form.Control.Feedback>
               </InputGroup>
             </Form.Group>
 
-            {/* Confirm password (register only) */}
             {!isLogin && (
               <Form.Group className="mb-3" controlId="authConfirmPassword">
                 <Form.Label>Confirm Password</Form.Label>
@@ -138,22 +135,11 @@ export default function AuthForm({ mode = 'login' }) {
                     required
                     className="auth-input"
                   />
-                  <Button
-                    variant="link"
-                    type="button"
-                    className="toggle-eye"
-                    onClick={() => setShowPassword(prev => !prev)}
-                    disabled={isSubmitting}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    {showPassword ? <FaEyeSlash /> : <FaEye />}
-                  </Button>
                   <Form.Control.Feedback type="invalid">{errors.confirm}</Form.Control.Feedback>
                 </InputGroup>
               </Form.Group>
             )}
 
-            {/* Remember & Forgot */}
             {isLogin && (
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <Form.Check
@@ -168,7 +154,6 @@ export default function AuthForm({ mode = 'login' }) {
               </div>
             )}
 
-            {/* Submit */}
             <div className="d-grid mb-3">
               <Button type="submit" className="auth-btn" disabled={isSubmitting}>
                 {isSubmitting ? (
@@ -181,10 +166,8 @@ export default function AuthForm({ mode = 'login' }) {
               </Button>
             </div>
 
-            {/* OAuth (login only) */}
             {isLogin && <OAuthButtonGroup />}
 
-            {/* Switch mode */}
             <p className="text-center switch-link">
               {isLogin ? "Don't have an account? " : 'Already have an account? '}
               <Link to={isLogin ? '/register' : '/login'} className="fw-bold gradient-text">
@@ -195,7 +178,6 @@ export default function AuthForm({ mode = 'login' }) {
         </div>
       </div>
 
-      {/* Error modal */}
       <Modal show={!!apiError} onHide={clearApiError} centered>
         <Modal.Body className="auth-error-modal">
           <h5>⚠️ Something went wrong</h5>
