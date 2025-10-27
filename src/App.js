@@ -1,23 +1,27 @@
 // src/App.js
 import React, { useContext } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+
 import { AuthContext } from './contexts/AuthContext';
 
-import AuthForm from './features/auth/AuthForm';
-import BoardsPage from './features/boards/BoardsPage';
-import TemplatesPage from './features/templates/TemplatesPage';
-import HomePage from './features/home/HomePage';
-import BoardDetailPage from './features/boards/BoardDetailPage';
-import PrivateRoute from './Layouts/PrivateRoute';
-import WithHeaderOnlyLayout from './Layouts/WithHeaderOnlyLayout.jsx'; // thêm dòng này
-import ProfileAndVisibility from './features/boards/settings/profileandvisibility/ProfileAndVisibility.jsx';
-import BoardsMainContent from './features/boards/BoardsMainContent';
-import Settings from './features/boards/settings/Setting.jsx';
-
 import { GlobalStyle } from './styles/GlobalStyle';
-import ResetPassword from './features/auth/ResetPassword';
-import ForgotPassword from './features/auth/ForgotPassword';
 
+import PrivateRoute from './Layouts/PrivateRoute';
+import WithHeaderOnlyLayout from './Layouts/WithHeaderOnlyLayout';
+
+import AuthForm from './features/auth/AuthForm';
+import ForgotPassword from './features/auth/ForgotPassword';
+import ResetPassword from './features/auth/ResetPassword';
+import MFAVerify from './features/auth/components/MFAVerify';
+
+import HomePage from './features/home/HomePage';
+import BoardsPage from './features/boards/BoardsPage';
+import BoardDetailPage from './features/boards/BoardDetailPage';
+import BoardsMainContent from './features/boards/BoardsMainContent';
+import TemplatesPage from './features/templates/TemplatesPage';
+
+import Settings from './features/boards/settings/Setting';
+import ProfileAndVisibility from './features/boards/settings/profileandvisibility/ProfileAndVisibility';
 
 const LogoutRedirect = () => {
   const { user } = useContext(AuthContext);
@@ -30,6 +34,29 @@ const LogoutRedirect = () => {
 };
 
 function App() {
+  const { user, mfaRequired, completeMFALogin } = useContext(AuthContext);
+  const location = useLocation();
+
+  // CRITICAL: Handle MFA verification flow
+  if (mfaRequired) {
+    return (
+      <>
+        <GlobalStyle />
+        <MFAVerify
+          onVerify={async (code) => {
+            const result = await completeMFALogin(code);
+            if (!result.success) {
+              throw new Error('Invalid code');
+            }
+          }}
+          onUseBackup={() => {
+            // Handle backup code flow
+          }}
+        />
+      </>
+    );
+  }
+
   return (
     <>
       <GlobalStyle/>
@@ -39,8 +66,6 @@ function App() {
         <Route path="/register" element={<AuthForm mode="register" />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-
-
 
         {/* App routes with header */}
         <Route
@@ -60,7 +85,6 @@ function App() {
               <WithHeaderOnlyLayout>
                 <BoardDetailPage />
               </WithHeaderOnlyLayout>
-              
             </PrivateRoute>
           }
         />
@@ -112,9 +136,12 @@ function App() {
           }
         />
 
-        <Route path="/" element={<LogoutRedirect />} />
+        <Route 
+          path="/" 
+          element={user ? <Navigate to="/boards" replace /> : <Navigate to="/login" replace />} 
+        />
         <Route path="*" element={<Navigate to="/boards" replace />} />
-        
+         
       </Routes>
     </>
   );
