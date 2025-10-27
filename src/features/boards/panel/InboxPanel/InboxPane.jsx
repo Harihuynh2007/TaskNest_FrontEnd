@@ -404,7 +404,7 @@ export default function InboxPane({
 
         {showMenu && (
           <InboxMenu
-            position={menuPos}
+            anchorEl={menuButtonRef.current}
             style={{ pointerEvents: showMenu ? "auto" : "none" }}
             onClose={() => setShowMenu(false)}
             onSelect={(key) => {
