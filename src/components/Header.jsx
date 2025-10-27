@@ -6,12 +6,16 @@ import { AuthContext, WorkspaceContext, ModalContext } from '../contexts';
 import { MdSearch } from 'react-icons/md';
 import { FiHelpCircle } from 'react-icons/fi';
 import { AiOutlineGlobal } from 'react-icons/ai';
+import { motion, AnimatePresence } from 'framer-motion';
+
+
 import UserDropdown from './UserDropdown';
 import CreateDropdown from './CreateDropdown';
 import BoardThemeDrawer from '../features/boards/BoardThemeDrawer';
 import FeedbackPopup from '../components/FeedbackPopup';
 import AppsDropdown from './AppsDropdown';
 import NotificationBell from '../features/notifications/NotificationBell';
+import styled from 'styled-components';
 
 export default function Header() {
   const navigate = useNavigate();
@@ -120,15 +124,27 @@ export default function Header() {
               >
                 <span className="tn-plus">＋</span> Create
               </Button>
-              {showCreateDropdown && (
-                <CreateDropdown
-                  onCreateBoard={onCreateBoard}
-                  onStartTemplate={() => {
-                    setShowCreateDropdown(false);
-                    navigate('/templates');
-                  }}
-                />
-              )}
+
+              <AnimatePresence>
+                {showCreateDropdown && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: -8 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -8 }}
+                    transition={{ duration: 0.18, ease: 'easeOut' }}
+                    className="position-absolute z-50"
+                  >
+                    <CreateDropdown
+                      onCreateBoard={onCreateBoard}
+                      onStartTemplate={() => {
+                        setShowCreateDropdown(false);
+                        navigate('/templates');
+                      }}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
             </div>
 
             <div className="position-relative" ref={feedbackRef}>
