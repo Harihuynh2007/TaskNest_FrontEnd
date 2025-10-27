@@ -18,6 +18,7 @@ import useInboxThemeColor from './useInboxThemeColor';
 import InboxThemePicker from './InboxThemePicker';
 import InboxThemeButton from './InboxThemeButton';
 import InboxMenu from "./inbox-menu/InboxMenu";
+import SortCardPopup from './sort/SortCardPopup';
 
 dayjs.extend(isoWeek);
 dayjs.extend(isSameOrBefore);
@@ -44,6 +45,9 @@ export default function InboxPane({
   const [showMenu, setShowMenu] = useState(false);
   const menuButtonRef = useRef(null);
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+
+  const [showSort, setShowSort] = useState(false);
+  const [sortPos, setSortPos] = useState({ top: 0, left: 0 });
 
   
   const {
@@ -232,6 +236,12 @@ export default function InboxPane({
     };
   }, [showMenu, menuButtonRef]);
 
+  const handleBackToMenu = () => {
+    setShowSort(false);
+    setShowMenu(true);
+  };
+
+
   return (
     <PaneWrapper $background={effectiveColor}>
       <InboxSubHeader
@@ -344,50 +354,50 @@ export default function InboxPane({
             isInboxMode={true}
             onCardDeleted={handleCardDeleted}
             onSelect={async (key, c) => {
-      switch (key) {
-        case 'open': {
-          const card = editPopup?.card;
-          setEditPopup(null);
-          if (card) setSelectedCard(card);
-          break;
-        }
-        case 'labels': {
-          toast?.('Labels: tính năng sắp có');
-          break;
-        }
-        case 'dates': {
-          toast?.('Dates: tính năng sắp có');
-          break;
-        }
-        case 'checklist': {
-          toast?.('Checklist: tính năng sắp có');
-          break;
-        }
-        case 'attachment': {
-          toast?.('Attachment: tính năng sắp có');
-          break;
-        }
-        case 'members': {
-          toast?.('Members: tính năng sắp có');
-          break;
-        }
-        case 'delete': {
-          try {
-            await cardApi.deleteCard(c.id);
-             if (typeof handleCardDeleted === 'function') handleCardDeleted(c.id);
-            toast?.success?.('Đã xoá thẻ');
-          } catch (err) {
-            console.error(err);
-            toast?.error?.('Xoá thẻ thất bại');
-          } finally {
-            setEditPopup(null);
-          }
-          break;
-        }
-        default:
-          break;
-      }
-    }}
+              switch (key) {
+                case 'open': {
+                  const card = editPopup?.card;
+                  setEditPopup(null);
+                  if (card) setSelectedCard(card);
+                  break;
+                }
+                case 'labels': {
+                  toast?.('Labels: tính năng sắp có');
+                  break;
+                }
+                case 'dates': {
+                  toast?.('Dates: tính năng sắp có');
+                  break;
+                }
+                case 'checklist': {
+                  toast?.('Checklist: tính năng sắp có');
+                  break;
+                }
+                case 'attachment': {
+                  toast?.('Attachment: tính năng sắp có');
+                  break;
+                }
+                case 'members': {
+                  toast?.('Members: tính năng sắp có');
+                  break;
+                }
+                case 'delete': {
+                  try {
+                    await cardApi.deleteCard(c.id);
+                    if (typeof handleCardDeleted === 'function') handleCardDeleted(c.id);
+                    toast?.success?.('Đã xoá thẻ');
+                  } catch (err) {
+                    console.error(err);
+                    toast?.error?.('Xoá thẻ thất bại');
+                  } finally {
+                    setEditPopup(null);
+                  }
+                  break;
+                }
+                default:
+                  break;
+              }
+            }}
           />
         )}
 
@@ -399,9 +409,11 @@ export default function InboxPane({
             onClose={() => setShowMenu(false)}
             onSelect={(key) => {
               switch (key) {
-                case "sort":
-                  toast("Sort logic sẽ xử lý ở đây");
+                case "sort": {
+                  setShowMenu(false);
+                  setShowSort(true);
                   break;
+                }
                 case "filter":
                   setShowFilter(true);
                   break;
@@ -415,6 +427,30 @@ export default function InboxPane({
                   break;
               }
               setShowMenu(false);
+            }}
+          />
+        )}
+
+        {showSort && (
+          <SortCardPopup
+            anchorEl={menuButtonRef.current}
+            onClose={() => setShowSort(false)}
+            onBack={handleBackToMenu}
+            onSelect={(key) => {
+              const sorted = [...cards];
+              switch (key) {
+                case 'created_newest':  sorted.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)); break;
+                case 'created_oldest':  sorted.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)); break;
+                case 'name_az':         sorted.sort((a,b)=> (a.name||'').localeCompare(b.name||'')); break;
+                case 'name_za':         sorted.sort((a,b)=> (b.name||'').localeCompare(a.name||'')); break;
+                case 'due_earliest':    sorted.sort((a,b)=> new Date(a.due_date||'9999-12-31') - new Date(b.due_date||'9999-12-31')); break;
+                case 'due_latest':      sorted.sort((a,b)=> new Date(b.due_date||'1970-01-01') - new Date(a.due_date||'1970-01-01')); break;
+                case 'completed_first': sorted.sort((a,b)=> (b.completed?1:0) - (a.completed?1:0)); break;
+                case 'incomplete_first':sorted.sort((a,b)=> (a.completed?1:0) - (b.completed?1:0)); break;
+                default: break;
+              }
+              setCards(sorted);
+              setShowSort(false);
             }}
           />
         )}
