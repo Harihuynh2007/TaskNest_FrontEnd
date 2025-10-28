@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import UserDropdown from './UserDropdown';
 import CreateDropdown from './CreateDropdown';
-import BoardThemeDrawer from '../features/boards/BoardThemeDrawer';
+import BoardThemeDrawer from '../features/boards/CreateBoard/BoardThemeDrawer';
 import FeedbackPopup from '../components/FeedbackPopup';
 import AppsDropdown from './AppsDropdown';
 import NotificationBell from '../features/notifications/NotificationBell';

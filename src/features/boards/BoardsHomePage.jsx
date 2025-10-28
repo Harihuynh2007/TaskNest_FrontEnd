@@ -11,7 +11,7 @@ import * as boardApi from '../../api/boardApi';
 
 import RecentBoardsSection from './RecentBoardsSection';
 import ClosedBoardsModal from './ClosedBoardsPage';
-import BoardThemeDrawer from './BoardThemeDrawer';
+import BoardThemeDrawer from './CreateBoard/BoardThemeDrawer';
 
 export default function BoardsHomePage() {
   const { workspaces, loadingWorkspaces } = useContext(WorkspaceContext);

@@ -5,7 +5,7 @@ import { fetchBoards } from '../../api/boardApi';
 import { Link } from 'react-router-dom';
 import * as boardApi from '../../api/boardApi'; 
 import styled from 'styled-components';
-import BoardThemeDrawer from './BoardThemeDrawer';
+import BoardThemeDrawer from './CreateBoard/BoardThemeDrawer';
 import ClosedBoardsModal from './ClosedBoardsPage';
 
 export default function BoardsMainContent({ onCreateBoard }) {

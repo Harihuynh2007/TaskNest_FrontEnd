@@ -9,7 +9,7 @@ import {
 } from 'react-icons/md';
 import toast from 'react-hot-toast';
 
-import BoardThemeDrawer from '../features/boards/BoardThemeDrawer';
+import BoardThemeDrawer from '../features/boards/CreateBoard/BoardThemeDrawer';
 import CreateWorkspaceModal from './Workspace/CreateWorkspaceModal';
 import InviteWorkspaceModal from './Workspace/InviteWorkspaceModal';
 import { WorkspaceContext } from '../contexts/WorkspaceContext';
