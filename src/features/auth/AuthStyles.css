@@ -17,14 +17,15 @@
   max-width: 100%;
   border-radius: 1rem;
   overflow: hidden;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-  background: linear-gradient(135deg, rgba(40, 56, 77, 0.9), rgba(17, 25, 40, 0.8));
-  backdrop-filter: blur(10px);
-  transition: transform 0.25s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  background: rgba(17, 25, 40, 0.75);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
-
 .auth-card:hover {
   transform: translateY(-3px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 
 /* Left side illustration */
@@ -60,7 +61,9 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-
+  background: rgba(255, 255, 255, 0.060);
+  backdrop-filter: blur(8px);
+  border-left: 1px solid rgba(255, 255, 255, 0.082);
 }
 
 .auth-title {
@@ -188,10 +191,19 @@
 }
 
 
-
 .auth-card { background: rgba(17,25,40,0.85); /* tăng alpha nhẹ khi thiếu blur */ }
 @supports (backdrop-filter: blur(12px)) {
   .auth-card { background: rgba(17,25,40,0.7); }
 }
 
 
+button.btn-outline-dark {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f9fafb;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+button.btn-outline-dark:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
