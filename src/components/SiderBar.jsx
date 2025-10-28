@@ -428,135 +428,147 @@ export default function SiderBar() {
   }
 
   return (
-    <SidebarContainer>
-      {/* Top navigation */}
-      <ListGroup variant="flush" className="mb-2">
-        <StyledItem 
-          $isActive={location.pathname === '/boards'} 
-          onClick={() => navigate('/boards')}
-          role="button"
-          tabIndex={0}
-          aria-label="Navigate to Boards"
-          onKeyDown={(e) => handleKeyDown(e, () => navigate('/boards'))}
-        >
-          <FaTrello /> Boards
-        </StyledItem>
-        <StyledItem 
-          $isActive={location.pathname === '/templates'} 
-          onClick={() => navigate('/templates')}
-          role="button"
-          tabIndex={0}
-          aria-label="Navigate to Templates"
-          onKeyDown={(e) => handleKeyDown(e, () => navigate('/templates'))}
-        >
-          <FaFileAlt /> Templates
-        </StyledItem>
-        <StyledItem 
-          $isActive={location.pathname === '/home'} 
-          onClick={() => navigate('/home')}
-          role="button"
-          tabIndex={0}
-          aria-label="Navigate to Home"
-          onKeyDown={(e) => handleKeyDown(e, () => navigate('/home'))}
-        >
-          <FaHome /> Home
-        </StyledItem>
-      </ListGroup>
-
-      {/* Workspace Section */}
-      <WorkspaceHeader>Workspaces</WorkspaceHeader>
-      
-      <CollapsibleWorkspaceToggle 
-        onClick={toggleWorkspaceMenu}
-        $isOpen={isWorkspaceMenuOpen}
-        role="button"
-        tabIndex={0}
-        aria-expanded={isWorkspaceMenuOpen}
-        aria-label={`${isWorkspaceMenuOpen ? 'Collapse' : 'Expand'} workspace menu`}
-        onKeyDown={(e) => handleKeyDown(e, toggleWorkspaceMenu)}
-      >
-        <div className="workspace-info">
-          <div 
-            className="workspace-avatar"
-            aria-hidden="true"
-          >
-            {currentWs.name ? currentWs.name[0].toUpperCase() : 'W'}
-          </div>
-          <div className="workspace-name" title={currentWs.name}>
-            {currentWs.name}
-          </div>
-        </div>
-        {isWorkspaceMenuOpen ? <FaChevronUp /> : <FaChevronDown />}
-      </CollapsibleWorkspaceToggle>
-
-      <WorkspaceMenuContainer $isOpen={isWorkspaceMenuOpen}>
-        <ListGroup variant="flush" className="mb-2 mt-1">
-          <WorkspaceNavItem 
-            $isActive={isWorkspacePathActive('boards')} 
-            onClick={() => navigate(`/w/${currentWs.id}/boards`)}
+    <>
+      <SidebarContainer>
+        {/* Top navigation */}
+        <ListGroup variant="flush" className="mb-2">
+          <StyledItem 
+            $isActive={location.pathname === '/boards'} 
+            onClick={() => navigate('/boards')}
             role="button"
             tabIndex={0}
-            aria-label="Navigate to Workspace Boards"
-            onKeyDown={(e) => handleKeyDown(e, () => navigate(`/w/${currentWs.id}/boards`))}
+            aria-label="Navigate to Boards"
+            onKeyDown={(e) => handleKeyDown(e, () => navigate('/boards'))}
           >
             <FaTrello /> Boards
-          </WorkspaceNavItem>
-          
-          <WorkspaceNavItem 
-            $isActive={isWorkspacePathActive('members')} 
-            onClick={() => navigate(`/w/${currentWs.id}/members`)}
+          </StyledItem>
+          <StyledItem 
+            $isActive={location.pathname === '/templates'} 
+            onClick={() => navigate('/templates')}
             role="button"
             tabIndex={0}
-            aria-label="Navigate to Workspace Members"
-            onKeyDown={(e) => handleKeyDown(e, () => navigate(`/w/${currentWs.id}/members`))}
+            aria-label="Navigate to Templates"
+            onKeyDown={(e) => handleKeyDown(e, () => navigate('/templates'))}
           >
-            <FaUsers /> Members
-            <InviteButton
-              aria-label="Invite workspace members"
-              onClick={handleInviteClick}
-              onKeyDown={(e) => handleKeyDown(e, handleInviteClick)}
-              title="Invite members"
-              tabIndex={0}
-            >
-              <FaPlus size={12} />
-            </InviteButton>
-          </WorkspaceNavItem>
-          
-          <WorkspaceNavItem 
-            $isActive={isWorkspacePathActive('settings')} 
-            onClick={() => navigate(`/w/${currentWs.id}/settings`)}
+            <FaFileAlt /> Templates
+          </StyledItem>
+          <StyledItem 
+            $isActive={location.pathname === '/home'} 
+            onClick={() => navigate('/home')}
             role="button"
             tabIndex={0}
-            aria-label="Navigate to Workspace Settings"
-            onKeyDown={(e) => handleKeyDown(e, () => navigate(`/w/${currentWs.id}/settings`))}
+            aria-label="Navigate to Home"
+            onKeyDown={(e) => handleKeyDown(e, () => navigate('/home'))}
           >
-            <FaCog /> Settings
-          </WorkspaceNavItem>
+            <FaHome /> Home
+          </StyledItem>
         </ListGroup>
-      </WorkspaceMenuContainer>
 
-      {otherWorkspaces.length > 0 && (
-        <StyledDropdown>
-          <Dropdown.Toggle 
-            variant="light" 
-            size="sm"
-            id="workspace-dropdown"
-          >
-            Switch workspace
-          </Dropdown.Toggle>
-          <Dropdown.Menu>
-            {otherWorkspaces.map(ws => (
-              <Dropdown.Item 
-                key={ws.id} 
-                onClick={() => handleWorkspaceChange(ws.id)}
+        {/* Workspace Section */}
+        <WorkspaceHeader>Workspaces</WorkspaceHeader>
+        
+        <CollapsibleWorkspaceToggle 
+          onClick={toggleWorkspaceMenu}
+          $isOpen={isWorkspaceMenuOpen}
+          role="button"
+          tabIndex={0}
+          aria-expanded={isWorkspaceMenuOpen}
+          aria-label={`${isWorkspaceMenuOpen ? 'Collapse' : 'Expand'} workspace menu`}
+          onKeyDown={(e) => handleKeyDown(e, toggleWorkspaceMenu)}
+        >
+          <div className="workspace-info">
+            <div 
+              className="workspace-avatar"
+              aria-hidden="true"
+            >
+              {currentWs.name ? currentWs.name[0].toUpperCase() : 'W'}
+            </div>
+            <div className="workspace-name" title={currentWs.name}>
+              {currentWs.name}
+            </div>
+          </div>
+          {isWorkspaceMenuOpen ? <FaChevronUp /> : <FaChevronDown />}
+        </CollapsibleWorkspaceToggle>
+
+        <WorkspaceMenuContainer $isOpen={isWorkspaceMenuOpen}>
+          <ListGroup variant="flush" className="mb-2 mt-1">
+            <WorkspaceNavItem 
+              $isActive={isWorkspacePathActive('boards')} 
+              onClick={() => navigate(`/w/${currentWs.id}/boards`)}
+              role="button"
+              tabIndex={0}
+              aria-label="Navigate to Workspace Boards"
+              onKeyDown={(e) => handleKeyDown(e, () => navigate(`/w/${currentWs.id}/boards`))}
+            >
+              <FaTrello /> Boards
+            </WorkspaceNavItem>
+            
+            <WorkspaceNavItem 
+              $isActive={isWorkspacePathActive('members')} 
+              onClick={() => navigate(`/w/${currentWs.id}/members`)}
+              role="button"
+              tabIndex={0}
+              aria-label="Navigate to Workspace Members"
+              onKeyDown={(e) => handleKeyDown(e, () => navigate(`/w/${currentWs.id}/members`))}
+            >
+              <FaUsers /> Members
+              <InviteButton
+                aria-label="Invite workspace members"
+                onClick={handleInviteClick}
+                onKeyDown={(e) => handleKeyDown(e, handleInviteClick)}
+                title="Invite members"
+                tabIndex={0}
               >
-                {ws.name}
-              </Dropdown.Item>
-            ))}
-          </Dropdown.Menu>
-        </StyledDropdown>
-      )}
-      
+                <FaPlus size={12} />
+              </InviteButton>
+            </WorkspaceNavItem>
+            
+            <WorkspaceNavItem 
+              $isActive={isWorkspacePathActive('settings')} 
+              onClick={() => navigate(`/w/${currentWs.id}/settings`)}
+              role="button"
+              tabIndex={0}
+              aria-label="Navigate to Workspace Settings"
+              onKeyDown={(e) => handleKeyDown(e, () => navigate(`/w/${currentWs.id}/settings`))}
+            >
+              <FaCog /> Settings
+            </WorkspaceNavItem>
+          </ListGroup>
+        </WorkspaceMenuContainer>
+
+        {otherWorkspaces.length > 0 && (
+          <StyledDropdown>
+            <Dropdown.Toggle 
+              variant="light" 
+              size="sm"
+              id="workspace-dropdown"
+            >
+              Switch workspace
+            </Dropdown.Toggle>
+            <Dropdown.Menu>
+              {otherWorkspaces.map(ws => (
+                <Dropdown.Item 
+                  key={ws.id} 
+                  onClick={() => handleWorkspaceChange(ws.id)}
+                >
+                  {ws.name}
+                </Dropdown.Item>
+              ))}
+            </Dropdown.Menu>
+          </StyledDropdown>
+        )}
+
+        {/* Premium promo card */}
+        <PromoCard>
+          <h6>Try TaskNest Premium</h6>
+          <p>
+            Get Planner (full access), advanced features, and more.
+          </p>
+          <PromoButton variant="outline-success" size="sm">
+            Start free trial
+          </PromoButton>
+        </PromoCard>
+      </SidebarContainer>
       {showInvite && currentWs?.id && (
         <InviteWorkspaceModal
           workspaceId={currentWs.id}
@@ -565,17 +577,7 @@ export default function SiderBar() {
           onCreatedLink={() => {}}
         />
       )}
-
-      {/* Premium promo card */}
-      <PromoCard>
-        <h6>Try TaskNest Premium</h6>
-        <p>
-          Get Planner (full access), advanced features, and more.
-        </p>
-        <PromoButton variant="outline-success" size="sm">
-          Start free trial
-        </PromoButton>
-      </PromoCard>
-    </SidebarContainer>
+    </>
+    
   );
 }
