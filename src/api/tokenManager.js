@@ -79,7 +79,7 @@ export const TokenManager = {
     
     // Refresh if token expires in < 5 minutes
     const expiresIn = decoded.exp * 1000 - Date.now();
-    return expiresIn < 5 * 60 * 1000;
+    return expiresIn < 15 * 60 * 1000;
   },
 
   // NEW: Get token expiry time

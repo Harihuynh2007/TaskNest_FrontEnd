@@ -216,10 +216,31 @@ function ActivityList({ cardId,refreshKey = 0 }) {
                   <img
                     src={activity.user.avatar}
                     alt={activity.user?.name || activity.user?.username || 'User'}
+                    onError={(e) => {
+                      // Fallback khi avatar load fail
+                      e.target.style.display = 'none';
+                      e.target.parentElement.innerHTML = `
+                        <div style="
+                          width: 100%;
+                          height: 100%;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          font-size: 14px;
+                          font-weight: 600;
+                          color: white;
+                          text-transform: uppercase;
+                        ">
+                          ${activity.user?.initials || 
+                            (activity.user?.name || activity.user?.username || 'U').charAt(0).toUpperCase()}
+                        </div>
+                      `;
+                    }}
                   />
                 ) : (
                   <AvatarText>
-                    {(activity.user?.name || activity.user?.username || 'U').charAt(0)}
+                    {activity.user?.initials || 
+                    (activity.user?.name || activity.user?.username || 'U').charAt(0).toUpperCase()}
                   </AvatarText>
                 )}
               </Avatar>
