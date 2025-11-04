@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import * as cardApi from '../../../../../api/cardApi';
 import { fetchCardsByList, fetchInboxCards } from '../../../../../api/cardApi';
 import { fetchLists } from '../../../../../api/listApi';
@@ -8,20 +8,21 @@ export const usePlannerData = (boardId) => {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const currentRequestRef = useRef(null);
 
-  // Load all cards from board + inbox
   const loadCards = useCallback(async () => {
     if (!boardId) return;
+    
+    const requestId = Date.now();
+    currentRequestRef.current = requestId;
     
     setLoading(true);
     setError(null);
     
     try {
-      // 1. Fetch all lists
       const listsRes = await fetchLists(boardId);
       const lists = listsRes.data || [];
       
-      // 2. Fetch cards from each list
       const listCardsPromises = lists.map(list => 
         fetchCardsByList(list.id).then(res => ({
           listId: list.id,
@@ -32,31 +33,37 @@ export const usePlannerData = (boardId) => {
       
       const listCardsResults = await Promise.all(listCardsPromises);
       
-      // 3. Fetch inbox cards
       const inboxRes = await fetchInboxCards();
       const inboxCards = (inboxRes.data || []).map(card => ({
         ...card,
-        list: null
+        listId: null,
+        listName: null
       }));
       
-      // 4. Combine all cards
       const allCards = [
         ...inboxCards,
         ...listCardsResults.flatMap(result => 
           result.cards.map(card => ({
             ...card,
-            list: { id: result.listId, name: result.listName }
+            listId: result.listId,
+            listName: result.listName
           }))
         )
       ];
       
-      setCards(allCards);
+      if (currentRequestRef.current === requestId) {
+        setCards(allCards);
+      }
     } catch (err) {
-      console.error('Failed to load planner cards:', err);
-      setError(err.message);
-      toast.error('Failed to load cards');
+      if (currentRequestRef.current === requestId) {
+        console.error('Failed to load planner cards:', err);
+        setError(err.message);
+        toast.error('Failed to load cards');
+      }
     } finally {
-      setLoading(false);
+      if (currentRequestRef.current === requestId) {
+        setLoading(false);
+      }
     }
   }, [boardId]);
 
@@ -64,9 +71,9 @@ export const usePlannerData = (boardId) => {
     loadCards();
   }, [loadCards]);
 
-  // Update card date
   const updateCardDate = useCallback(async (cardId, newDate) => {
-    // Optimistic update
+    const previousCards = [...cards];
+    
     setCards(prev => 
       prev.map(c => c.id === cardId ? { ...c, due_date: newDate } : c)
     );
@@ -77,22 +84,27 @@ export const usePlannerData = (boardId) => {
     } catch (err) {
       console.error('Failed to update card date:', err);
       toast.error('Failed to update date');
-      // Rollback
-      loadCards();
+      setCards(previousCards);
     }
-  }, [loadCards]);
+  }, [cards]);
 
-  // Create new card
   const createCard = useCallback(async (data) => {
     try {
       const res = await cardApi.createInboxCard({
         name: data.name,
         due_date: data.due_date,
-        status: 'doing',
-        visibility: 'private'
+        description: data.description || '',
+        status: data.status || 'doing',
+        visibility: data.visibility || 'private',
+        position: cards.length
       });
 
-      const newCard = { ...res.data, list: null };
+      const newCard = { 
+        ...res.data, 
+        listId: null, 
+        listName: null 
+      };
+      
       setCards(prev => [...prev, newCard]);
       toast.success('Card created');
       return newCard;
@@ -101,16 +113,15 @@ export const usePlannerData = (boardId) => {
       toast.error('Failed to create card');
       throw err;
     }
-  }, []);
+  }, [cards.length]);
 
-  // Toggle card completion
   const toggleCardComplete = useCallback(async (cardId) => {
     const card = cards.find(c => c.id === cardId);
     if (!card) return;
 
     const newStatus = !card.completed;
+    const previousCards = [...cards];
     
-    // Optimistic update
     setCards(prev =>
       prev.map(c => c.id === cardId ? { ...c, completed: newStatus } : c)
     );
@@ -120,12 +131,51 @@ export const usePlannerData = (boardId) => {
     } catch (err) {
       console.error('Failed to toggle completion:', err);
       toast.error('Failed to update status');
-      // Rollback
-      setCards(prev =>
-        prev.map(c => c.id === cardId ? { ...c, completed: !newStatus } : c)
-      );
+      setCards(previousCards);
     }
   }, [cards]);
+
+  const batchUpdateDates = useCallback(async (updates) => {
+    const previousCards = [...cards];
+    
+    const optimisticCards = cards.map(card => {
+      const update = updates.find(u => u.cardId === card.id);
+      return update ? { ...card, due_date: update.newDate } : card;
+    });
+    
+    setCards(optimisticCards);
+    
+    try {
+      await Promise.all(
+        updates.map(u => cardApi.updateCard(u.cardId, { due_date: u.newDate }))
+      );
+      toast.success(`Updated ${updates.length} cards`);
+    } catch (err) {
+      console.error('Failed to batch update:', err);
+      toast.error('Failed to batch update');
+      setCards(previousCards);
+    }
+  }, [cards]);
+
+  const onCardCreated = useCallback((card) => {
+    setCards(prev => [...prev, { 
+      ...card, 
+      listId: card.list?.id || null,
+      listName: card.list?.name || null
+    }]);
+  }, []);
+  
+  const onCardUpdated = useCallback((card) => {
+    setCards(prev => prev.map(c => 
+      c.id === card.id 
+        ? { ...card, listId: card.list?.id || null, listName: card.list?.name || null }
+        : c
+    ));
+  }, []);
+  
+  const onCardDeleted = useCallback((cardId) => {
+    setCards(prev => prev.filter(c => c.id !== cardId));
+  }, []);
 
   return {
     cards,
@@ -134,6 +184,10 @@ export const usePlannerData = (boardId) => {
     updateCardDate,
     createCard,
     toggleCardComplete,
-    refresh: loadCards
+    batchUpdateDates,
+    refresh: loadCards,
+    onCardCreated,
+    onCardUpdated,
+    onCardDeleted
   };
 };

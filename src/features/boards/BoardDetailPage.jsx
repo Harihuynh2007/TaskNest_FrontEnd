@@ -22,6 +22,7 @@ import { fetchInboxCards, updateCard, createInboxCard,batchUpdateCards } from '.
 import { AuthContext } from '../../contexts/AuthContext.jsx';
 
 import { useRecentBoards } from '../../hooks/useRecentBoards';
+import useBoardData  from '../../hooks/useBoardData';
 
 const DEFAULT_WEEK_PALETTE = [
   '#8E9AAF', // Sun
@@ -41,17 +42,26 @@ const LS_KEYS = (boardId) => ({
 export default function BoardDetailPage() {
   const navigate = useNavigate();
   const { workspaceId, boardId } = useParams();
+  const {
+    board,
+    lists,
+    setLists,
+    cards,
+    setCards,
+    refresh,
+    updateCardInState,
+    updateCardDate,
+    createInboxCard,
+    deleteCardLocal,
+    moveCardBetweenLists,
+  } = useBoardData(workspaceId, boardId);
+
   const { user: currentUser } = useContext(AuthContext);
   const numericBoardId = parseInt(boardId);
   const [background, setBackground] = useState('#e4f0f6');
   const [loading, setLoading] = useState(true);
   const [activeTabs, setActiveTabs] = useState(['inbox']);
-  const [cards, setCards] = useState([]);
-  const [lists, setLists] = useState([
-    { id: 1, title: 'To Do', cards: [] },
-    { id: 2, title: 'Doing', cards: [] },
-    { id: 3, title: 'Done', cards: [] },
-  ]);
+  
   const [inputValue, setInputValue] = useState('');
   const [showInput, setShowInput] = useState(false);
   const [editPopup, setEditPopup] = useState(null);
@@ -69,6 +79,7 @@ export default function BoardDetailPage() {
   const [todayIndex, setTodayIndex] = useState(dayjs().day()); // 0..6
   const resolvedBackground = autoWeekday ? weekPalette[todayIndex] : background;
 
+  
   
     // Load theme preferences from localStorage by boardId
   useEffect(() => {
@@ -181,17 +192,6 @@ export default function BoardDetailPage() {
     loadBoard();
   }, [workspaceId, boardId, addToRecent]);
 
-  useEffect(() => {
-    const loadInboxCards = async () => {
-      try {
-        const res = await fetchInboxCards(); // gọi API cards/ => card không có list
-        setCards(res.data || []);
-      } catch (err) {
-        console.error('❌ Lỗi load inbox cards:', err);
-      }
-    };
-    loadInboxCards();
-  }, [boardId]);
   
 
   // useEffect(() => {
@@ -512,23 +512,43 @@ export default function BoardDetailPage() {
           setEditPopup={setEditPopup}
           selectedCard={selectedCard}
           setSelectedCard={setSelectedCard}
-          handleAddCard={handleAddCard}
+          handleAddCard={async () => {
+            const trimmed = inputValue.trim();
+            if (!trimmed) return;
+            await createInboxCard({ name: trimmed });
+            setInputValue('');
+            setShowInput(false);
+          }}
           toggleComplete={toggleComplete}
           handleSaveCard={handleSaveCard}
         />
       )}
-      {activeTabs.includes('planner') && <PlannerPane background="#e4f0f6" />}
-      {activeTabs.includes('board') && 
-      <BoardPane 
-      background={background}
-      boardId={numericBoardId}
-      lists={lists}
-      setLists={setLists}
-      boardName={boardName}
-      setBoardName={setBoardName}
-      onListDeleted={handleDeleteListRequest}
-      onCloseBoard={handleCloseBoardRequest}
-       />}
+
+      {activeTabs.includes('planner') && (
+        <PlannerPane
+          background="#e4f0f6"
+          cards={cards}
+          lists={lists}
+          setCards={setCards}
+          setLists={setLists}
+          onCardUpdate={updateCardInState}
+          onDueDateChange={updateCardDate}
+        />
+      )}
+
+      {activeTabs.includes('board') && (
+        <BoardPane
+          background={background}
+          boardId={numericBoardId}
+          lists={lists}
+          setLists={setLists}
+          boardName={boardName}
+          setBoardName={setBoardName}
+          onListDeleted={handleDeleteListRequest}
+          onCloseBoard={handleCloseBoardRequest}
+        />
+      )}
+
     </SplitContainer>
   );
 
@@ -545,27 +565,6 @@ export default function BoardDetailPage() {
     labels: card.labels || [],
   });
 
-  // TẠO HÀM CẬP NHẬT TRUNG TÂM
-  const updateCardInState = (updatedCard) => {
-    if (!updatedCard || !updatedCard.id) return; // Guard clause
-    const normalizedCard = ensureCardStructure(updatedCard);
-
-    // Cập nhật cho BoardPane
-    setLists(prevLists =>
-      prevLists.map(list => ({
-        ...list,
-        cards: list.cards.map(card =>
-          card.id === normalizedCard.id ? normalizedCard : card
-        )
-      }))
-    );
-
-    setCards(prevCards =>
-      prevCards.map(card =>
-        card.id === normalizedCard.id ? normalizedCard : card
-      )
-    );
-  };
 
   if (loading) return <div>Loading board...</div>;
 
