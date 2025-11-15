@@ -47,15 +47,16 @@ export function useWorkspaceActivity(workspaceId, initialParams = {}) {
     
     const params = { ...initialParams };
     if (nextPage) {
-      // Extract page number from next URL if backend uses pagination
-      const url = new URL(nextPage, window.location.origin);
+      // Handle both absolute and relative URLs
+      const url = nextPage.startsWith('http') 
+        ? new URL(nextPage) 
+        : new URL(nextPage, window.location.origin);
       const page = url.searchParams.get('page');
       if (page) params.page = page;
     }
     
     await fetchActivityLog(params, true);
   }, [hasMore, loading, nextPage, initialParams, fetchActivityLog]);
-
   return {
     activities,
     loading,

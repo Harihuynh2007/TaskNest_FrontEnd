@@ -19,6 +19,7 @@ export function useWorkspaceMembers(workspaceId) {
   const fetchMembers = useCallback(async (params = {}) => {
     if (!workspaceId) {
       setLoading(false);
+      setError(null);
       return;
     }
     
@@ -34,8 +35,7 @@ export function useWorkspaceMembers(workspaceId) {
     } finally {
       setLoading(false);
     }
-  }, [workspaceId]);
-  useEffect(() => {
+  }, [workspaceId]);  useEffect(() => {
     fetchMembers();
   }, [fetchMembers]);
 
@@ -84,8 +84,7 @@ export function useWorkspaceMembers(workspaceId) {
         error: err.response?.data?.error || 'Failed to remove member' 
       };
     }
-  }, [workspaceId]);
-
+  }, [workspaceId, fetchMembers]);
   return {
     members,
     loading,

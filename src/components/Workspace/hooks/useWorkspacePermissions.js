@@ -17,7 +17,7 @@ import {
  */
 export function useWorkspacePermissions(workspace, members, userId) {
   return useMemo(() => {
-    if (!workspace || !userId) {
+    if (!workspace || !userId || !members) {
       return {
         isOwner: false,
         isAdmin: false,
@@ -31,7 +31,6 @@ export function useWorkspacePermissions(workspace, members, userId) {
         canTransfer: false,
       };
     }
-
     const isOwner = isWorkspaceOwner(workspace, userId);
     const isAdmin = isWorkspaceAdmin(members, userId);
     const role = getUserRole(workspace, members, userId);

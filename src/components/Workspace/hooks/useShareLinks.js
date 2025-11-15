@@ -39,17 +39,24 @@ export function useShareLinks(workspaceId) {
 
   const create = useCallback(async (options) => {
     try {
+      setLoading(true);
       const response = await createShareLink(workspaceId, options);
-      await fetchLinks(); // Refresh list
+      try {
+        await fetchLinks(); // Refresh list
+      } catch (refreshErr) {
+        console.error('Error refreshing links after create:', refreshErr);
+        // Still return success since the create itself succeeded
+      }
       return { success: true, data: response?.data || response };
     } catch (err) {
       return { 
         success: false, 
         error: err.response?.data?.error || 'Failed to create share link' 
       };
+    } finally {
+      setLoading(false);
     }
   }, [workspaceId, fetchLinks]);
-
   const update = useCallback(async (linkId, updates) => {
     try {
       const response = await updateShareLink(workspaceId, linkId, updates);
@@ -66,7 +73,7 @@ export function useShareLinks(workspaceId) {
   const remove = useCallback(async (linkId) => {
     try {
       await deleteShareLink(workspaceId, linkId);
-      setLinks(prev => prev.filter(l => l.id !== linkId));
+      await fetchLinks(); // Consistent with create/update
       return { success: true };
     } catch (err) {
       return { 
@@ -74,8 +81,7 @@ export function useShareLinks(workspaceId) {
         error: err.response?.data?.error || 'Failed to delete share link' 
       };
     }
-  }, [workspaceId]);
-
+  }, [workspaceId, fetchLinks]);
   return {
     links,
     loading,
