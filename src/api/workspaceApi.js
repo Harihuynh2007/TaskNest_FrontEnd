@@ -1,11 +1,14 @@
+// src/api/workspaceApi.js
 import api from './apiClient';
 import { workspaces as routes } from './apiRoutes';
+
+// ==================== BASIC WORKSPACE CRUD ====================
 
 /** Get all workspaces the current user can access. */
 export const fetchWorkspaces = () => api.get(routes.list());
 
 /** Create a workspace.
- * @param {object} data - { name: string }
+ * @param {object} data - { name: string, description?: string }
  * @returns {Promise<object>}
  */
 export const createWorkspace = (data) => api.post(routes.list(), data);
@@ -32,12 +35,15 @@ export const updateWorkspace = (workspaceId, data) =>
 export const deleteWorkspace = (workspaceId) =>
   api.delete(routes.detail(workspaceId));
 
+// ==================== MEMBER MANAGEMENT ====================
+
 /** List members in a workspace.
  * @param {string|number} workspaceId
+ * @param {object} params - Query parameters (search, role, page, page_size)
  * @returns {Promise<Array>}
  */
-export const fetchWorkspaceMembers = (workspaceId) =>
-  api.get(routes.members(workspaceId));
+export const fetchWorkspaceMembers = (workspaceId, params = {}) =>
+  api.get(routes.members(workspaceId), { params });
 
 /** Invite a member by email.
  * @param {string|number} workspaceId
@@ -47,6 +53,101 @@ export const fetchWorkspaceMembers = (workspaceId) =>
 export const inviteMember = (workspaceId, data) =>
   api.post(routes.inviteMember(workspaceId), data);
 
+/** Update member role.
+ * @param {string|number} workspaceId
+ * @param {string|number} memberId
+ * @param {string} role - 'admin' | 'member'
+ * @returns {Promise<object>}
+ */
+export const updateMemberRole = (workspaceId, memberId, role) =>
+  api.patch(`/workspaces/${workspaceId}/members/${memberId}/`, { role });
+
+/** Remove a member from workspace.
+ * @param {string|number} workspaceId
+ * @param {string|number} memberId
+ * @returns {Promise<void>}
+ */
+export const removeMember = (workspaceId, memberId) =>
+  api.delete(`/workspaces/${workspaceId}/members/${memberId}/`);
+
+/** Leave workspace (for non-owners).
+ * @param {string|number} workspaceId
+ * @returns {Promise<object>}
+ */
+export const leaveWorkspace = (workspaceId) =>
+  api.post(`/workspaces/${workspaceId}/leave/`);
+
+// ==================== SHARE LINKS ====================
+
+/** List all share links for a workspace.
+ * @param {string|number} workspaceId
+ * @returns {Promise<Array>}
+ */
+export const listShareLinks = (workspaceId) =>
+  api.get(routes.shareLinks(workspaceId));
+
+/** Create a share link.
+ * @param {string|number} workspaceId
+ * @param {object} payload - { role, expires_at?, max_uses?, domain_restriction? }
+ * @returns {Promise<object>}
+ */
+export const createShareLink = (workspaceId, payload) =>
+  api.post(routes.shareLinks(workspaceId), payload);
+
+/** Update a share link.
+ * @param {string|number} workspaceId
+ * @param {string|number} linkId
+ * @param {object} patch - { enabled?, expires_at?, max_uses?, role? }
+ * @returns {Promise<object>}
+ */
+export const updateShareLink = (workspaceId, linkId, patch) =>
+  api.patch(`/workspaces/${workspaceId}/share-links/${linkId}/`, patch);
+
+/** Delete a share link.
+ * @param {string|number} workspaceId
+ * @param {string|number} linkId
+ * @returns {Promise<void>}
+ */
+export const deleteShareLink = (workspaceId, linkId) =>
+  api.delete(`/workspaces/${workspaceId}/share-links/${linkId}/`);
+
+/** Join a workspace via share link.
+ * @param {string} token - Share link token
+ * @returns {Promise<object>}
+ */
+export const joinWorkspaceByLink = (token) =>
+  api.post(routes.joinByLink(token));
+
+// ==================== INVITATIONS ====================
+
+/** Accept a workspace invite.
+ * @param {string} token - Invitation token
+ * @returns {Promise<object>}
+ */
+export const acceptInvite = (token) =>
+  api.post(routes.inviteAccept(token));
+
+/** Revoke a workspace invite.
+ * @param {string} token - Invitation token
+ * @returns {Promise<void>}
+ */
+export const revokeInvite = (token) =>
+  api.post(routes.inviteRevoke(token));
+
+// ==================== OWNERSHIP & PERMISSIONS ====================
+
+/** Transfer workspace ownership.
+ * @param {string|number} workspaceId
+ * @param {number} newOwnerId - User ID of new owner (must be admin)
+ * @returns {Promise<object>}
+ */
+export const transferOwnership = (workspaceId, newOwnerId) =>
+  api.post(`/workspaces/${workspaceId}/transfer-ownership/`, { 
+    new_owner_id: newOwnerId 
+  });
+
+// ==================== BOARDS ====================
+
 /** List boards in a workspace that the user can see.
  * Server applies visibility/role/membership filters.
  * @param {string|number} workspaceId
@@ -55,59 +156,39 @@ export const inviteMember = (workspaceId, data) =>
 export const fetchBoardsInWorkspace = (workspaceId) =>
   api.get(routes.boards(workspaceId));
 
-/** Share links */
-export const listShareLinks = (workspaceId) =>
-  api.get(routes.shareLinks(workspaceId));
+// ==================== ACTIVITY LOG ====================
 
-/** Create a share link.
+/** Get workspace activity log.
  * @param {string|number} workspaceId
- * @param {object} payload - { role: 'admin'|'member', expires_at?, max_uses?, domain_restriction? }
- * @returns {Promise<object>}
+ * @param {object} params - { page?, page_size?, activity_type?, user_id?, from_date?, to_date? }
+ * @returns {Promise<object>} - Paginated response
  */
-export const createShareLink = (workspaceId, payload) =>
-  api.post(routes.shareLinks(workspaceId), payload);
+export const fetchActivities = (workspaceId, params = {}) =>
+  api.get(`/workspaces/${workspaceId}/activities/`, { params });
 
-/** Update a share link.
- * @param {string} token
- * @param {object} patch - { enabled?, expires_at?, max_uses?, domain_restriction?, role? }
- * @returns {Promise<object>}
+// ==================== DATA EXPORT ====================
+
+/** Request workspace data export.
+ * @param {string|number} workspaceId
+ * @param {object} options - { include_boards?, include_cards?, include_comments?, include_attachments?, format? }
+ * @returns {Promise<object>} - { export_id, status, message }
  */
-export const updateShareLink = (token, patch) =>
-  api.patch(routes.shareLinkDetail(token), patch);
+export const exportWorkspaceData = (workspaceId, options = {}) =>
+  api.post(`/workspaces/${workspaceId}/export/`, options);
 
-/** Delete a share link.
- * @param {string} token
- * @returns {Promise<void>}
+/** Get export status.
+ * @param {string|number} workspaceId
+ * @param {string} exportId
+ * @returns {Promise<object>} - { export_id, status, download_url?, ... }
  */
-export const deleteShareLink = (token) =>
-  api.delete(routes.shareLinkDetail(token));
+export const getExportStatus = (workspaceId, exportId) =>
+  api.get(`/workspaces/${workspaceId}/exports/${exportId}/`);
 
-/** Join a workspace via share link.
- * @param {string} token
- * @returns {Promise<object>}
- */
-export const joinWorkspaceByLink = (token) =>
-  api.post(routes.joinByLink(token));
-
-/** Accept a workspace invite.
- * @param {string} token
- * @returns {Promise<object>}
- */
-export const acceptInvite = (token) =>
-  api.post(routes.inviteAccept(token));
-
-/** Revoke a workspace invite.
- * @param {string} token
- * @returns {Promise<void>}
- */
-export const revokeInvite = (token) =>
-  api.post(routes.inviteRevoke(token));
-
-/** Helpers */
+// ==================== HELPER FUNCTIONS ====================
 
 /** Is user an admin in this workspace?
- * @param {Array} members
- * @param {number} userId
+ * @param {Array} members - Array of workspace members
+ * @param {number} userId - User ID to check
  * @returns {boolean}
  */
 export const isWorkspaceAdmin = (members, userId) => {
@@ -116,8 +197,8 @@ export const isWorkspaceAdmin = (members, userId) => {
 };
 
 /** Is user the workspace owner?
- * @param {object} workspace
- * @param {number} userId
+ * @param {object} workspace - Workspace object
+ * @param {number} userId - User ID to check
  * @returns {boolean}
  */
 export const isWorkspaceOwner = (workspace, userId) => {
@@ -125,18 +206,133 @@ export const isWorkspaceOwner = (workspace, userId) => {
 };
 
 /** Can user create a board in this workspace?
- * Current rule: owner only. (Adjust if backend changes.)
- * @param {object} workspace
- * @param {Array} members
- * @param {number} userId
+ * Checks workspace policy and user role.
+ * @param {object} workspace - Workspace object
+ * @param {Array} members - Array of workspace members
+ * @param {number} userId - User ID to check
  * @returns {boolean}
  */
 export const canCreateBoard = (workspace, members, userId) => {
-  return isWorkspaceOwner(workspace, userId);
-  // To allow members too, compute membership and OR the check above.
+  if (!workspace || !members || !Array.isArray(members) || !userId) return false;
+  
+  const isOwner = isWorkspaceOwner(workspace, userId);
+  const isAdmin = isWorkspaceAdmin(members, userId);
+  const isMember = members.some(m => m.user?.id === userId);
+  
+  const policy = workspace.board_creation_policy || 'members';
+  
+  switch (policy) {
+    case 'owner':
+      return isOwner;
+    case 'admins':
+      return isOwner || isAdmin;
+    case 'members':
+      return isOwner || isAdmin || isMember;
+    default:
+      return false;
+  }
+};
+/** Get user's role in workspace.
+ * @param {object} workspace - Workspace object
+ * @param {Array} members - Array of workspace members
+ * @param {number} userId - User ID to check
+ * @returns {string|null} - 'owner' | 'admin' | 'member' | null
+ */
+export const getUserRole = (workspace, members, userId) => {
+  if (isWorkspaceOwner(workspace, userId)) return 'owner';
+  if (!members || !Array.isArray(members)) return null;
+  const membership = members.find(m => m.user?.id === userId);
+  return membership?.role || null;
+};
+/** Can user manage members (invite/remove/edit roles)?
+ * @param {object} workspace - Workspace object
+ * @param {Array} members - Array of workspace members
+ * @param {number} userId - User ID to check
+ * @returns {boolean}
+ */
+export const canManageMembers = (workspace, members, userId) => {
+  return isWorkspaceOwner(workspace, userId) || isWorkspaceAdmin(members, userId);
 };
 
-export const createWorkspaceShareLink = async (workspaceId) => {
-  const res = await api.post(`/workspaces/${workspaceId}/share-link/`);
-  return res.data; 
+/** Can user edit workspace settings?
+ * @param {object} workspace - Workspace object
+ * @param {Array} members - Array of workspace members
+ * @param {number} userId - User ID to check
+ * @returns {boolean}
+ */
+export const canEditWorkspace = (workspace, members, userId) => {
+  return isWorkspaceOwner(workspace, userId) || isWorkspaceAdmin(members, userId);
 };
+
+/** Can user change workspace policies?
+ * @param {object} workspace - Workspace object
+ * @param {number} userId - User ID to check
+ * @returns {boolean}
+ */
+export const canChangePolicies = (workspace, userId) => {
+  return isWorkspaceOwner(workspace, userId);
+};
+
+// ==================== DEPRECATED (backward compatibility) ====================
+
+/** @deprecated Use createShareLink instead */
+export const createWorkspaceShareLink = async (workspaceId, options = {}) => {
+  console.warn('createWorkspaceShareLink is deprecated. Use createShareLink instead.');
+  return createShareLink(workspaceId, options);
+};
+
+// ==================== EXPORTS ====================
+
+const workspaceApi = {
+  // CRUD
+  fetchWorkspaces,
+  createWorkspace,
+  fetchWorkspaceDetails,
+  updateWorkspace,
+  deleteWorkspace,
+
+  // Members
+  fetchWorkspaceMembers,
+  inviteMember,
+  updateMemberRole,
+  removeMember,
+  leaveWorkspace,
+
+  // Share Links
+  listShareLinks,
+  createShareLink,
+  updateShareLink,
+  deleteShareLink,
+  joinWorkspaceByLink,
+
+  // Invitations
+  acceptInvite,
+  revokeInvite,
+
+  // Ownership & Permissions
+  transferOwnership,
+
+  // Boards
+  fetchBoardsInWorkspace,
+
+  // Activity Log
+  fetchActivities,
+
+  // Data Export
+  exportWorkspaceData,
+  getExportStatus,
+
+  // Helpers
+  isWorkspaceAdmin,
+  isWorkspaceOwner,
+  canCreateBoard,
+  getUserRole,
+  canManageMembers,
+  canEditWorkspace,
+  canChangePolicies,
+
+  // Deprecated
+  createWorkspaceShareLink,
+};
+
+export default workspaceApi;
