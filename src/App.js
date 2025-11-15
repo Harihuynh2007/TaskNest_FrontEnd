@@ -19,6 +19,7 @@ import BoardsPage from './features/boards/BoardsPage';
 import BoardDetailPage from './features/boards/BoardDetailPage';
 import BoardsMainContent from './features/boards/BoardsMainContent';
 import TemplatesPage from './features/templates/TemplatesPage';
+import WorkspaceSettingsPage from './components/Workspace/WorkspaceSettingsPage';
 
 import Settings from './features/boards/settings/Setting';
 import ProfileAndVisibility from './features/boards/settings/profileandvisibility/ProfileAndVisibility';
@@ -135,6 +136,18 @@ function App() {
             </PrivateRoute>
           }
         />
+
+        <Route
+          path="/w/:workspaceId/settings"
+          element={
+            <PrivateRoute>
+              <WithHeaderOnlyLayout>
+                <WorkspaceSettingsPage />
+              </WithHeaderOnlyLayout>
+            </PrivateRoute>
+          }
+        />
+
 
         <Route 
           path="/" 
