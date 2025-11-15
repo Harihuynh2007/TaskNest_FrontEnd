@@ -41,12 +41,7 @@ export function useShareLinks(workspaceId) {
     try {
       setLoading(true);
       const response = await createShareLink(workspaceId, options);
-      try {
-        await fetchLinks(); // Refresh list
-      } catch (refreshErr) {
-        console.error('Error refreshing links after create:', refreshErr);
-        // Still return success since the create itself succeeded
-      }
+      await fetchLinks(); // Refresh list
       return { success: true, data: response?.data || response };
     } catch (err) {
       return { 
@@ -56,8 +51,7 @@ export function useShareLinks(workspaceId) {
     } finally {
       setLoading(false);
     }
-  }, [workspaceId, fetchLinks]);
-  const update = useCallback(async (linkId, updates) => {
+  }, [workspaceId, fetchLinks]);  const update = useCallback(async (linkId, updates) => {
     try {
       const response = await updateShareLink(workspaceId, linkId, updates);
       await fetchLinks(); // Refresh list
