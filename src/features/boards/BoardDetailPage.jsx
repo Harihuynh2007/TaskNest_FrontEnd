@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import InboxPane from './panel/InboxPanel/InboxPane.jsx';
 import PlannerPane from './panel/PlannerPanel/PlannerPane.jsx';
 import BoardPane from './panel/BoardPanel/BoardPane';
+import ResizableLayout from './ResizableLayout.jsx';
 
 import dayjs from 'dayjs';
 import BottomFloatingNav from './BottomFloatingNav';
@@ -499,58 +500,60 @@ export default function BoardDetailPage() {
 
 
   const renderPanes = () => (
-    <SplitContainer>
-      {activeTabs.includes('inbox') && (
-        <InboxPane
-          cards={cards}
-          setCards={setCards}
-          inputValue={inputValue}
-          setInputValue={setInputValue}
-          showInput={showInput}
-          setShowInput={setShowInput}
-          editPopup={editPopup}
-          setEditPopup={setEditPopup}
-          selectedCard={selectedCard}
-          setSelectedCard={setSelectedCard}
-          handleAddCard={async () => {
-            const trimmed = inputValue.trim();
-            if (!trimmed) return;
-            await createInboxCard({ name: trimmed });
-            setInputValue('');
-            setShowInput(false);
-          }}
-          toggleComplete={toggleComplete}
-          handleSaveCard={handleSaveCard}
-        />
-      )}
-
-      {activeTabs.includes('planner') && (
-        <PlannerPane
-          background="#e4f0f6"
-          cards={cards}
-          lists={lists}
-          setCards={setCards}
-          setLists={setLists}
-          onCardUpdate={updateCardInState}
-          onDueDateChange={updateCardDate}
-        />
-      )}
-
-      {activeTabs.includes('board') && (
-        <BoardPane
-          background={background}
-          boardId={numericBoardId}
-          lists={lists}
-          setLists={setLists}
-          boardName={boardName}
-          setBoardName={setBoardName}
-          onListDeleted={handleDeleteListRequest}
-          onCloseBoard={handleCloseBoardRequest}
-        />
-      )}
-
-    </SplitContainer>
+    <ResizableLayout
+      boardId={numericBoardId}
+      activeTabs={activeTabs}
+      inboxPane={
+        activeTabs.includes('inbox') ? (
+          <InboxPane
+            cards={cards}
+            setCards={setCards}
+            inputValue={inputValue}
+            setInputValue={setInputValue}
+            showInput={showInput}
+            setShowInput={setShowInput}
+            editPopup={editPopup}
+            setEditPopup={setEditPopup}
+            selectedCard={selectedCard}
+            setSelectedCard={setSelectedCard}
+            handleAddCard={async () => {
+              await handleAddCard();
+            }}
+            toggleComplete={toggleComplete}
+            handleSaveCard={handleSaveCard}
+          />
+        ) : null
+      }
+      plannerPane={
+        activeTabs.includes('planner') ? (
+          <PlannerPane
+            background="#e4f0f6"
+            cards={cards}
+            lists={lists}
+            setCards={setCards}
+            setLists={setLists}
+            onCardUpdate={updateCardInState}
+            onDueDateChange={updateCardDate}
+          />
+        ) : null
+      }
+      boardPane={
+        activeTabs.includes('board') ? (
+          <BoardPane
+            background={background}
+            boardId={numericBoardId}
+            lists={lists}
+            setLists={setLists}
+            boardName={boardName}
+            setBoardName={setBoardName}
+            onListDeleted={handleDeleteListRequest}
+            onCloseBoard={handleCloseBoardRequest}
+          />
+        ) : null
+      }
+    />
   );
+
 
   const ensureCardStructure = (card) => ({
     id: card.id,
