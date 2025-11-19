@@ -51,7 +51,8 @@ export const fetchWorkspaceMembers = (workspaceId, params = {}) =>
  * @returns {Promise<object>}
  */
 export const inviteMember = (workspaceId, data) =>
-  api.post(routes.inviteMember(workspaceId), data);
+  api.post(`/workspaces/${workspaceId}/members/`, data);
+
 
 /** Update member role.
  * @param {string|number} workspaceId
