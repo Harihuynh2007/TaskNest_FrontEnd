@@ -48,7 +48,6 @@ export default function InboxPane({
 
   const [showSort, setShowSort] = useState(false);
   const [sortPos, setSortPos] = useState({ top: 0, left: 0 });
-
   
   const {
     inboxColor,
@@ -107,7 +106,9 @@ export default function InboxPane({
   const [popupPos, setPopupPos] = useState({ top: 0, left: 0 });
   const filterButtonRef = useRef(null);
 
-  const filteredCards = cards.filter((card) => {
+  const filteredCards = (cards || []).filter((card) => {
+    if (!card) return false;
+
     const name = (card.name || '').toLowerCase();
     const kw = (filter.keyword || '').toLowerCase();
     const matchKeyword = name.includes(kw);
@@ -263,7 +264,7 @@ export default function InboxPane({
             card={selectedCard}
             onClose={() => setSelectedCard(null)}
             onCardUpdate={(updatedCard) => {
-              setCards((prev) => prev.map((card) => card.id === updatedCard.id ? updatedCard : card));
+              setCards((prev) => prev.map((card) => card && card.id === updatedCard.id ? updatedCard : card));
             }}
           />
         )}
@@ -437,6 +438,7 @@ export default function InboxPane({
             onClose={() => setShowSort(false)}
             onBack={handleBackToMenu}
             onSelect={(key) => {
+              const validCards = (cards || []).filter(card => card != null);
               const sorted = [...cards];
               switch (key) {
                 case 'created_newest':  sorted.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)); break;
@@ -467,7 +469,6 @@ const PaneWrapper = styled.div`
   flex-direction: column;
   overflow-y: auto;
 `;
-
 
 const InnerContent = styled.div`
   width: 100%;
