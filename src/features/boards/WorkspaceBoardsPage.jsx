@@ -18,7 +18,7 @@ export default function WorkspaceBoardsPage() {
 
     // Sync workspace context với URL
     if (workspaceId && !loadingWorkspaces) {
-      const wsExists = workspaces.some(ws => ws.id.toString() === workspaceId);
+      const wsExists = workspaces.some(ws => String(ws.id) === String(workspaceId));
       
       if (!wsExists) {
         console.warn(`Workspace ${workspaceId} not found. Redirecting to /boards`);
