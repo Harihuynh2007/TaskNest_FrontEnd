@@ -439,7 +439,7 @@ export default function InboxPane({
             onBack={handleBackToMenu}
             onSelect={(key) => {
               const validCards = (cards || []).filter(card => card != null);
-              const sorted = [...cards];
+              const sorted = [...validCards];
               switch (key) {
                 case 'created_newest':  sorted.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)); break;
                 case 'created_oldest':  sorted.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)); break;
