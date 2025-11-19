@@ -1,11 +1,13 @@
 import React, { useContext, useState, useMemo, useCallback } from 'react';
-import { Col, ListGroup, Dropdown, Button } from 'react-bootstrap';
+import { Col, ListGroup, Dropdown, Button, Badge } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { WorkspaceContext } from '../contexts/WorkspaceContext';
-import { FaTrello, FaPlus, FaFileAlt, FaHome, FaUsers, FaCog, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { createWorkspace } from '../api/workspaceApi';
+import { AuthContext } from '../contexts/AuthContext';
+import { FaCheck, FaTrello, FaPlus, FaFileAlt, FaHome, FaUsers, FaCog, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import InviteWorkspaceModal from './Workspace/InviteWorkspaceModal';
-
+import CreateWorkspaceModal from './Workspace/CreateWorkspaceModal';
 // Styled Components với UX cải thiện
 // Giao diện Sáng (Light Mode) - Tinh tế & Hiện đại
 // Giao diện Tối (Dark Mode) - Sang trọng & Tập trung
@@ -315,24 +317,177 @@ const LoadingState = styled.div`
   flex: 1;
 `;
 
+const WorkspaceListSection = styled.div`
+  margin-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 16px;
+`;
+
+const WorkspaceListToggle = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  user-select: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+
+  &:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  svg {
+    font-size: 12px;
+    transition: transform 0.25s ease;
+    transform: ${({ $isOpen }) => ($isOpen ? 'rotate(0deg)' : 'rotate(-90deg)')};
+  }
+`;
+
+const WorkspaceList = styled.div`
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  max-height: ${({ $isOpen }) => ($isOpen ? '400px' : '0')};
+  opacity: ${({ $isOpen }) => ($isOpen ? '1' : '0')};
+  margin-top: 8px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background: #4a5261;
+    border-radius: 3px;
+    &:hover { background: #5f687a; }
+  }
+`;
+
+const WorkspaceItem = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  background-color: ${({ $isActive }) => ($isActive ? 'var(--bg-hover)' : 'transparent')};
+
+  &:hover {
+    background-color: var(--bg-hover);
+  }
+
+  &:active {
+    background-color: var(--bg-active);
+    transform: scale(0.98);
+  }
+
+  .ws-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: ${({ $isActive }) => 
+      $isActive 
+        ? 'var(--brand-gradient)' 
+        : 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)'
+    };
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    margin-right: 12px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  }
+
+  .ws-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .ws-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: ${({ $isActive }) => 
+      $isActive ? 'var(--brand-primary)' : 'var(--text-primary)'
+    };
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+  }
+
+  .ws-meta {
+    font-size: 11px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ws-check {
+    position: absolute;
+    right: 12px;
+    color: var(--brand-primary);
+    font-size: 14px;
+  }
+`;
+
+const CreateWorkspaceButton = styled.button`
+  width: 100%;
+  padding: 10px 12px;
+  margin-top: 8px;
+  background-color: var(--bg-secondary);
+  border: 1px dashed var(--border-primary);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: var(--bg-hover);
+    border-color: var(--brand-primary);
+    color: var(--text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--brand-primary);
+    outline-offset: 2px;
+  }
+
+  svg {
+    font-size: 12px;
+  }
+`;
+
 export default function SiderBar() {
   const navigate = useNavigate();
   const location = useLocation();
   
-  const [showInvite, setShowInvite] = useState(false);
-  const [isWorkspaceMenuOpen, setWorkspaceMenuOpen] = useState(true);
-
-  const { workspaces, currentWorkspaceId, setCurrentWorkspaceId, loadingWorkspaces } = useContext(WorkspaceContext);
+  // Contexts
+  const { workspaces, currentWorkspaceId, setCurrentWorkspaceId, loadingWorkspaces, refreshWorkspaces } = useContext(WorkspaceContext);
+  const { user } = useContext(AuthContext);
   
-  // Memoize current workspace
+  // States
+  const [showInvite, setShowInvite] = useState(false);
+  const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
+  const [isWorkspaceMenuOpen, setWorkspaceMenuOpen] = useState(true);
+  const [isWorkspaceListOpen, setWorkspaceListOpen] = useState(false);
+
+  // Memoized values
   const currentWs = useMemo(() => 
     workspaces.find(w => w.id === currentWorkspaceId) || {},
-    [workspaces, currentWorkspaceId]
-  );
-
-  // Memoize other workspaces
-  const otherWorkspaces = useMemo(() => 
-    workspaces.filter(ws => ws.id !== currentWorkspaceId),
     [workspaces, currentWorkspaceId]
   );
 
@@ -340,6 +495,7 @@ export default function SiderBar() {
     return location.pathname.startsWith(`/w/${currentWs.id}/${path}`);
   }, [location.pathname, currentWs.id]);
 
+  // Handlers
   const handleWorkspaceChange = useCallback((workspaceId) => {
     setCurrentWorkspaceId(workspaceId);
     navigate(`/w/${workspaceId}/boards`);
@@ -348,6 +504,10 @@ export default function SiderBar() {
 
   const toggleWorkspaceMenu = useCallback(() => {
     setWorkspaceMenuOpen(prev => !prev);
+  }, []);
+
+  const toggleWorkspaceList = useCallback(() => {
+    setWorkspaceListOpen(prev => !prev);
   }, []);
 
   const handleInviteClick = useCallback((e) => {
@@ -359,7 +519,41 @@ export default function SiderBar() {
     setShowInvite(false);
   }, []);
 
-  // Keyboard navigation
+  const handleCreateWorkspace = useCallback(async (data) => {
+    try {
+      const response = await createWorkspace(data);
+      const newWorkspace = response.data || response;
+      
+      // Refresh workspace list
+      if (refreshWorkspaces) {
+        await refreshWorkspaces();
+      }
+      
+      // Navigate to new workspace
+      setCurrentWorkspaceId(newWorkspace.id);
+      navigate(`/w/${newWorkspace.id}/boards`);
+      setShowCreateWorkspace(false);
+    } catch (error) {
+      console.error('Failed to create workspace:', error);
+      throw error; // Let modal handle error display
+    }
+  }, [navigate, setCurrentWorkspaceId, refreshWorkspaces]);
+
+  // Helper functions
+  const getRoleBadgeColor = useCallback((role) => {
+    switch (role) {
+      case 'owner': return 'success';
+      case 'admin': return 'primary';
+      case 'member': return 'info';
+      case 'guest': return 'secondary';
+      default: return 'secondary';
+    }
+  }, []);
+
+  const getRoleLabel = useCallback((role) => {
+    return role ? role.charAt(0).toUpperCase() + role.slice(1) : 'Member';
+  }, []);
+
   const handleKeyDown = useCallback((e, action) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -367,6 +561,7 @@ export default function SiderBar() {
     }
   }, []);
 
+  // Render loading state
   if (loadingWorkspaces) {
     return (
       <SidebarContainer>
@@ -380,6 +575,7 @@ export default function SiderBar() {
     );
   }
 
+  // Render empty state
   if (!currentWs.id) {
     return (
       <SidebarContainer>
@@ -418,7 +614,7 @@ export default function SiderBar() {
           <Button 
             variant="primary" 
             size="sm" 
-            onClick={() => navigate('/create-workspace')}
+            onClick={() => setShowCreateWorkspace(true)}
           >
             Create a Workspace
           </Button>
@@ -427,6 +623,7 @@ export default function SiderBar() {
     );
   }
 
+  // Main render
   return (
     <>
       <SidebarContainer>
@@ -464,8 +661,8 @@ export default function SiderBar() {
           </StyledItem>
         </ListGroup>
 
-        {/* Workspace Section */}
-        <WorkspaceHeader>Workspaces</WorkspaceHeader>
+        {/* Current Workspace Section */}
+        <WorkspaceHeader>Workspace</WorkspaceHeader>
         
         <CollapsibleWorkspaceToggle 
           onClick={toggleWorkspaceMenu}
@@ -477,10 +674,7 @@ export default function SiderBar() {
           onKeyDown={(e) => handleKeyDown(e, toggleWorkspaceMenu)}
         >
           <div className="workspace-info">
-            <div 
-              className="workspace-avatar"
-              aria-hidden="true"
-            >
+            <div className="workspace-avatar" aria-hidden="true">
               {currentWs.name ? currentWs.name[0].toUpperCase() : 'W'}
             </div>
             <div className="workspace-name" title={currentWs.name}>
@@ -536,39 +730,81 @@ export default function SiderBar() {
           </ListGroup>
         </WorkspaceMenuContainer>
 
-        {otherWorkspaces.length > 0 && (
-          <StyledDropdown>
-            <Dropdown.Toggle 
-              variant="light" 
-              size="sm"
-              id="workspace-dropdown"
+        {/* ⭐ NEW: All Workspaces List Section */}
+        <WorkspaceListSection>
+          <WorkspaceListToggle 
+            onClick={toggleWorkspaceList}
+            $isOpen={isWorkspaceListOpen}
+            role="button"
+            tabIndex={0}
+            aria-expanded={isWorkspaceListOpen}
+            aria-label="Toggle workspace list"
+            onKeyDown={(e) => handleKeyDown(e, toggleWorkspaceList)}
+          >
+            <span>Your Workspaces ({workspaces.length})</span>
+            <FaChevronDown />
+          </WorkspaceListToggle>
+
+          <WorkspaceList $isOpen={isWorkspaceListOpen}>
+            {workspaces.map(ws => (
+              <WorkspaceItem
+                key={ws.id}
+                $isActive={ws.id === currentWorkspaceId}
+                onClick={() => handleWorkspaceChange(ws.id)}
+                role="button"
+                tabIndex={0}
+                aria-label={`Switch to ${ws.name} workspace`}
+                onKeyDown={(e) => handleKeyDown(e, () => handleWorkspaceChange(ws.id))}
+                title={ws.name}
+              >
+                <div className="ws-avatar" aria-hidden="true">
+                  {ws.name[0].toUpperCase()}
+                </div>
+                <div className="ws-info">
+                  <div className="ws-name">{ws.name}</div>
+                  <div className="ws-meta">
+                    <Badge 
+                      bg={getRoleBadgeColor(ws.effective_role)} 
+                      style={{ fontSize: '10px', padding: '2px 6px' }}
+                    >
+                      {getRoleLabel(ws.effective_role)}
+                    </Badge>
+                    {/* Hiển thị số boards nếu có */}
+                    {ws.boards && ws.boards.length > 0 && (
+                      <span>{ws.boards.length} boards</span>
+                    )}
+                  </div>
+                </div>
+                {ws.id === currentWorkspaceId && (
+                  <FaCheck className="ws-check" aria-label="Current workspace" />
+                )}
+              </WorkspaceItem>
+            ))}
+
+            <CreateWorkspaceButton 
+              onClick={() => setShowCreateWorkspace(true)}
+              role="button"
+              tabIndex={0}
+              aria-label="Create new workspace"
+              onKeyDown={(e) => handleKeyDown(e, () => setShowCreateWorkspace(true))}
             >
-              Switch workspace
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              {otherWorkspaces.map(ws => (
-                <Dropdown.Item 
-                  key={ws.id} 
-                  onClick={() => handleWorkspaceChange(ws.id)}
-                >
-                  {ws.name}
-                </Dropdown.Item>
-              ))}
-            </Dropdown.Menu>
-          </StyledDropdown>
-        )}
+              <FaPlus />
+              <span>Create new workspace</span>
+            </CreateWorkspaceButton>
+          </WorkspaceList>
+        </WorkspaceListSection>
 
         {/* Premium promo card */}
         <PromoCard>
           <h6>Try TaskNest Premium</h6>
-          <p>
-            Get Planner (full access), advanced features, and more.
-          </p>
+          <p>Get Planner (full access), advanced features, and more.</p>
           <PromoButton variant="outline-success" size="sm">
             Start free trial
           </PromoButton>
         </PromoCard>
       </SidebarContainer>
+
+      {/* Modals */}
       {showInvite && currentWs?.id && (
         <InviteWorkspaceModal
           workspaceId={currentWs.id}
@@ -577,7 +813,13 @@ export default function SiderBar() {
           onCreatedLink={() => {}}
         />
       )}
+
+      {showCreateWorkspace && (
+        <CreateWorkspaceModal
+          onClose={() => setShowCreateWorkspace(false)}
+          onContinue={handleCreateWorkspace}
+        />
+      )}
     </>
-    
   );
 }
