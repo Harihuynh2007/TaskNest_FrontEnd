@@ -487,14 +487,15 @@ export default function SiderBar() {
 
   // Memoized values
   const currentWs = useMemo(() => 
-    workspaces.find(w => w.id === currentWorkspaceId) || {},
+    workspaces.find(w => w.id === currentWorkspaceId) || { id: '', name: '', boards: [], effective_role: '' },
     [workspaces, currentWorkspaceId]
   );
 
   const isWorkspacePathActive = useCallback((path) => {
-    return location.pathname.startsWith(`/w/${currentWs.id}/${path}`);
+    if (!currentWs.id) return false;
+    const regex = new RegExp(`^/w/${currentWs.id}/${path}(?:/|$)`);
+    return regex.test(location.pathname);
   }, [location.pathname, currentWs.id]);
-
   // Handlers
   const handleWorkspaceChange = useCallback((workspaceId) => {
     setCurrentWorkspaceId(workspaceId);
@@ -730,7 +731,7 @@ export default function SiderBar() {
           </ListGroup>
         </WorkspaceMenuContainer>
 
-        {/* ⭐ NEW: All Workspaces List Section */}
+        
         <WorkspaceListSection>
           <WorkspaceListToggle 
             onClick={toggleWorkspaceList}
@@ -742,7 +743,7 @@ export default function SiderBar() {
             onKeyDown={(e) => handleKeyDown(e, toggleWorkspaceList)}
           >
             <span>Your Workspaces ({workspaces.length})</span>
-            <FaChevronDown />
+            {isWorkspaceListOpen ? <FaChevronUp /> : <FaChevronDown />}
           </WorkspaceListToggle>
 
           <WorkspaceList $isOpen={isWorkspaceListOpen}>
@@ -757,8 +758,8 @@ export default function SiderBar() {
                 onKeyDown={(e) => handleKeyDown(e, () => handleWorkspaceChange(ws.id))}
                 title={ws.name}
               >
-                <div className="ws-avatar" aria-hidden="true">
-                  {ws.name[0].toUpperCase()}
+                <div className="ws-avatar">
+                  {ws.name ? ws.name[0].toUpperCase() : 'W'}
                 </div>
                 <div className="ws-info">
                   <div className="ws-name">{ws.name}</div>
@@ -798,7 +799,7 @@ export default function SiderBar() {
         <PromoCard>
           <h6>Try TaskNest Premium</h6>
           <p>Get Planner (full access), advanced features, and more.</p>
-          <PromoButton variant="outline-success" size="sm">
+          <PromoButton size="sm">
             Start free trial
           </PromoButton>
         </PromoCard>
