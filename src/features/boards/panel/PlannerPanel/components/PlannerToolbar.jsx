@@ -1,9 +1,20 @@
+// src/features/boards/panel/PlannerPanel/components/PlannerToolbar.jsx
 import React from "react";
 import styled from "styled-components";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, CalendarDays, List, Clock, Plus, CheckSquare } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  CalendarDays,
+  List,
+  Clock,
+  Plus,
+  CheckSquare,
+} from "lucide-react";
 
 export default function PlannerToolbar({
+  mode,
+  setMode,
   view,
   setView,
   currentDate,
@@ -17,14 +28,22 @@ export default function PlannerToolbar({
   const handleToday = () => navigate(0);
 
   const formattedRange = (() => {
+    if (mode !== 'plan') {
+      // Với focus / heatmap / insights → hiển thị theo tháng
+      return currentDate.format("MMMM YYYY");
+    }
     if (view === "month") return currentDate.format("MMMM YYYY");
     if (view === "week") {
       const start = currentDate.startOf("week").format("MMM D");
       const end = currentDate.endOf("week").format("MMM D, YYYY");
       return `${start} - ${end}`;
     }
-    return `${currentDate.startOf("week").format("MMM D")} → ${currentDate.endOf("week").format("MMM D, YYYY")}`;
+    return `${currentDate.startOf("week").format("MMM D")} → ${currentDate
+      .endOf("week")
+      .format("MMM D, YYYY")}`;
   })();
+
+  const isPlanMode = mode === 'plan';
 
   return (
     <ToolbarWrapper>
@@ -47,33 +66,64 @@ export default function PlannerToolbar({
         <TodayButton onClick={handleToday}>Today</TodayButton>
       </NavSection>
 
-      {/* Center section: view switch */}
-      <ViewSwitchGroup>
-        <ViewButton
-          data-active={view === "month"}
-          onClick={() => setView("month")}
-          aria-label="Month view"
-        >
-          <CalendarDays size={16} />
-          <span>Month</span>
-        </ViewButton>
-        <ViewButton
-          data-active={view === "week"}
-          onClick={() => setView("week")}
-          aria-label="Week view"
-        >
-          <List size={16} />
-          <span>Week</span>
-        </ViewButton>
-        <ViewButton
-          data-active={view === "timeline"}
-          onClick={() => setView("timeline")}
-          aria-label="Timeline view"
-        >
-          <Clock size={16} />
-          <span>Timeline</span>
-        </ViewButton>
-      </ViewSwitchGroup>
+      {/* Center section: view + mode */}
+      <CenterSection>
+        {/* View switch – chỉ active khi mode = plan */}
+        <ViewSwitchGroup data-disabled={!isPlanMode}>
+          <ViewButton
+            data-active={isPlanMode && view === "month"}
+            onClick={() => isPlanMode && setView("month")}
+            aria-label="Month view"
+          >
+            <CalendarDays size={16} />
+            <span>Month</span>
+          </ViewButton>
+          <ViewButton
+            data-active={isPlanMode && view === "week"}
+            onClick={() => isPlanMode && setView("week")}
+            aria-label="Week view"
+          >
+            <List size={16} />
+            <span>Week</span>
+          </ViewButton>
+          <ViewButton
+            data-active={isPlanMode && view === "timeline"}
+            onClick={() => isPlanMode && setView("timeline")}
+            aria-label="Timeline view"
+          >
+            <Clock size={16} />
+            <span>Timeline</span>
+          </ViewButton>
+        </ViewSwitchGroup>
+
+        {/* Mode switch */}
+        <ModeSwitchGroup>
+          <ModeButton
+            data-active={mode === "plan"}
+            onClick={() => setMode("plan")}
+          >
+            Plan
+          </ModeButton>
+          <ModeButton
+            data-active={mode === "focus"}
+            onClick={() => setMode("focus")}
+          >
+            Focus
+          </ModeButton>
+          <ModeButton
+            data-active={mode === "heatmap"}
+            onClick={() => setMode("heatmap")}
+          >
+            Heatmap
+          </ModeButton>
+          <ModeButton
+            data-active={mode === "insights"}
+            onClick={() => setMode("insights")}
+          >
+            Insights
+          </ModeButton>
+        </ModeSwitchGroup>
+      </CenterSection>
 
       {/* Right section: actions */}
       <ActionSection>
@@ -103,8 +153,8 @@ const ToolbarWrapper = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(8px);
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(59, 130, 246, 0.15);
   color: #e2e8f0;
   user-select: none;
@@ -117,6 +167,12 @@ const NavSection = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
+`;
+
+const CenterSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
 `;
 
 const NavButton = styled.button`
@@ -167,10 +223,12 @@ const ViewSwitchGroup = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(30, 41, 59, 0.7);
+  background: rgba(30, 41, 59, 0.8);
   border-radius: 8px;
   padding: 3px;
   border: 1px solid rgba(59, 130, 246, 0.1);
+  opacity: ${({ "data-disabled": disabled }) => (disabled ? 0.4 : 1)};
+  pointer-events: ${({ "data-disabled": disabled }) => (disabled ? "none" : "auto")};
 `;
 
 const ViewButton = styled.button`
@@ -196,6 +254,39 @@ const ViewButton = styled.button`
   &:hover:not([data-active="true"]) {
     background: rgba(59, 130, 246, 0.12);
     color: #e2e8f0;
+  }
+`;
+
+const ModeSwitchGroup = styled.div`
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  gap: 2px;
+`;
+
+const ModeButton = styled.button`
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 9px;
+  cursor: pointer;
+  transition: 0.15s ease;
+
+  &[data-active="true"] {
+    background: rgba(88, 175, 246, 0.16);
+    color: #e5f2ff;
+    box-shadow: 0 0 0 1px rgba(88, 175, 246, 0.7);
+  }
+
+  &:hover:not([data-active="true"]) {
+    background: rgba(148, 163, 184, 0.16);
+    color: #e5e7eb;
   }
 `;
 
