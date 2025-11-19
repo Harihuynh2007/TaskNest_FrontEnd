@@ -914,7 +914,7 @@ export default function SiderBar() {
   }
 
   // ================== Final render ==================
-  console.log('showCreateWorkspace = ', showCreateWorkspace);
+  // console.log('showCreateWorkspace = ', showCreateWorkspace);
   return (
     <>
       {/* Nếu bạn có prop isOpen từ ngoài truyền vào thì đổi $isOpen={true} thành $isOpen={props.isOpen} */}
@@ -931,11 +931,11 @@ export default function SiderBar() {
           onCreatedLink={() => {}}
         />
       )}
-      {showCreateWorkspace && (
+      {/* {showCreateWorkspace && (
         <div style={{ color: 'white', position: 'fixed', top: 0, left: 0, zIndex: 9999 }}>
         DEBUG: Modal flag is TRUE
         </div>
-      )}
+      )} */}
 
       {showCreateWorkspace && (
         <CreateWorkspaceModal
