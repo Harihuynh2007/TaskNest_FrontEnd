@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import ReactDOM from 'react-dom';
+import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 
 /* ===== Backdrop + Card (dark-premium) ===== */
@@ -206,7 +206,9 @@ export default function CreateWorkspaceModal({ onClose, onContinue }) {
             </Field>
 
             <Field>
-              <Label htmlFor="ws-desc">Workspace description <span style={{color:'var(--text-secondary)', fontWeight:400}}>Optional</span></Label>
+              <Label htmlFor="ws-desc">
+                Workspace description <span style={{color:'var(--text-secondary)', fontWeight:400}}>Optional</span>
+              </Label>
               <Textarea
                 id="ws-desc"
                 value={description}
@@ -240,6 +242,11 @@ export default function CreateWorkspaceModal({ onClose, onContinue }) {
     </Backdrop>
   );
 
-  // 🔒 Render qua Portal để tránh bị clip/đẩy bởi grid/overflow của trang
-  return ReactDOM.createPortal(modal, document.body);
+  // Nếu vì lý do gì đó không có document (SSR), tránh crash
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  // Render qua Portal
+  return createPortal(modal, document.body);
 }

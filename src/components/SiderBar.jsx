@@ -5,12 +5,22 @@ import styled from 'styled-components';
 import { WorkspaceContext } from '../contexts/WorkspaceContext';
 import { createWorkspace } from '../api/workspaceApi';
 import { AuthContext } from '../contexts/AuthContext';
-import { FaCheck, FaTrello, FaPlus, FaFileAlt, FaHome, FaUsers, FaCog, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import {
+  FaCheck,
+  FaTrello,
+  FaPlus,
+  FaFileAlt,
+  FaHome,
+  FaUsers,
+  FaCog,
+  FaChevronDown,
+  FaChevronUp
+} from 'react-icons/fa';
 import InviteWorkspaceModal from './Workspace/InviteWorkspaceModal';
 import CreateWorkspaceModal from './Workspace/CreateWorkspaceModal';
-// Styled Components với UX cải thiện
-// Giao diện Sáng (Light Mode) - Tinh tế & Hiện đại
-// Giao diện Tối (Dark Mode) - Sang trọng & Tập trung
+
+// ================== Styled Components ==================
+
 const SidebarContainer = styled(Col)`
   /* Định nghĩa biến màu cho toàn bộ component */
   --bg-primary: #171c26;
@@ -40,18 +50,24 @@ const SidebarContainer = styled(Col)`
   position: sticky;
   top: var(--header-height, 48px);
   transition: background-color 0.3s ease;
-  
+
   /* Custom scrollbar cho theme tối */
-  &::-webkit-scrollbar { width: 8px; }
-  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
   &::-webkit-scrollbar-thumb {
     background: #4a5261;
     border-radius: 4px;
-    &:hover { background: #5f687a; }
+    &:hover {
+      background: #5f687a;
+    }
   }
 
   @media (max-width: 768px) {
-    display: ${props => props.$isOpen ? 'flex' : 'none'};
+    display: ${(props) => (props.$isOpen ? 'flex' : 'none')};
     position: fixed;
     left: 0;
     top: var(--header-height, 48px);
@@ -69,8 +85,10 @@ const StyledItem = styled(ListGroup.Item)`
   border: none;
   border-radius: 8px;
   margin-bottom: 4px;
-  background-color: ${({ $isActive }) => ($isActive ? 'rgba(88, 175, 246, 0.15)' : 'transparent')};
-  color: ${({ $isActive }) => ($isActive ? 'var(--brand-primary)' : 'var(--text-secondary)')};
+  background-color: ${({ $isActive }) =>
+    $isActive ? 'rgba(88, 175, 246, 0.15)' : 'transparent'};
+  color: ${({ $isActive }) =>
+    $isActive ? 'var(--brand-primary)' : 'var(--text-secondary)'};
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
 
@@ -87,7 +105,8 @@ const StyledItem = styled(ListGroup.Item)`
   svg {
     margin-right: 14px;
     font-size: 16px;
-    color: ${({ $isActive }) => ($isActive ? 'var(--brand-primary)' : 'var(--text-secondary)')};
+    color: ${({ $isActive }) =>
+      $isActive ? 'var(--brand-primary)' : 'var(--text-secondary)'};
     transition: color 0.2s ease;
   }
 
@@ -130,7 +149,12 @@ const CollapsibleWorkspaceToggle = styled.div`
     background-color: var(--bg-active);
   }
 
-  .workspace-info { display: flex; align-items: center; flex-grow: 1; min-width: 0; }
+  .workspace-info {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    min-width: 0;
+  }
 
   .workspace-avatar {
     width: 32px;
@@ -164,7 +188,7 @@ const CollapsibleWorkspaceToggle = styled.div`
   }
 `;
 
-const WorkspaceNavItem = styled(StyledItem)` // Kế thừa từ StyledItem để đồng bộ
+const WorkspaceNavItem = styled(StyledItem)`
   padding: 8px 12px;
   font-size: 14px;
 `;
@@ -181,15 +205,19 @@ const InviteButton = styled.button`
   border-radius: 6px;
   color: var(--text-secondary);
   transition: all 0.2s ease;
-  
+
   &:hover {
     background-color: var(--bg-active);
     color: var(--text-primary);
   }
-  
-  &:focus-visible { outline: 2px solid var(--brand-primary); }
 
-  svg { margin: 0; }
+  &:focus-visible {
+    outline: 2px solid var(--brand-primary);
+  }
+
+  svg {
+    margin: 0;
+  }
 `;
 
 const WorkspaceMenuContainer = styled.div`
@@ -220,8 +248,10 @@ const StyledDropdown = styled(Dropdown)`
       border-color: var(--brand-primary);
       color: var(--text-primary);
     }
-    
-    &:focus { box-shadow: 0 0 0 2px rgba(88, 175, 246, 0.3); }
+
+    &:focus {
+      box-shadow: 0 0 0 2px rgba(88, 175, 246, 0.3);
+    }
   }
 
   .dropdown-menu {
@@ -241,7 +271,8 @@ const StyledDropdown = styled(Dropdown)`
     color: var(--text-secondary);
     transition: all 0.15s ease;
 
-    &:hover, &:focus {
+    &:hover,
+    &:focus {
       background-color: var(--bg-hover);
       color: var(--text-primary);
     }
@@ -280,7 +311,7 @@ const PromoButton = styled(Button)`
   border: none;
   color: #fff;
   background: var(--brand-gradient);
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(58, 123, 213, 0.3);
@@ -302,7 +333,7 @@ const EmptyState = styled.div`
     margin-bottom: 16px;
   }
 
-  button { /* Kế thừa từ PromoButton */
+  button {
     font-weight: 600;
   }
 `;
@@ -356,12 +387,18 @@ const WorkspaceList = styled.div`
   margin-top: 8px;
   overflow-y: auto;
 
-  &::-webkit-scrollbar { width: 6px; }
-  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
   &::-webkit-scrollbar-thumb {
     background: #4a5261;
     border-radius: 3px;
-    &:hover { background: #5f687a; }
+    &:hover {
+      background: #5f687a;
+    }
   }
 `;
 
@@ -374,7 +411,8 @@ const WorkspaceItem = styled.div`
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
-  background-color: ${({ $isActive }) => ($isActive ? 'var(--bg-hover)' : 'transparent')};
+  background-color: ${({ $isActive }) =>
+    $isActive ? 'var(--bg-hover)' : 'transparent'};
 
   &:hover {
     background-color: var(--bg-hover);
@@ -389,11 +427,10 @@ const WorkspaceItem = styled.div`
     width: 28px;
     height: 28px;
     border-radius: 6px;
-    background: ${({ $isActive }) => 
-      $isActive 
-        ? 'var(--brand-gradient)' 
-        : 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)'
-    };
+    background: ${({ $isActive }) =>
+      $isActive
+        ? 'var(--brand-gradient)'
+        : 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)'};
     color: white;
     display: flex;
     align-items: center;
@@ -413,9 +450,8 @@ const WorkspaceItem = styled.div`
   .ws-name {
     font-size: 13px;
     font-weight: 600;
-    color: ${({ $isActive }) => 
-      $isActive ? 'var(--brand-primary)' : 'var(--text-primary)'
-    };
+    color: ${({ $isActive }) =>
+      $isActive ? 'var(--brand-primary)' : 'var(--text-primary)'};
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -471,44 +507,65 @@ const CreateWorkspaceButton = styled.button`
   }
 `;
 
+// ================== Component ==================
+
 export default function SiderBar() {
   const navigate = useNavigate();
   const location = useLocation();
-  
-  // Contexts
-  const { workspaces, currentWorkspaceId, setCurrentWorkspaceId, loadingWorkspaces, refreshWorkspaces } = useContext(WorkspaceContext);
-  const { user } = useContext(AuthContext);
-  
-  // States
+
+  const {
+    workspaces,
+    currentWorkspaceId,
+    setCurrentWorkspaceId,
+    loadingWorkspaces,
+    refreshWorkspaces
+  } = useContext(WorkspaceContext);
+  const { user } = useContext(AuthContext); // hiện tại chưa dùng, nhưng giữ để sau dùng tới
+
   const [showInvite, setShowInvite] = useState(false);
   const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
   const [isWorkspaceMenuOpen, setWorkspaceMenuOpen] = useState(true);
   const [isWorkspaceListOpen, setWorkspaceListOpen] = useState(false);
 
-  // Memoized values
-  const currentWs = useMemo(() => 
-    workspaces.find(w => w.id === currentWorkspaceId) || { id: '', name: '', boards: [], effective_role: '' },
+  // Workspace hiện tại
+  const currentWs = useMemo(
+    () =>
+      workspaces.find((w) => w.id === currentWorkspaceId) || {
+        id: '',
+        name: '',
+        boards: [],
+        effective_role: ''
+      },
     [workspaces, currentWorkspaceId]
   );
 
-  const isWorkspacePathActive = useCallback((path) => {
-    if (!currentWs.id) return false;
-    const regex = new RegExp(`^/w/${currentWs.id}/${path}(?:/|$)`);
-    return regex.test(location.pathname);
-  }, [location.pathname, currentWs.id]);
-  // Handlers
-  const handleWorkspaceChange = useCallback((workspaceId) => {
-    setCurrentWorkspaceId(workspaceId);
-    navigate(`/w/${workspaceId}/boards`);
-    setWorkspaceMenuOpen(true);
-  }, [setCurrentWorkspaceId, navigate]);
+  // Kiểm tra path active trong workspace
+  const isWorkspacePathActive = useCallback(
+    (path) => {
+      if (!currentWs.id) return false;
+      const regex = new RegExp(`^/w/${currentWs.id}/${path}(?:/|$)`);
+      return regex.test(location.pathname);
+    },
+    [location.pathname, currentWs.id]
+  );
+
+  // ================== Handlers ==================
+
+  const handleWorkspaceChange = useCallback(
+    (workspaceId) => {
+      setCurrentWorkspaceId(workspaceId);
+      navigate(`/w/${workspaceId}/boards`);
+      setWorkspaceMenuOpen(true);
+    },
+    [setCurrentWorkspaceId, navigate]
+  );
 
   const toggleWorkspaceMenu = useCallback(() => {
-    setWorkspaceMenuOpen(prev => !prev);
+    setWorkspaceMenuOpen((prev) => !prev);
   }, []);
 
   const toggleWorkspaceList = useCallback(() => {
-    setWorkspaceListOpen(prev => !prev);
+    setWorkspaceListOpen((prev) => !prev);
   }, []);
 
   const handleInviteClick = useCallback((e) => {
@@ -520,34 +577,39 @@ export default function SiderBar() {
     setShowInvite(false);
   }, []);
 
-  const handleCreateWorkspace = useCallback(async (data) => {
-    try {
-      const response = await createWorkspace(data);
-      const newWorkspace = response.data || response;
-      
-      // Refresh workspace list
-      if (refreshWorkspaces) {
-        await refreshWorkspaces();
-      }
-      
-      // Navigate to new workspace
-      setCurrentWorkspaceId(newWorkspace.id);
-      navigate(`/w/${newWorkspace.id}/boards`);
-      setShowCreateWorkspace(false);
-    } catch (error) {
-      console.error('Failed to create workspace:', error);
-      throw error; // Let modal handle error display
-    }
-  }, [navigate, setCurrentWorkspaceId, refreshWorkspaces]);
+  const handleCreateWorkspace = useCallback(
+    async (data) => {
+      try {
+        const response = await createWorkspace(data);
+        const newWorkspace = response.data || response;
 
-  // Helper functions
+        if (refreshWorkspaces) {
+          await refreshWorkspaces();
+        }
+
+        setCurrentWorkspaceId(newWorkspace.id);
+        navigate(`/w/${newWorkspace.id}/boards`);
+        setShowCreateWorkspace(false);
+      } catch (error) {
+        console.error('Failed to create workspace:', error);
+        throw error;
+      }
+    },
+    [navigate, setCurrentWorkspaceId, refreshWorkspaces]
+  );
+
   const getRoleBadgeColor = useCallback((role) => {
     switch (role) {
-      case 'owner': return 'success';
-      case 'admin': return 'primary';
-      case 'member': return 'info';
-      case 'guest': return 'secondary';
-      default: return 'secondary';
+      case 'owner':
+        return 'success';
+      case 'admin':
+        return 'primary';
+      case 'member':
+        return 'info';
+      case 'guest':
+        return 'secondary';
+      default:
+        return 'secondary';
     }
   }, []);
 
@@ -562,101 +624,116 @@ export default function SiderBar() {
     }
   }, []);
 
-  // Render loading state
+  // ================== Nội dung chính (3 state) ==================
+
+  let content = null;
+
+  // 1. Loading
   if (loadingWorkspaces) {
-    return (
-      <SidebarContainer>
-        <LoadingState>
-          <div className="spinner-border spinner-border-sm me-2" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
-          Loading workspaces...
-        </LoadingState>
-      </SidebarContainer>
+    content = (
+      <LoadingState>
+        <div
+          className="spinner-border spinner-border-sm me-2"
+          role="status"
+        >
+          <span className="visually-hidden">Loading...</span>
+        </div>
+        Loading workspaces...
+      </LoadingState>
     );
   }
-
-  // Render empty state
-  if (!currentWs.id) {
-    return (
-      <SidebarContainer>
+  // 2. Chưa có workspace hiện tại
+  else if (!currentWs.id) {
+    content = (
+      <>
         <ListGroup variant="flush" className="mb-4">
-          <StyledItem 
-            $isActive={location.pathname === '/boards'} 
+          <StyledItem
+            $isActive={location.pathname === '/boards'}
             onClick={() => navigate('/boards')}
             role="button"
             tabIndex={0}
-            onKeyDown={(e) => handleKeyDown(e, () => navigate('/boards'))}
+            onKeyDown={(e) =>
+              handleKeyDown(e, () => navigate('/boards'))
+            }
           >
             <FaTrello /> Boards
           </StyledItem>
-          <StyledItem 
-            $isActive={location.pathname === '/templates'} 
+          <StyledItem
+            $isActive={location.pathname === '/templates'}
             onClick={() => navigate('/templates')}
             role="button"
             tabIndex={0}
-            onKeyDown={(e) => handleKeyDown(e, () => navigate('/templates'))}
+            onKeyDown={(e) =>
+              handleKeyDown(e, () => navigate('/templates'))
+            }
           >
             <FaFileAlt /> Templates
           </StyledItem>
-          <StyledItem 
-            $isActive={location.pathname === '/home'} 
+          <StyledItem
+            $isActive={location.pathname === '/home'}
             onClick={() => navigate('/home')}
             role="button"
             tabIndex={0}
-            onKeyDown={(e) => handleKeyDown(e, () => navigate('/home'))}
+            onKeyDown={(e) =>
+              handleKeyDown(e, () => navigate('/home'))
+            }
           >
             <FaHome /> Home
           </StyledItem>
         </ListGroup>
-        
+
         <EmptyState>
           <p>You are not in any workspace.</p>
-          <Button 
-            variant="primary" 
-            size="sm" 
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => setShowCreateWorkspace(true)}
           >
             Create a Workspace
           </Button>
         </EmptyState>
-      </SidebarContainer>
+      </>
     );
   }
-
-  // Main render
-  return (
-    <>
-      <SidebarContainer>
+  // 3. Có workspace hiện tại
+  else {
+    content = (
+      <>
         {/* Top navigation */}
         <ListGroup variant="flush" className="mb-2">
-          <StyledItem 
-            $isActive={location.pathname === '/boards'} 
+          <StyledItem
+            $isActive={location.pathname === '/boards'}
             onClick={() => navigate('/boards')}
             role="button"
             tabIndex={0}
             aria-label="Navigate to Boards"
-            onKeyDown={(e) => handleKeyDown(e, () => navigate('/boards'))}
+            onKeyDown={(e) =>
+              handleKeyDown(e, () => navigate('/boards'))
+            }
           >
             <FaTrello /> Boards
           </StyledItem>
-          <StyledItem 
-            $isActive={location.pathname === '/templates'} 
+          <StyledItem
+            $isActive={location.pathname === '/templates'}
             onClick={() => navigate('/templates')}
             role="button"
             tabIndex={0}
             aria-label="Navigate to Templates"
-            onKeyDown={(e) => handleKeyDown(e, () => navigate('/templates'))}
+            onKeyDown={(e) =>
+              handleKeyDown(e, () => navigate('/templates'))
+            }
           >
             <FaFileAlt /> Templates
           </StyledItem>
-          <StyledItem 
-            $isActive={location.pathname === '/home'} 
+          <StyledItem
+            $isActive={location.pathname === '/home'}
             onClick={() => navigate('/home')}
             role="button"
             tabIndex={0}
             aria-label="Navigate to Home"
-            onKeyDown={(e) => handleKeyDown(e, () => navigate('/home'))}
+            onKeyDown={(e) =>
+              handleKeyDown(e, () => navigate('/home'))
+            }
           >
             <FaHome /> Home
           </StyledItem>
@@ -664,19 +741,23 @@ export default function SiderBar() {
 
         {/* Current Workspace Section */}
         <WorkspaceHeader>Workspace</WorkspaceHeader>
-        
-        <CollapsibleWorkspaceToggle 
+
+        <CollapsibleWorkspaceToggle
           onClick={toggleWorkspaceMenu}
           $isOpen={isWorkspaceMenuOpen}
           role="button"
           tabIndex={0}
           aria-expanded={isWorkspaceMenuOpen}
-          aria-label={`${isWorkspaceMenuOpen ? 'Collapse' : 'Expand'} workspace menu`}
+          aria-label={`${
+            isWorkspaceMenuOpen ? 'Collapse' : 'Expand'
+          } workspace menu`}
           onKeyDown={(e) => handleKeyDown(e, toggleWorkspaceMenu)}
         >
           <div className="workspace-info">
             <div className="workspace-avatar" aria-hidden="true">
-              {currentWs.name ? currentWs.name[0].toUpperCase() : 'W'}
+              {currentWs.name
+                ? currentWs.name[0].toUpperCase()
+                : 'W'}
             </div>
             <div className="workspace-name" title={currentWs.name}>
               {currentWs.name}
@@ -687,24 +768,32 @@ export default function SiderBar() {
 
         <WorkspaceMenuContainer $isOpen={isWorkspaceMenuOpen}>
           <ListGroup variant="flush" className="mb-2 mt-1">
-            <WorkspaceNavItem 
-              $isActive={isWorkspacePathActive('boards')} 
+            <WorkspaceNavItem
+              $isActive={isWorkspacePathActive('boards')}
               onClick={() => navigate(`/w/${currentWs.id}/boards`)}
               role="button"
               tabIndex={0}
               aria-label="Navigate to Workspace Boards"
-              onKeyDown={(e) => handleKeyDown(e, () => navigate(`/w/${currentWs.id}/boards`))}
+              onKeyDown={(e) =>
+                handleKeyDown(e, () =>
+                  navigate(`/w/${currentWs.id}/boards`)
+                )
+              }
             >
               <FaTrello /> Boards
             </WorkspaceNavItem>
-            
-            <WorkspaceNavItem 
-              $isActive={isWorkspacePathActive('members')} 
+
+            <WorkspaceNavItem
+              $isActive={isWorkspacePathActive('members')}
               onClick={() => navigate(`/w/${currentWs.id}/members`)}
               role="button"
               tabIndex={0}
               aria-label="Navigate to Workspace Members"
-              onKeyDown={(e) => handleKeyDown(e, () => navigate(`/w/${currentWs.id}/members`))}
+              onKeyDown={(e) =>
+                handleKeyDown(e, () =>
+                  navigate(`/w/${currentWs.id}/members`)
+                )
+              }
             >
               <FaUsers /> Members
               <InviteButton
@@ -717,37 +806,47 @@ export default function SiderBar() {
                 <FaPlus size={12} />
               </InviteButton>
             </WorkspaceNavItem>
-            
-            <WorkspaceNavItem 
-              $isActive={isWorkspacePathActive('settings')} 
+
+            <WorkspaceNavItem
+              $isActive={isWorkspacePathActive('settings')}
               onClick={() => navigate(`/w/${currentWs.id}/settings`)}
               role="button"
               tabIndex={0}
               aria-label="Navigate to Workspace Settings"
-              onKeyDown={(e) => handleKeyDown(e, () => navigate(`/w/${currentWs.id}/settings`))}
+              onKeyDown={(e) =>
+                handleKeyDown(e, () =>
+                  navigate(`/w/${currentWs.id}/settings`)
+                )
+              }
             >
               <FaCog /> Settings
             </WorkspaceNavItem>
           </ListGroup>
         </WorkspaceMenuContainer>
 
-        
+        {/* Workspace list */}
         <WorkspaceListSection>
-          <WorkspaceListToggle 
+          <WorkspaceListToggle
             onClick={toggleWorkspaceList}
             $isOpen={isWorkspaceListOpen}
             role="button"
             tabIndex={0}
             aria-expanded={isWorkspaceListOpen}
             aria-label="Toggle workspace list"
-            onKeyDown={(e) => handleKeyDown(e, toggleWorkspaceList)}
+            onKeyDown={(e) =>
+              handleKeyDown(e, toggleWorkspaceList)
+            }
           >
             <span>Your Workspaces ({workspaces.length})</span>
-            {isWorkspaceListOpen ? <FaChevronUp /> : <FaChevronDown />}
+            {isWorkspaceListOpen ? (
+              <FaChevronUp />
+            ) : (
+              <FaChevronDown />
+            )}
           </WorkspaceListToggle>
 
           <WorkspaceList $isOpen={isWorkspaceListOpen}>
-            {workspaces.map(ws => (
+            {workspaces.map((ws) => (
               <WorkspaceItem
                 key={ws.id}
                 $isActive={ws.id === currentWorkspaceId}
@@ -755,7 +854,9 @@ export default function SiderBar() {
                 role="button"
                 tabIndex={0}
                 aria-label={`Switch to ${ws.name} workspace`}
-                onKeyDown={(e) => handleKeyDown(e, () => handleWorkspaceChange(ws.id))}
+                onKeyDown={(e) =>
+                  handleKeyDown(e, () => handleWorkspaceChange(ws.id))
+                }
                 title={ws.name}
               >
                 <div className="ws-avatar">
@@ -764,30 +865,37 @@ export default function SiderBar() {
                 <div className="ws-info">
                   <div className="ws-name">{ws.name}</div>
                   <div className="ws-meta">
-                    <Badge 
-                      bg={getRoleBadgeColor(ws.effective_role)} 
-                      style={{ fontSize: '10px', padding: '2px 6px' }}
+                    <Badge
+                      bg={getRoleBadgeColor(ws.effective_role)}
+                      style={{
+                        fontSize: '10px',
+                        padding: '2px 6px'
+                      }}
                     >
                       {getRoleLabel(ws.effective_role)}
                     </Badge>
-                    {/* Hiển thị số boards nếu có */}
                     {ws.boards && ws.boards.length > 0 && (
                       <span>{ws.boards.length} boards</span>
                     )}
                   </div>
                 </div>
                 {ws.id === currentWorkspaceId && (
-                  <FaCheck className="ws-check" aria-label="Current workspace" />
+                  <FaCheck
+                    className="ws-check"
+                    aria-label="Current workspace"
+                  />
                 )}
               </WorkspaceItem>
             ))}
 
-            <CreateWorkspaceButton 
+            <CreateWorkspaceButton
               onClick={() => setShowCreateWorkspace(true)}
               role="button"
               tabIndex={0}
               aria-label="Create new workspace"
-              onKeyDown={(e) => handleKeyDown(e, () => setShowCreateWorkspace(true))}
+              onKeyDown={(e) =>
+                handleKeyDown(e, () => setShowCreateWorkspace(true))
+              }
             >
               <FaPlus />
               <span>Create new workspace</span>
@@ -799,13 +907,22 @@ export default function SiderBar() {
         <PromoCard>
           <h6>Try TaskNest Premium</h6>
           <p>Get Planner (full access), advanced features, and more.</p>
-          <PromoButton size="sm">
-            Start free trial
-          </PromoButton>
+          <PromoButton size="sm">Start free trial</PromoButton>
         </PromoCard>
+      </>
+    );
+  }
+
+  // ================== Final render ==================
+  console.log('showCreateWorkspace = ', showCreateWorkspace);
+  return (
+    <>
+      {/* Nếu bạn có prop isOpen từ ngoài truyền vào thì đổi $isOpen={true} thành $isOpen={props.isOpen} */}
+      <SidebarContainer $isOpen={true}>
+        {content}
       </SidebarContainer>
 
-      {/* Modals */}
+      {/* Modals luôn render dựa theo state */}
       {showInvite && currentWs?.id && (
         <InviteWorkspaceModal
           workspaceId={currentWs.id}
@@ -813,6 +930,11 @@ export default function SiderBar() {
           onClose={handleCloseInvite}
           onCreatedLink={() => {}}
         />
+      )}
+      {showCreateWorkspace && (
+        <div style={{ color: 'white', position: 'fixed', top: 0, left: 0, zIndex: 9999 }}>
+        DEBUG: Modal flag is TRUE
+        </div>
       )}
 
       {showCreateWorkspace && (
