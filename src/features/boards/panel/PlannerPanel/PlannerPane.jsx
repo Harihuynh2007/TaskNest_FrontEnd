@@ -44,7 +44,8 @@ export default function PlannerPane() {
     navigate,
     showCompleted,
     setShowCompleted,
-  } = usePlannerView();
+    goToDate
+    } = usePlannerView();
   
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
@@ -128,6 +129,9 @@ export default function PlannerPane() {
                 currentDate={currentDate} 
                 cards={planCards}
                 onCardClick={setSelectedCard}
+
+                setView={setView}    // Lấy từ usePlannerView
+                goToDate={goToDate}  // Lấy từ usePlannerView
               />
             )}
             {view === 'week' && (
