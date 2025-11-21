@@ -111,13 +111,12 @@ function MonthCalendar({ currentDate, cards, onCardClick, setView, goToDate }) {
     for (const card of cards) {
       if (!card?.due_date) continue;
 
-      // Tối ưu: lấy trực tiếp chuỗi YYYY-MM-DD
+      if (typeof card.due_date !== 'string' || card.due_date.length < 10) continue;
       const dateStr = card.due_date.slice(0, 10);
 
       if (!grouped[dateStr]) grouped[dateStr] = [];
       grouped[dateStr].push(card);
-    }
-    return grouped;
+    }    return grouped;
   }, [cards]);
 
   // ========== Navigation handler ==========
@@ -144,8 +143,7 @@ function MonthCalendar({ currentDate, cards, onCardClick, setView, goToDate }) {
                 cards={visible}
                 hiddenCount={hiddenCount}
                 isToday={date.isSame(dayjs(), "day")}
-                isCurrentMonth={date.month() === currentDate.month()}
-                provided={provided}
+                isCurrentMonth={date.isSame(currentDate, 'month')}                provided={provided}
                 snapshot={snapshot}
                 onCardClick={onCardClick}
                 handleNavigateToDay={handleNavigateToDay}
