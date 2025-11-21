@@ -44,13 +44,15 @@ export default function PlannerPane() {
     navigate,
     showCompleted,
     setShowCompleted,
-    goToDate
+    goToDate,
+    updateCardLocal,
+    deleteCardLocal,
     } = usePlannerView();
   
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
 
-  usePlannerRealtime(boardId, refresh);
+  usePlannerRealtime(boardId, refresh, updateCardLocal, deleteCardLocal);
   
   // Filter cards theo Completed toggle – dùng cho Plan mode
   const planCards = useMemo(() => {

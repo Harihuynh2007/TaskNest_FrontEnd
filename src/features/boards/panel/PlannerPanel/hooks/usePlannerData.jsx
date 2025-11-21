@@ -79,6 +79,17 @@ export const usePlannerData = (boardId) => {
     }
   }, [cards]);
 
+  const updateCardLocal = useCallback((updatedCard) => {
+    setCards(prev =>
+      prev.map(c => c.id === updatedCard.id ? { ...c, ...updatedCard } : c)
+    );
+  }, []);
+
+  const deleteCardLocal = useCallback((cardId) => {
+    setCards(prev => prev.filter(c => c.id !== cardId));
+  }, []);
+
+
   const createCard = useCallback(async (data) => {
     try {
       const res = await cardApi.createInboxCard({
@@ -179,6 +190,8 @@ export const usePlannerData = (boardId) => {
     refresh: loadCards,
     onCardCreated,
     onCardUpdated,
-    onCardDeleted
+    onCardDeleted,
+    updateCardLocal,
+    deleteCardLocal,
   };
 };
