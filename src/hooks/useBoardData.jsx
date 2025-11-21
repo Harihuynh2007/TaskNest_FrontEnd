@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import * as boardApi from '../api/boardApi';
-import * as listApi from '../api/listApi';
 import * as cardApi from '../api/cardApi';
 import { connectBoardSocket } from '../api/wsClient';
 import dayjs from 'dayjs';
@@ -14,12 +13,12 @@ import dayjs from 'dayjs';
  */
 export default function useBoardData(workspaceId, boardId) {
   const [board, setBoard] = useState(null);
-  const [lists, setLists] = useState([]);
-  const [cards, setCards] = useState([]);
+  const [lists, setLists] = useState([]); // [{ id, name, cards: [] }]
+  const [cards, setCards] = useState([]); // Inbox cards
   const socketRef = useRef(null);
   const isMounted = useRef(false);
 
-  /** =============== LOAD INITIAL DATA =============== */
+  /** =============== LOAD BOARD INFO =============== */
   const loadBoard = useCallback(async () => {
     if (!workspaceId || !boardId) return;
     try {
@@ -30,58 +29,62 @@ export default function useBoardData(workspaceId, boardId) {
     }
   }, [workspaceId, boardId]);
 
+  /** 
+   * =============== LOAD ALL LISTS + CARDS =============== 
+   * (Dùng API mới tối ưu – fetchPlannerData)
+   * Trả về:
+   * {
+   *    lists: [{id, name, position, cards: [...] }],
+   *    inbox: [...]
+   * }
+   */
   const loadListsAndCards = useCallback(async () => {
     if (!boardId) return;
+
     try {
-      // 1️⃣ Lấy tất cả danh sách (lists)
-      const resLists = await listApi.fetchLists(boardId);
-      const fetchedLists = resLists.data || [];
+      const res = await cardApi.fetchPlannerData(boardId);
+      const { lists = [], inbox = [] } = res.data || {};
 
-      // 2️⃣ Lấy thẻ trong từng list
-      const cardPromises = fetchedLists.map(list => cardApi.fetchCardsByList(list.id));
-      const cardResponses = await Promise.all(cardPromises);
-
-      const listsWithCards = fetchedLists.map((list, index) => ({
-        ...list,
-        cards: cardResponses[index]?.data || []
+      // Chuẩn hoá list
+      const formattedLists = lists.map(lst => ({
+        ...lst,
+        cards: lst.cards || []
       }));
 
-      setLists(listsWithCards);
-
-      // 3️⃣ Lấy các thẻ trong Inbox (list = null)
-      const resInbox = await cardApi.fetchInboxCards();
-      const inboxCards = resInbox.data || [];
-      setCards(inboxCards);
+      setLists(formattedLists);
+      setCards(inbox);
 
     } catch (err) {
-      console.error('❌ Failed to load lists or cards:', err);
+      console.error('❌ Failed to load planner data:', err);
     }
   }, [boardId]);
 
-  /** =============== REFRESH (cho WS & planner) =============== */
+  /** =============== REFRESH (WS & Planner Panel) =============== */
   const refresh = useCallback(async () => {
     await loadListsAndCards();
   }, [loadListsAndCards]);
 
-  /** =============== UPDATE / CREATE / DELETE CARD =============== */
+  /** =============== UPDATE CARD TRONG STATE =============== */
   const updateCardInState = useCallback((updatedCard) => {
     if (!updatedCard?.id) return;
 
-    // Update trong Inbox (cards)
+    // Update inbox cards
     setCards(prev =>
       prev.map(c => (c.id === updatedCard.id ? { ...c, ...updatedCard } : c))
     );
 
-    // Update trong lists
+    // Update card trong list
     setLists(prev =>
-      prev.map(l => ({
-        ...l,
-        cards: l.cards.map(c => (c.id === updatedCard.id ? { ...c, ...updatedCard } : c))
+      prev.map(list => ({
+        ...list,
+        cards: list.cards.map(c =>
+          c.id === updatedCard.id ? { ...c, ...updatedCard } : c
+        )
       }))
     );
   }, []);
 
-  /** ✅ Dời ngày hạn của thẻ (Planner dùng) */
+  /** =============== UPDATE DUE DATE (Planner) =============== */
   const updateCardDate = useCallback(async (cardId, newDate) => {
     try {
       const res = await cardApi.updateCard(cardId, { due_date: newDate });
@@ -91,7 +94,7 @@ export default function useBoardData(workspaceId, boardId) {
     }
   }, [updateCardInState]);
 
-  /** ✅ Tạo thẻ trong Inbox */
+  /** =============== TẠO CARD Ở INBOX =============== */
   const createInboxCard = useCallback(async (payload) => {
     try {
       const res = await cardApi.createInboxCard(payload);
@@ -103,15 +106,17 @@ export default function useBoardData(workspaceId, boardId) {
     }
   }, []);
 
-  /** ✅ Xóa thẻ (dùng cho modal hoặc popup) */
+  /** =============== DELETE CARD LOCAL =============== */
   const deleteCardLocal = useCallback(async (cardId) => {
     try {
       await cardApi.deleteCard(cardId);
+
       setCards(prev => prev.filter(c => c.id !== cardId));
+
       setLists(prev =>
-        prev.map(l => ({
-          ...l,
-          cards: l.cards.filter(c => c.id !== cardId)
+        prev.map(list => ({
+          ...list,
+          cards: list.cards.filter(c => c.id !== cardId)
         }))
       );
     } catch (err) {
@@ -119,29 +124,33 @@ export default function useBoardData(workspaceId, boardId) {
     }
   }, []);
 
-  /** ✅ Di chuyển card giữa list / inbox */
-  const moveCardBetweenLists = useCallback(async (cardId, sourceListId, destListId, newPos) => {
-    try {
-      const res = await cardApi.updateCard(cardId, {
-        list: destListId,
-        position: newPos,
-        completed: false
-      });
-      await refresh();
-      return res.data;
-    } catch (err) {
-      console.error('❌ Failed to move card:', err);
-    }
-  }, [refresh]);
-
-  /** =============== WEBSOCKET REALTIME =============== */
+  /** =============== DI CHUYỂN CARD GIỮA LIST/INBOX =============== */
+  const moveCardBetweenLists = useCallback(
+    async (cardId, sourceListId, destListId, newPos) => {
+      try {
+        const res = await cardApi.updateCard(cardId, {
+          list: destListId,
+          position: newPos,
+          completed: false
+        });
+        await refresh();
+        return res.data;
+      } catch (err) {
+        console.error('❌ Failed to move card:', err);
+        throw err;
+      }
+    },
+    [refresh]
+  );
+  /** =============== REALTIME WEBSOCKET =============== */
   useEffect(() => {
     if (!boardId) return;
 
     socketRef.current = connectBoardSocket(boardId, (data) => {
       if (!data?.type) return;
+
       if (['card_created', 'card_updated', 'card_deleted', 'card_moved'].includes(data.type)) {
-        console.log('🔄 WS update received:', data.type);
+        console.log('🔄 WS update:', data.type);
         refresh();
       }
     });
@@ -158,6 +167,7 @@ export default function useBoardData(workspaceId, boardId) {
   useEffect(() => {
     if (isMounted.current) return;
     isMounted.current = true;
+
     (async () => {
       await loadBoard();
       await loadListsAndCards();
