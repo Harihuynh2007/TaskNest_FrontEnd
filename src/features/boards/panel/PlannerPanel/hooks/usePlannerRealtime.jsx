@@ -1,37 +1,71 @@
-// src/features/boards/panel/PlannerPanel/hooks/usePlannerRealtime.jsx
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { connectBoardSocket, closeBoardSocket } from "../../../../../api/wsClient";
 
 /**
- * 🔄 usePlannerRealtime (phiên bản tương thích TaskNest)
- * Tự động kết nối WebSocket board, và gọi refresh() khi có card thay đổi.
+ * usePlannerRealtime (Optimized)
+ * - Debounce refresh() để tránh spam API
+ * - Hỗ trợ local mutation nếu server gửi kèm data.card
  *
- * @param {number|string} boardId - ID của board hiện tại
- * @param {Function} refresh - Hàm reload lại dữ liệu (thường từ usePlannerData)
+ * @param {number|string} boardId
+ * @param {Function} refresh
+ * @param {Function} updateCardLocal (từ usePlannerData) — optional
+ * @param {Function} deleteCardLocal (từ usePlannerData) — optional
  */
-export function usePlannerRealtime(boardId, refresh) {
+export function usePlannerRealtime(boardId, refresh, updateCardLocal, deleteCardLocal) {
   const socketRef = useRef(null);
+  const debounceRef = useRef(null);
+
+  // Debounce refresh 500ms
+  const triggerRefresh = useCallback(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      refresh();
+    }, 500);
+  }, [refresh]);
 
   useEffect(() => {
     if (!boardId) return;
 
-    // Kết nối WebSocket board
     const socket = connectBoardSocket(boardId);
     socketRef.current = socket;
 
     console.log(`🌐 [PlannerRealtime] Connected to /ws/boards/${boardId}/`);
 
-    // Xử lý message realtime
     socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        // console.log("[Planner WS] Received:", data);
 
-        if (
-          ["card_created", "card_updated", "card_deleted", "card_moved"].includes(data.type)
-        ) {
-          refresh(); // 🔁 Tải lại dữ liệu Planner
+        const eventType = data.type;
+        const card = data.card ?? null;
+
+        // ---- Local update (Cấp độ 2) ----
+        if (eventType === "card_updated" && card && updateCardLocal) {
+          updateCardLocal(card);
+          return;
         }
+
+        if (eventType === "card_created" && card && updateCardLocal) {
+          updateCardLocal(card);
+          return;
+        }
+
+        if (eventType === "card_deleted" && card?.id && deleteCardLocal) {
+          deleteCardLocal(card.id);
+          return;
+        }
+
+        if (eventType === "card_moved" && card && updateCardLocal) {
+          updateCardLocal(card);
+          return;
+        }
+
+        // ---- Fallback: Debounced refresh (Cấp độ 1) ----
+        if (
+          ["card_created", "card_updated", "card_deleted", "card_moved"].includes(eventType)
+        ) {
+          triggerRefresh();
+        }
+
       } catch (err) {
         console.error("⚠️ [PlannerRealtime] Parse error:", err);
       }
@@ -44,6 +78,7 @@ export function usePlannerRealtime(boardId, refresh) {
     return () => {
       closeBoardSocket(boardId);
       socketRef.current = null;
+      if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [boardId, refresh]);
+  }, [boardId, refresh, updateCardLocal, deleteCardLocal, triggerRefresh]);
 }
