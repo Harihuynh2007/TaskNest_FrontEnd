@@ -164,18 +164,15 @@ export default function ResizableLayout({
   }, [paneKey]);
 
   /** Dọn global handler khi unmount */
-    useEffect(() => {
+  useEffect(() => {
     return () => {
       if (dragRef.current) {
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
-
-        document.body.style.userSelect = prevBodyStyleRef.current.userSelect;
-        document.body.style.cursor = prevBodyStyleRef.current.cursor;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
 
   const startDragging = (leftId, rightId, clientX) => {
     const leftNode = paneRefMap[leftId]?.current;
