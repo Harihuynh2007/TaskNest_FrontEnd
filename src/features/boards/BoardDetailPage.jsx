@@ -643,7 +643,7 @@ export default function BoardDetailPage() {
   return (
     <>
       {editPopup && <DarkOverlay />}
-
+      
       <BoardWrapper $background={resolvedBackground}>
         <DragDropContext onDragEnd={onDragEnd}>
             {renderPanes()}
@@ -782,6 +782,7 @@ const BoardWrapper = styled.div`
   height: 100vh;
   display: flex;
   flex-direction: column;
+   
 `;
 
 const SplitContainer = styled.div`

@@ -146,31 +146,36 @@ export default function ResizableLayout({
   };
 
   /** Khởi tạo layout khi activeTabs / boardId thay đổi */
+  const paneKey = useMemo(
+    () => panes.map((p) => p.id).join('|'),
+    [panes]
+  );
+
   useLayoutEffect(() => {
     applyLayout();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [boardId, panes.length]);
+  }, [boardId, paneKey]); // thay vì panes.length
 
-  /** Re-apply khi window resize (cho responsive) */
   useEffect(() => {
     const handleResize = () => {
       applyLayout();
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [panes.length]);
+  }, [paneKey]);
 
   /** Dọn global handler khi unmount */
-  useEffect(() => {
+    useEffect(() => {
     return () => {
       if (dragRef.current) {
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
+
+        document.body.style.userSelect = prevBodyStyleRef.current.userSelect;
+        document.body.style.cursor = prevBodyStyleRef.current.cursor;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   const startDragging = (leftId, rightId, clientX) => {
     const leftNode = paneRefMap[leftId]?.current;
@@ -211,7 +216,6 @@ export default function ResizableLayout({
       });
     };
   };
-
 
   
   const handleMouseMove = useCallback(

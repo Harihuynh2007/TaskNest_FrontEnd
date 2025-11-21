@@ -44,11 +44,15 @@ const SidebarContainer = styled(Col)`
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
+
   min-width: 240px;
   max-width: 280px;
-  flex: 0 0 260px;
-  position: sticky;
+  left: 0;
+  position: fixed;
+  z-index: 200;
+  
   top: var(--header-height, 48px);
+  height: calc(100vh - var(--header-height,48px));
   transition: background-color 0.3s ease;
 
   /* Custom scrollbar cho theme tối */
