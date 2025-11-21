@@ -5,12 +5,20 @@ import { BrowserRouter } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
 import App from './App' ;
+import api from './api/apiClient';
+
+
 import './styles/index.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider, WorkspaceProvider, ModalProvider } from './contexts';
+import { TokenManager } from './api/tokenManager';
 
+const token = TokenManager.getAccessToken();
+if (token) {
+  api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
