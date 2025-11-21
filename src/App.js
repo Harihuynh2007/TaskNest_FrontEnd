@@ -20,6 +20,7 @@ import BoardDetailPage from './features/boards/BoardDetailPage';
 import BoardsMainContent from './features/boards/BoardsMainContent';
 import TemplatesPage from './features/templates/TemplatesPage';
 import WorkspaceSettingsPage from './components/Workspace/WorkspaceSettingsPage';
+import WorkspaceBoardsPage from './features/boards/WorkspaceBoardsPage';
 
 import Settings from './features/boards/settings/Setting';
 import ProfileAndVisibility from './features/boards/settings/profileandvisibility/ProfileAndVisibility';
@@ -79,6 +80,9 @@ function App() {
             </PrivateRoute>
           }
         />
+
+        <Route path="/w/:workspaceId/boards" element={<WorkspaceBoardsPage />} />
+
         <Route
           path="/workspaces/:workspaceId/boards/:boardId/inbox"
           element={
