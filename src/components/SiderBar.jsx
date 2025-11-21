@@ -47,9 +47,8 @@ const SidebarContainer = styled(Col)`
 
   min-width: 240px;
   max-width: 280px;
-  left: 0;
-  position: fixed;
-  z-index: 200;
+  flex: 0 0 260px;
+  position: sticky;
   
   top: var(--header-height, 48px);
   height: calc(100vh - var(--header-height,48px));
