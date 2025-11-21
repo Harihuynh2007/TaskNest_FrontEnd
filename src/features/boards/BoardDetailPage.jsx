@@ -77,11 +77,79 @@ export default function BoardDetailPage() {
 
   const [autoWeekday, setAutoWeekday] = useState(false);
   const [weekPalette, setWeekPalette] = useState(DEFAULT_WEEK_PALETTE);
+
+  const PANE_TABS = ['inbox', 'planner', 'board'];
+
+  const BOARD_ACTIVE_TABS_KEY = (boardId) =>
+    `tn:board:${boardId}:activeTabs`;
+
+  const GLOBAL_LAST_TABS_KEY = 'tn:user:lastActiveTabs';
+
+  const sanitizeTabs = (tabs) => {
+    if (!Array.isArray(tabs)) return ['inbox'];
+    const filtered = tabs.filter((t) => PANE_TABS.includes(t));
+    return filtered.length ? filtered : ['inbox'];
+  };
+
   const [todayIndex, setTodayIndex] = useState(dayjs().day()); // 0..6
   const resolvedBackground = autoWeekday ? weekPalette[todayIndex] : background;
 
-  
-  
+  useEffect(() => {
+    if (!boardId || typeof window === 'undefined') return;
+
+    try {
+      const boardKey = BOARD_ACTIVE_TABS_KEY(boardId);
+      const globalKey = GLOBAL_LAST_TABS_KEY;
+
+      // 1. Ưu tiên: layout đã lưu cho chính board này
+      const rawBoard = window.localStorage.getItem(boardKey);
+      if (rawBoard) {
+        const parsed = JSON.parse(rawBoard);
+        const next = sanitizeTabs(parsed);
+        setActiveTabs(next);
+        return;
+      }
+
+      // 2. Nếu board chưa có layout riêng → dùng layout gần nhất user đã dùng
+      const rawGlobal = window.localStorage.getItem(globalKey);
+      if (rawGlobal) {
+        const parsed = JSON.parse(rawGlobal);
+        const next = sanitizeTabs(parsed);
+        setActiveTabs(next);
+        return;
+      }
+
+      // 3. Fallback mặc định
+      setActiveTabs(['inbox']);
+    } catch (err) {
+      console.error('Failed to restore layout tabs', err);
+      setActiveTabs(['inbox']);
+    }
+  }, [boardId]);
+
+  useEffect(() => {
+    if (!boardId || typeof window === 'undefined') return;
+
+    try {
+      // Chỉ lưu những tab thực sự là pane layout
+      const paneTabs = activeTabs.filter((t) => PANE_TABS.includes(t));
+      if (!paneTabs.length) return;
+
+      const boardKey = BOARD_ACTIVE_TABS_KEY(boardId);
+      const globalKey = GLOBAL_LAST_TABS_KEY;
+
+      // 1. Lưu layout cho board hiện tại
+      window.localStorage.setItem(boardKey, JSON.stringify(paneTabs));
+
+      // 2. Lưu layout "gần nhất" mà user dùng (để board mới reuse)
+      window.localStorage.setItem(globalKey, JSON.stringify(paneTabs));
+    } catch (err) {
+      console.error('Failed to persist layout tabs', err);
+    }
+  }, [activeTabs, boardId]);
+
+
+
     // Load theme preferences from localStorage by boardId
   useEffect(() => {
     if (!boardId) return;
