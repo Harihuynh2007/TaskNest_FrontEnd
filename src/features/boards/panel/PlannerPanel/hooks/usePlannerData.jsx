@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import * as cardApi from './././././api/cardApi';
+import * as cardApi from '../../../../../api/cardApi';
 import { toast } from 'react-hot-toast';
 
 export const usePlannerData = (boardId) => {
@@ -57,9 +57,6 @@ export const usePlannerData = (boardId) => {
     }
   }, [boardId]);
 
-  useEffect(() => {
-    loadCards();
-  }, [loadCards]);
 
   useEffect(() => {
     loadCards();
