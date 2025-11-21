@@ -1,71 +1,65 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import * as cardApi from '../../../../../api/cardApi';
-import { fetchCardsByList, fetchInboxCards } from '../../../../../api/cardApi';
-import { fetchLists } from '../../../../../api/listApi';
+import * as cardApi from './././././api/cardApi';
 import { toast } from 'react-hot-toast';
 
 export const usePlannerData = (boardId) => {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState(null);
   const currentRequestRef = useRef(null);
 
   const loadCards = useCallback(async () => {
     if (!boardId) return;
-    
+
     const requestId = Date.now();
     currentRequestRef.current = requestId;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
-      const listsRes = await fetchLists(boardId);
-      const lists = listsRes.data || [];
-      
-      const listCardsPromises = lists.map(list => 
-        fetchCardsByList(list.id).then(res => ({
-          listId: list.id,
-          listName: list.name,
-          cards: res.data || []
-        }))
-      );
-      
-      const listCardsResults = await Promise.all(listCardsPromises);
-      
-      const inboxRes = await fetchInboxCards();
-      const inboxCards = (inboxRes.data || []).map(card => ({
-        ...card,
-        listId: null,
-        listName: null
-      }));
-      
-      const allCards = [
-        ...inboxCards,
-        ...listCardsResults.flatMap(result => 
-          result.cards.map(card => ({
+      // ---- GỌI API MỚI CHỈ 1 LẦN ----
+      const res = await cardApi.fetchPlannerData(boardId);
+      const { lists = [], inbox = [] } = res.data || {};
+
+      // ---- Chuẩn hóa dữ liệu thành 1 mảng duy nhất ----
+      const mergedCards = [
+        ...inbox.map(card => ({
+          ...card,
+          listId: null,
+          listName: null
+        })),
+        ...lists.flatMap(lst =>
+          lst.cards.map(card => ({
             ...card,
-            listId: result.listId,
-            listName: result.listName
+            listId: lst.id,
+            listName: lst.name
           }))
         )
       ];
-      
+
       if (currentRequestRef.current === requestId) {
-        setCards(allCards);
+        setCards(mergedCards);
       }
+
     } catch (err) {
       if (currentRequestRef.current === requestId) {
-        console.error('Failed to load planner cards:', err);
+        console.error('Failed to load planner data:', err);
         setError(err.message);
         toast.error('Failed to load cards');
       }
+
     } finally {
       if (currentRequestRef.current === requestId) {
         setLoading(false);
       }
     }
   }, [boardId]);
+
+  useEffect(() => {
+    loadCards();
+  }, [loadCards]);
 
   useEffect(() => {
     loadCards();
