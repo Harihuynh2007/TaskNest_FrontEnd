@@ -200,16 +200,18 @@ export default function ResizableLayout({
     window.addEventListener('mouseup', handleMouseUp);
   };
 
-  const throttle = (func, limit) => {
-    let inThrottle;
-    return function(...args) {
-      if (!inThrottle) {
-        func.apply(this, args);
-        inThrottle = true;
-        requestAnimationFrame(() => inThrottle = false);
-      }
+  const throttle = (func) => {
+    let inThrottle = false;
+    return (...args) => {
+      if (inThrottle) return;
+      inThrottle = true;
+      func(...args);
+      requestAnimationFrame(() => {
+        inThrottle = false;
+      });
     };
   };
+
 
   
   const handleMouseMove = useCallback(
