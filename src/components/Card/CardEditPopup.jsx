@@ -1,31 +1,12 @@
 import React, { useEffect, useMemo, useRef, useCallback } from "react";
 import styled from "styled-components";
+import { createPortal } from "react-dom"; // ⭐ ADD PORTAL
 import { FiEdit3, FiTrash2, FiUsers, FiClock, FiMaximize2 } from "react-icons/fi";
 import { BiLabel } from "react-icons/bi";
 import { MdChecklist } from "react-icons/md";
 import { FiPaperclip } from "react-icons/fi";
 
-/**
- * CardEditPopup
- *
- * Props (giữ tương thích, có thể bớt/đổi theo dự án của bạn):
- * - card: object (bắt buộc)
- * - anchorRect: DOMRect của nút mở popup (bắt buộc)
- * - onClose: () => void (bắt buộc)
- * - onOpenFullCard: (card) => void
- * - onDelete: (card) => Promise|void
- * - onRename: (card) => void   // nếu bạn có flow rename nhanh
- *
- * - onEditMembers?: (card) => void
- * - onEditDueDate?: (card) => void
- * - onEditLabels?: (card) => void
- * - onAddChecklist?: (card) => void
- * - onAddAttachment?: (card) => void
- *
- * Lưu ý:
- * - Không đổi pixel layout tổng của container xung quanh (đặt tuyệt đối theo anchorRect).
- * - Nếu thiếu callback, tự fallback toast: window.toast?.info('Tính năng sắp có')
- */
+
 export default function CardEditPopup({
   card,
   anchorRect,
@@ -57,100 +38,131 @@ export default function CardEditPopup({
     []
   );
 
-  // Tính vị trí và clamp viewport (không đổi pixel container cha)
+  // ⭐ FIX: Dùng `position: fixed` và tính theo viewport
   const positionStyle = useMemo(() => {
     const GAP = 8;
     const width = 280;
-    let top = anchorRect?.bottom + window.scrollY + GAP;
-    let left = (anchorRect?.left ?? 0);
+
+    if (!anchorRect) return { top: 200, left: 200, width };
+
+    let top = anchorRect.bottom + GAP;
+    let left = anchorRect.left;
 
     const maxLeft = window.innerWidth - width - GAP;
-    if (left > maxLeft) left = Math.max(GAP, maxLeft);
+    if (left > maxLeft) left = maxLeft;
+    if (left < GAP) left = GAP;
 
     const approxHeight = 360;
-    const fitsBelow = top + approxHeight < window.scrollY + window.innerHeight;
+    const fitsBelow = top + approxHeight < window.innerHeight - GAP;
+
     if (!fitsBelow) {
-      top = (anchorRect?.top ?? 0) + window.scrollY - approxHeight - GAP;
-      if (top < window.scrollY + GAP) top = window.scrollY + GAP;
+      top = anchorRect.top - approxHeight - GAP;
+      if (top < GAP) top = GAP;
     }
+
     return { top, left, width };
   }, [anchorRect]);
 
-  // Click outside để đóng
+  /** CLICK OUTSIDE */
   useEffect(() => {
     const onDown = (e) => {
-      if (popupRef.current && !popupRef.current.contains(e.target)) onClose?.();
+      if (popupRef.current && !popupRef.current.contains(e.target)) {
+        onClose?.();
+      }
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
   }, [onClose]);
 
-  // Không auto-focus item đầu → tránh auto highlight; chỉ highlight khi :hover hoặc :focus-visible
-  const callOrToast = useCallback((fn) => {
-    if (typeof fn === "function") return fn(card);
-    if (window?.toast?.info) window.toast.info("Tính năng sắp có");
-  }, [card]);
+  const callOrToast = useCallback(
+    (fn) => {
+      if (typeof fn === "function") return fn(card);
+      if (window?.toast?.info) window.toast.info("Tính năng sắp có");
+    },
+    [card]
+  );
 
-  const handleSelect = useCallback(async (key) => {
-    if (typeof onSelect === "function") {
-      onSelect(key, card);
+  const handleSelect = useCallback(
+    async (key) => {
+      if (typeof onSelect === "function") {
+        onSelect(key, card);
+        onClose?.();
+        return;
+      }
+
+      switch (key) {
+        case "open":
+          onOpenFullCard?.(card);
+          break;
+        case "rename":
+          callOrToast(onRename);
+          break;
+        case "labels":
+          callOrToast(onEditLabels);
+          break;
+        case "checklist":
+          callOrToast(onAddChecklist);
+          break;
+        case "attachment":
+          callOrToast(onAddAttachment);
+          break;
+        case "members":
+          callOrToast(onEditMembers);
+          break;
+        case "dates":
+          callOrToast(onEditDueDate);
+          break;
+        case "delete":
+          if (typeof onDelete === "function") await onDelete(card);
+          break;
+        default:
+          break;
+      }
       onClose?.();
-      return;
-    }
-    switch (key) {
-      case "open":
-        onOpenFullCard?.(card);
-        break;
-      case "rename":
-        callOrToast(onRename);
-        break;
-      case "labels":
-        callOrToast(onEditLabels);
-        break;
-      case "checklist":
-        callOrToast(onAddChecklist);
-        break;
-      case "attachment":
-        callOrToast(onAddAttachment);
-        break;
-      case "members":
-        callOrToast(onEditMembers);
-        break;
-      case "dates":
-        callOrToast(onEditDueDate);
-        break;
-      case "delete":
-        if (typeof onDelete === "function") await onDelete(card);
-        break;
-      default:
-        break;
-    }
-    onClose?.();
-  }, [card, onSelect, onOpenFullCard, onRename, onEditLabels, onAddChecklist, onAddAttachment, onEditMembers, onEditDueDate, onDelete, onClose, callOrToast]);
+    },
+    [
+      card,
+      onSelect,
+      onOpenFullCard,
+      onRename,
+      onEditLabels,
+      onAddChecklist,
+      onAddAttachment,
+      onEditMembers,
+      onEditDueDate,
+      onDelete,
+      onClose,
+      callOrToast,
+    ]
+  );
 
-  // Keyboard trên toàn menu: ESC đóng, ↑/↓ di chuyển focus (focus item đầu nếu chưa focus)
-  const onKeyDownMenu = useCallback((e) => {
-    const idx = itemRefs.current.findIndex((el) => el === document.activeElement);
-    if (e.key === "Escape") {
-      e.preventDefault();
-      onClose?.();
-      return;
-    }
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      const next = idx === -1 ? 0 : (idx + 1) % items.length;
-      itemRefs.current[next]?.focus?.();
-      return;
-    }
-    if (e.key === "ArrowUp") {
-      e.preventDefault();
-      const prev = idx === -1 ? items.length - 1 : (idx - 1 + items.length) % items.length;
-      itemRefs.current[prev]?.focus?.();
-      return;
-    }
-  }, [items.length, onClose]);
+  const onKeyDownMenu = useCallback(
+    (e) => {
+      const idx = itemRefs.current.findIndex((el) => el === document.activeElement);
 
-  return (
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose?.();
+        return;
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        const next = idx === -1 ? 0 : (idx + 1) % items.length;
+        itemRefs.current[next]?.focus?.();
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        const prev = idx === -1 ? items.length - 1 : (idx - 1 + items.length) % items.length;
+        itemRefs.current[prev]?.focus?.();
+        return;
+      }
+    },
+    [items.length, onClose]
+  );
+
+  // ⭐ FIX: Render bằng Portal → KHÔNG còn bị ảnh hưởng bởi overflow/transform của InboxPane
+  return createPortal(
     <Wrap
       ref={popupRef}
       role="menu"
@@ -184,19 +196,20 @@ export default function CardEditPopup({
           </Item>
         ))}
       </List>
-    </Wrap>
+    </Wrap>,
+    document.body
   );
 }
 
 /* ================= Styled ================= */
 
 const Wrap = styled.div`
-  position: absolute;
+  position: fixed; /* ⭐ FIXED, không còn absolute */
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.18);
-  z-index: 2000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
   padding: 8px 0;
+  z-index: 3000; /* ⭐ cao hơn overlay của Inbox */
   backdrop-filter: saturate(120%) blur(6px);
 `;
 
@@ -232,7 +245,8 @@ const Item = styled.button`
     color: #b42318;
   }
 
-  &:hover, &:focus-visible {
+  &:hover,
+  &:focus-visible {
     outline: none;
     background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
     color: #fff;
@@ -255,6 +269,13 @@ const IconWrap = styled.span`
 const Txt = styled.div`
   display: flex;
   flex-direction: column;
-  b { font-size: 14px; font-weight: 600; line-height: 1.15; }
-  small { font-size: 12px; color: currentColor; opacity: 0.8; }
+  b {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.15;
+  }
+  small {
+    font-size: 12px;
+    opacity: 0.8;
+  }
 `;
