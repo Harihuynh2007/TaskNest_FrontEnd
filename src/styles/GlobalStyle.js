@@ -184,6 +184,5 @@ export const GlobalStyle = createGlobalStyle`
 
   --chip-bg: rgba(0,0,0,.35);
 
-  
 
 `;
