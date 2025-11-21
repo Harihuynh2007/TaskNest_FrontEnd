@@ -143,7 +143,8 @@ function MonthCalendar({ currentDate, cards, onCardClick, setView, goToDate }) {
                 cards={visible}
                 hiddenCount={hiddenCount}
                 isToday={date.isSame(dayjs(), "day")}
-                isCurrentMonth={date.isSame(currentDate, 'month')}                provided={provided}
+                isCurrentMonth={date.isSame(currentDate, 'month')}                
+                provided={provided}
                 snapshot={snapshot}
                 onCardClick={onCardClick}
                 handleNavigateToDay={handleNavigateToDay}
