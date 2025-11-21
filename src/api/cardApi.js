@@ -157,3 +157,6 @@ export async function removeCardMember(cardId, membershipId) {
   const res = await api.delete(`/cards/${cardId}/memberships/${membershipId}/`);
   return res.data;
 }
+
+export const fetchPlannerData = (boardId) =>
+  api.get(`/boards/${boardId}/planner/`);
