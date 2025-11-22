@@ -489,8 +489,6 @@ export default function WorkspaceBoardsPage() {
 
   if (!ws) return <Page><EmptyState>Workspace not found</EmptyState></Page>;
   
-  if (authLoading || !user) return null;
-
   return (
     <Page>
       {/* Header */}
