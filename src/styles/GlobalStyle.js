@@ -171,10 +171,11 @@ export const GlobalStyle = createGlobalStyle`
   /* ======= Utility: container spacing in header ======= */
   .tn-header .navbar-nav { gap: 6px; }
 
-  --surface-1: #171c26;      /* app bg */
-  --surface-2: #222834;      /* card bg / tile bg */
-  --surface-3: #2c3341;      /* hover bg */
-  --panel-border: #3a414f;
+  :root {
+    --surface-1: #171c26;      /* app bg */
+    --surface-2: #222834;      /* card bg / tile bg */
+    --surface-3: #2c3341;      /* hover bg */
+    --panel-border: #3a414f;
 
   --text-primary: #e1e3e6;
   --text-secondary: #8a93a2;
@@ -184,6 +185,13 @@ export const GlobalStyle = createGlobalStyle`
 
   --chip-bg: rgba(0,0,0,.35);
 
-  
+  [data-theme="dark"] {
+    --surface-1: #171c26;
+    --surface-2: #222834;
+    --surface-3: #2c3341;
+    --panel-border: #3a414f;
+    --text-primary: #e1e3e6;
+    --text-secondary: #8a93a2;
+  }
 
 `;
