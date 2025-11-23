@@ -80,7 +80,10 @@ export default function DueDatePopup({ card, onClose, onUpdated, anchorRect }) {
             anchorRect={anchorRect}
             role="dialog"
             aria-label="Set due date"
-            aria-busy={loading}
+            
+            className="tasknest-due-popup"
+            // Chặn sự kiện nổi bọt để chắc chắn click bên trong không đóng modal cha
+            onMouseDown={(e) => e.stopPropagation()}
           >
             <Arrow anchorRect={anchorRect} />
 
