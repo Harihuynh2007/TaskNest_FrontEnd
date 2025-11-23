@@ -550,9 +550,26 @@ export default function FullCardModal({
           labels={localCard?.labels || []}
           dueDate={localCard?.due_date || null}
           members={localCard?.members || []}
-          onClickLabels={undefined}
-          onClickDueDate={undefined}
-          onClickMembers={undefined}
+
+          onClickLabels={() => {
+             /* Có thể mở popup label nếu cần */
+             toast('Labels popup coming soon');
+          }}
+
+          onClickDueDate={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setDueDateAnchor(rect);
+            setShowDueDatePopup(true);
+          }}
+
+          onClickMembers={(e) => {
+             // Tái sử dụng logic mở popup member
+             if (isBoardCard) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setMembersAnchor(rect);
+                setShowMembersPopup(true);
+             }
+          }}
         />
         
         {(localCard.start_date || localCard.due_date) && (
