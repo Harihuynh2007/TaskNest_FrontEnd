@@ -49,9 +49,10 @@ export default function CardMetaBar({
       {/* Due Date */}
       {due && (
         <Group
+          className="card-meta-due-pill"
           role="button"
           tabIndex={0}
-          onClick={onClickDueDate}
+          onClick={(e) => onClickDueDate?.(e)} 
           aria-label="Due date"
           title={isOverdue ? 'Overdue' : 'Due'}
         >

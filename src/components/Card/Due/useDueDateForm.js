@@ -33,7 +33,7 @@ export default function useDueDateForm(card, onUpdated) {
   const buildPayload = useCallback(() => {
     const dueISO =
       dueDate && dueTime
-        ? new Date(`${dueDate}T${dueTime}:00Z`).toISOString()
+        ? new Date(`${dueDate}T${dueTime}:00`).toISOString()
         : dueDate
         ? new Date(dueDate).toISOString()
         : null;

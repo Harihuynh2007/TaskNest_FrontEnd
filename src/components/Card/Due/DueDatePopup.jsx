@@ -115,7 +115,7 @@ export default function DueDatePopup({ card, onClose, onUpdated, anchorRect }) {
               Dates{' '}
               {dueDate && (
                 <span style={{ color: '#60a5fa', fontSize: 13, marginLeft: 6 }}>
-                  ({format(new Date(`${dueDate}T${dueTime || '00:00'}:00Z`), 'dd MMM, HH:mm')})
+                  ({format(new Date(`${dueDate}T${dueTime || '00:00'}:00`), 'dd MMM, HH:mm')})
                 </span>
               )}
             </PopupHeader>
@@ -136,7 +136,7 @@ export default function DueDatePopup({ card, onClose, onUpdated, anchorRect }) {
                   label="Due date"
                   value={
                     dueDate
-                      ? new Date(`${dueDate}T${dueTime || '00:00'}:00Z`).toISOString()
+                      ? new Date(`${dueDate}T${dueTime || '00:00'}:00`).toISOString()
                       : null
                   }
                   onChange={(v) => {

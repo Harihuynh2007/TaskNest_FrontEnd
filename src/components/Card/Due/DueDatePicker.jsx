@@ -41,7 +41,7 @@ export default function DueDatePicker({
       onChange?.(null);
       return;
     }
-    const iso = t ? new Date(`${d}T${t}:00Z`).toISOString() : new Date(d).toISOString();
+    const iso = t ? new Date(`${d}T${t}:00`).toISOString() : new Date(d).toISOString();
     onChange?.(iso);
   };
 
