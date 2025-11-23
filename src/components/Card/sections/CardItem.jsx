@@ -1,6 +1,7 @@
 import React, { useState,useMemo,useCallback  } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
+import { FiClock } from 'react-icons/fi';
 
 export default function CardItem({
   card,
@@ -50,7 +51,16 @@ export default function CardItem({
     };
   }, [isDragging, dragWidth, draggingOver]);
 
-
+  const getDateStatus = (dateStr) => {
+    if (!dateStr) return null;
+    const due = new Date(dateStr);
+    const now = new Date();
+    const isOverdue = due < now;
+    // Format ngắn: 24 Oct
+    const text = due.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+    return { text, isOverdue };
+  };
+  const dateInfo = getDateStatus(card.due_date);
 
   return (
     <CardWrapper
@@ -100,6 +110,14 @@ export default function CardItem({
         <CardText $hovered={hovered} $completed={card.completed}>
           {card.name || card.title || '(Không tiêu đề)'}
         </CardText>
+
+
+        {dateInfo && (
+          <DateBadge $isOverdue={dateInfo.isOverdue}>
+            <FiClock size={12} />
+            <span>{dateInfo.text}</span>
+          </DateBadge>
+        )}
 
         <EditIcon
           $visible={hovered}
@@ -226,3 +244,20 @@ const EditIcon = styled.button`
   }
 `;
 
+const DateBadge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 8px;
+  background-color: ${({ $isOverdue }) => ($isOverdue ? '#fee2e2' : '#f1f5f9')}; // Đỏ nhạt nếu quá hạn
+  color: ${({ $isOverdue }) => ($isOverdue ? '#ef4444' : '#64748b')}; // Chữ đỏ nếu quá hạn
+  white-space: nowrap;
+  
+  svg {
+    stroke-width: 2.5;
+  }
+`;
