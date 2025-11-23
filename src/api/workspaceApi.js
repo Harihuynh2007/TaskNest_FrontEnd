@@ -193,13 +193,12 @@ export const getExportStatus = (workspaceId, exportId) =>
  * @returns {boolean}
  */
 export const isWorkspaceAdmin = (members, userId) => {
-  if (!members || !Array.isArray(members) || !userId) return false;
+  if (!members || !Array.isArray(members) || userId == null) return false;
   
   const membership = members.find(m => {
     const memberId = m.user?.id || m.user_id;
     return String(memberId) === String(userId);
-  });
-  
+  });  
   return membership?.role === 'admin';
 };
 
@@ -209,7 +208,7 @@ export const isWorkspaceAdmin = (members, userId) => {
  * @returns {boolean}
  */
 export const isWorkspaceOwner = (workspace, userId) => {
-  if (!workspace || !userId) return false;
+  if (!workspace || userId == null) return false;
   
   // Ưu tiên check is_owner từ API (đã tính sẵn ở backend)
   if (workspace.is_owner === true) return true;
