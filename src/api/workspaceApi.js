@@ -193,7 +193,13 @@ export const getExportStatus = (workspaceId, exportId) =>
  * @returns {boolean}
  */
 export const isWorkspaceAdmin = (members, userId) => {
-  const membership = members.find(m => m.user?.id === userId);
+  if (!members || !Array.isArray(members) || !userId) return false;
+  
+  const membership = members.find(m => {
+    const memberId = m.user?.id || m.user_id;
+    return String(memberId) === String(userId);
+  });
+  
   return membership?.role === 'admin';
 };
 
@@ -203,7 +209,25 @@ export const isWorkspaceAdmin = (members, userId) => {
  * @returns {boolean}
  */
 export const isWorkspaceOwner = (workspace, userId) => {
-  return workspace?.owner === userId || workspace?.owner?.id === userId;
+  if (!workspace || !userId) return false;
+  
+  // Ưu tiên check is_owner từ API (đã tính sẵn ở backend)
+  if (workspace.is_owner === true) return true;
+  
+  // Fallback: check effective_role
+  if (workspace.effective_role === 'owner') return true;
+  
+  // Fallback: so sánh owner_id
+  if (workspace.owner_id && String(workspace.owner_id) === String(userId)) {
+    return true;
+  }
+  
+  // Legacy: check owner object (nếu backend trả về owner object)
+  if (workspace.owner?.id && String(workspace.owner.id) === String(userId)) {
+    return true;
+  }
+  
+  return false;
 };
 
 /** Can user create a board in this workspace?
