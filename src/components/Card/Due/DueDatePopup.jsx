@@ -200,8 +200,9 @@ export default function DueDatePopup({ card, onClose, onUpdated, anchorRect }) {
         }
       }, 300);
     }
-  };  /**
-   * Handle remove
+  };
+
+  /**   * Handle remove
    */
   const handleRemove = async () => {
     const success = await remove();
