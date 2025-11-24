@@ -9,13 +9,13 @@ import client from '../../../api/apiClient';
 import DueDatePopup from '../Due/DueDatePopup';
 import InlineDateBlock from '../Due/InlineDateBlock';
 
+import { createPortal } from "react-dom";
 
 import * as cardApi from '../../../api/apiClient';
 import {
   getCardComments,
   updateCardDescription,
 } from '../../../api/cardApi';
-
 import {
    getCardAttachments,
    updateAttachment,
@@ -530,11 +530,54 @@ export default function FullCardModal({
   // ✅ Xác định card thuộc Board hay Inbox
   const isBoardCard = !!(card.board || card.board_id || card.list);
 
+  const handleAddMenuSelect = useCallback((type) => {
+    setShowAddMenu(false);
+    closeAllPopups();
+
+    switch (type) {
+      case "labels":
+        toast("Labels coming soon");
+        break;
+
+      case "dates":
+        const rectDate = addMenuAnchor;
+        setDueDateAnchor(rectDate);
+        setShowDueDatePopup(true);
+        break;
+
+      case "checklist":
+        const rectCL = addMenuAnchor;
+        setChecklistAnchor(rectCL);
+        setShowChecklistPopup(true);
+        break;
+
+      case "members":
+        const rectMB = addMenuAnchor;
+        setMembersAnchor(rectMB);
+        setShowMembersPopup(true);
+        break;
+
+      case "attachment":
+        const rectAT = addMenuAnchor;
+        setAttachmentAnchor(rectAT);
+        setShowAttachmentPopup(true);
+        break;
+
+      default:
+        break;
+    }
+  }, [
+    addMenuAnchor,
+    closeAllPopups,
+  ]);
 
   
   // ============= RENDER =============
-  return (
+  return createPortal(
+  (
     <S.Overlay ref={overlayRef}>
+
+      {/* MODAL CONTAINER */}
       <S.ModalContainer ref={modalRef}>
         {/* Header */}
         <S.HeaderBar>
@@ -546,6 +589,7 @@ export default function FullCardModal({
               </S.DropIcon>
             </S.TitleButton>
           </S.HeaderLeft>
+
           <S.HeaderRight>
             <S.IconBtn title="Feedback" aria-label="Feedback">📢</S.IconBtn>
             <S.IconBtn title="Cover" aria-label="Cover">🖼️</S.IconBtn>
@@ -561,21 +605,15 @@ export default function FullCardModal({
           labels={localCard?.labels || []}
           dueDate={localCard?.due_date || null}
           members={localCard?.members || []}
-
-          onClickLabels={() => {
-             /* Có thể mở popup label nếu cần */
-             toast('Labels popup coming soon');
-          }}
-
+          onClickLabels={() => toast('Labels popup coming soon')}
           onClickDueDate={(e) => {
+            closeAllPopups();
             const rect = e.currentTarget.getBoundingClientRect();
             setDueDateAnchor(rect);
             setShowDueDatePopup(true);
           }}
-
           onClickMembers={(e) => {
             closeAllPopups();
-             // Tái sử dụng logic mở popup member
             if (isBoardCard) {
               const rect = e.currentTarget.getBoundingClientRect();
               setMembersAnchor(rect);
@@ -583,27 +621,29 @@ export default function FullCardModal({
             }
           }}
         />
-        
+
         {(localCard.start_date || localCard.due_date) && (
           <InlineDateBlock
             card={localCard}
-            onUpdated={(patch) => setLocalCard((prev) => ({ ...prev, ...patch }))}
+            onUpdated={(patch) =>
+              setLocalCard((prev) => ({ ...prev, ...patch }))
+            }
           />
         )}
 
-        {/* Content */}
+        {/* BODY */}
         <S.ContentBody>
           <S.MainColumn>
-            {/* Title Section */}
+            {/* TITLE */}
             <S.TitleSection>
               <S.TitleCheckboxWrapper>
                 <S.CompleteCheckbox
                   type="checkbox"
                   checked={isComplete}
                   onChange={handleToggleComplete}
-                  aria-label={`Mark "${title}" complete`}
                 />
               </S.TitleCheckboxWrapper>
+
               <S.TitleContent>
                 <S.EditableTitle
                   value={title}
@@ -611,14 +651,14 @@ export default function FullCardModal({
                   onKeyDown={handleTitleKeyDown}
                   onBlur={handleTitleSave}
                   placeholder="Card title"
-                  aria-label="Card title"
                 />
               </S.TitleContent>
             </S.TitleSection>
 
-            {/* Action Buttons */}
+            {/* ACTION BUTTONS */}
             <S.ActionSectionGrid>
               <S.EmptyIconSpace />
+
               <S.ActionSectionBody>
                 <S.ActionButton
                   onClick={(e) => {
@@ -627,15 +667,12 @@ export default function FullCardModal({
                     setAddMenuAnchor(rect);
                     setShowAddMenu((prev) => !prev);
                   }}
-                  aria-label="Add to card"
                 >
                   + Add
                 </S.ActionButton>
 
-                <S.ActionButton aria-label="Add labels">
-                  <BiLabel /> Labels
-                </S.ActionButton>
-                
+                <S.ActionButton><BiLabel /> Labels</S.ActionButton>
+
                 <S.ActionButton
                   onClick={(e) => {
                     closeAllPopups();
@@ -643,24 +680,21 @@ export default function FullCardModal({
                     setDueDateAnchor(rect);
                     setShowDueDatePopup(true);
                   }}
-                  aria-label="Add dates"
                 >
                   <BsClock /> Dates
                 </S.ActionButton>
 
-                
                 <S.ActionButton
                   onClick={(e) => {
                     closeAllPopups();
                     const rect = e.currentTarget.getBoundingClientRect();
-                    setChecklistAnchor(rect);        
+                    setChecklistAnchor(rect);
                     setShowChecklistPopup(true);
                   }}
-                  aria-label="Add checklist"
                 >
                   <MdChecklist /> Checklist
                 </S.ActionButton>
-                
+
                 {isBoardCard ? (
                   <S.ActionButton
                     onClick={(e) => {
@@ -669,28 +703,15 @@ export default function FullCardModal({
                       setMembersAnchor(rect);
                       setShowMembersPopup(true);
                     }}
-                    aria-label="Add members"
-                    title="Add or remove members"
                   >
                     <HiOutlineUserAdd /> Members
                   </S.ActionButton>
                 ) : (
-                  <S.ActionButton
-                    disabled
-                    aria-label="Private card (no members)"
-                    title="Private cards can’t have members."
-                    style={{
-                      opacity: 0.6,
-                      cursor: "not-allowed"
-                    }}
-                    onClick={() => {
-                      toast("🔒 Private cards can’t have members.");
-                    }}
-                  >
+                  <S.ActionButton disabled>
                     <HiOutlineUserAdd /> Members
                   </S.ActionButton>
                 )}
-                
+
                 <S.ActionButton
                   onClick={(e) => {
                     closeAllPopups();
@@ -698,14 +719,13 @@ export default function FullCardModal({
                     setAttachmentAnchor(rect);
                     setShowAttachmentPopup(true);
                   }}
-                  aria-label="Add attachment"
                 >
                   📎 Attachment
                 </S.ActionButton>
               </S.ActionSectionBody>
             </S.ActionSectionGrid>
 
-            {/* Description */}
+            {/* DESCRIPTION */}
             <CardDescription
               description={description}
               isEditing={isEditingDesc}
@@ -717,7 +737,7 @@ export default function FullCardModal({
               onStartEdit={() => setIsEditingDesc(true)}
             />
 
-            {/* Attachments */}
+            {/* ATTACHMENTS */}
             <CardAttachments
               attachments={attachments}
               onAddClick={() => setShowAttachmentPopup(true)}
@@ -726,7 +746,7 @@ export default function FullCardModal({
               onDelete={handleDeleteAttachment}
             />
 
-            {/* Checklists */}
+            {/* CHECKLISTS */}
             <CardChecklists
               checklists={localCard.checklists || []}
               onChangeTitle={handleChecklistTitle}
@@ -737,9 +757,8 @@ export default function FullCardModal({
             />
           </S.MainColumn>
 
-          {/* Sidebar */}
+          {/* SIDEBAR */}
           <S.Sidebar>
-            {/* Comments */}
             <CardComments
               cardId={card.id}
               currentUser={currentUser}
@@ -755,24 +774,18 @@ export default function FullCardModal({
               onCommentDeleted={handleCommentDeleted}
             />
 
-            {/* Activity */}
             <S.Section>
               <S.ActivityHeader>
                 <S.SectionLabel>Activity</S.SectionLabel>
                 <S.ShowDetailsButton 
                   onClick={() => setShowDetails(!showDetails)}
-                  aria-expanded={showDetails}
                 >
                   {showDetails ? 'Hide details' : 'Show details'}
                 </S.ShowDetailsButton>
               </S.ActivityHeader>
-              
+
               {showDetails && (
-                <Suspense fallback={
-                  <div style={{color:'#94a3b8', fontStyle:'italic'}}>
-                    Loading activity…
-                  </div>
-                }>
+                <Suspense fallback={<div>Loading activity…</div>}>
                   <ActivityList cardId={card.id} />
                 </Suspense>
               )}
@@ -781,14 +794,14 @@ export default function FullCardModal({
         </S.ContentBody>
       </S.ModalContainer>
 
-      {/* Popups */}
+      {/* POPUPS */}
       {showChecklistPopup && (
         <CheckListPopup
           ref={checklistPopupRef}
           anchorRect={checklistAnchor}
           onClose={() => setShowChecklistPopup(false)}
-          onSubmit={handleCreateChecklist}            
-          existingChecklists={localCard.checklists || []}
+          existingChecklists={localCard?.checklists || []}
+          onSubmit={handleCreateChecklist}
         />
       )}
 
@@ -801,14 +814,14 @@ export default function FullCardModal({
           />
         </S.PopupOverlay>
       )}
-      
+
       {showDueDatePopup && dueDateAnchor && (
         <DueDatePopup
-          card={localCard}
           anchorRect={dueDateAnchor}
+          card={localCard}
           onClose={() => setShowDueDatePopup(false)}
-          onUpdated={(updatedFields) => {
-            setCardAndBubble(prev => ({ ...prev, ...updatedFields }));
+          onUpdated={(fields) => {
+            setCardAndBubble(prev => ({ ...prev, ...fields }));
             toast.success('Dates updated');
           }}
         />
@@ -818,51 +831,25 @@ export default function FullCardModal({
         <AddToCardMenu
           anchorRect={addMenuAnchor}
           onClose={() => setShowAddMenu(false)}
-          onSelect={async (type) => {
-            setShowAddMenu(false);
-            switch (type) {
-              case 'labels':
-                toast('Labels coming soon');
-                break;
-              case 'dates':
-                toast('Dates coming soon');
-                break;
-              case 'checklist':
-                setChecklistAnchor(addMenuAnchor);
-                setShowChecklistPopup(true);
-                break;
-              case 'members':
-                setMembersAnchor(addMenuAnchor);
-                setShowMembersPopup(true);
-                break;
-              case 'attachment':
-                setAttachmentAnchor(addMenuAnchor);
-                setShowAttachmentPopup(true);
-                break;
-              case 'custom_fields':
-                toast('Custom fields coming soon');
-                break;
-              default:
-                break;
-            }
-          }}
+          onSelect={handleAddMenuSelect}
         />
       )}
 
       {isBoardCard && showMembersPopup && membersAnchor && (
         <MemberCardPopup
           anchorRect={membersAnchor}
-          onClose={() => setShowMembersPopup(false)}
           cardId={card.id}
           boardId={card.board || card.board_id}
-          assigned={localCard.members?.map((m) => m.id) || []}
+          assigned={localCard.members?.map(m => m.id) || []}
+          onClose={() => setShowMembersPopup(false)}
           onUpdated={(members) => {
-            setCardAndBubble((prev) => ({ ...prev, members }));
+            setCardAndBubble(prev => ({ ...prev, members }));
             toast.success("Members updated");
           }}
         />
       )}
-
     </S.Overlay>
-  );
+  ),
+  document.body
+);
 }
