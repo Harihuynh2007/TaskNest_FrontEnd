@@ -9,8 +9,7 @@ export const Overlay = styled.div`
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 0 24px;
-
+  padding: 48px 24px;
 
   z-index: 1000;
   overflow-y: auto;

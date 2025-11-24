@@ -81,14 +81,19 @@ export default function ResizableLayout({
     board: boardRef,
   };
 
-  panes.forEach(p => {
-    if (!activeTabs.includes(p.id)) {
-      sizesRef.current[p.id] = null;
-      localStorage.removeItem(getStorageKey(boardId, p.id));
-    }
-  });
-
-
+  useEffect(() => {
+    const allPaneIds = ['inbox', 'planner', 'board'];
+    allPaneIds.forEach(paneId => {
+      if (!activeTabs.includes(paneId)) {
+        sizesRef.current[paneId] = null;
+        try {
+          localStorage.removeItem(getStorageKey(boardId, paneId));
+        } catch {
+          // ignore
+        }
+      }
+    });
+  }, [activeTabs, boardId]);
   /** Áp layout từ sizesRef xuống DOM (không dùng setState) */
   const applyLayout = () => {
     if (!containerRef.current) return;
