@@ -57,13 +57,12 @@ export default function DueDatePopup({ card, onClose, onUpdated, anchorRect }) {
   useEffect(() => {
     if (anchorRect) {
       setMounted(true);
-      // Auto-focus first input after mount
-      setTimeout(() => {
-        firstInputRef.current?.focus?.();
+      const timer = setTimeout(() => {
+        firstInputRef.current?.focus();
       }, 100);
+      return () => clearTimeout(timer);
     }
   }, [anchorRect]);
-
   // Click outside to close
   useEffect(() => {
     const handleClick = (e) => {
@@ -181,18 +180,27 @@ export default function DueDatePopup({ card, onClose, onUpdated, anchorRect }) {
   };
 
   /**
+  /**
    * Handle save with validation
    */
+  const mountedRef = useRef(true);
+  
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   const handleSave = async () => {
     const success = await save();
     if (success) {
-      // Auto-close on success
-      setTimeout(() => onClose(), 300);
+      setTimeout(() => {
+        if (mountedRef.current) {
+          onClose();
+        }
+      }, 300);
     }
-    // On error, stay open to allow user to fix
-  };
-
-  /**
+  };  /**
    * Handle remove
    */
   const handleRemove = async () => {
