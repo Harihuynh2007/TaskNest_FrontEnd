@@ -81,6 +81,14 @@ export default function ResizableLayout({
     board: boardRef,
   };
 
+  panes.forEach(p => {
+    if (!activeTabs.includes(p.id)) {
+      sizesRef.current[p.id] = null;
+      localStorage.removeItem(getStorageKey(boardId, p.id));
+    }
+  });
+
+
   /** Áp layout từ sizesRef xuống DOM (không dùng setState) */
   const applyLayout = () => {
     if (!containerRef.current) return;
@@ -92,8 +100,8 @@ export default function ResizableLayout({
       const onlyPane = panes[0];
       const node = paneRefMap[onlyPane.id]?.current;
       if (node) {
-        node.style.flex = '1 1 auto';
-        node.style.minWidth = `${MIN_WIDTH}px`;
+        node.style.flex = "1 1 auto";
+        node.style.minWidth = "0";
         node.style.maxWidth = '100%';
       }
       return;
@@ -333,7 +341,8 @@ const PaneShell = styled.div`
   min-width: ${MIN_WIDTH}px;
   max-width: 100%;
   overflow: hidden;
-  border-left: 1px solid rgba(148, 163, 184, 0.24);
+  border-left: ${props => props.first ? "none" : "1px solid rgba(...)"};
+
 
   &:first-child {
     border-left: none;

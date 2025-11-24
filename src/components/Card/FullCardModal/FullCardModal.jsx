@@ -693,6 +693,7 @@ export default function FullCardModal({
                 
                 <S.ActionButton
                   onClick={(e) => {
+                    closeAllPopups();
                     const rect = e.currentTarget.getBoundingClientRect();
                     setAttachmentAnchor(rect);
                     setShowAttachmentPopup(true);

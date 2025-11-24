@@ -1,13 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { X } from 'lucide-react';
 import { createAttachmentFile, createAttachmentLink } from '../../../api/cardApi';
 
-const AttachmentPopup = ({ cardId, onClose, onAttachmentAdded }) => {
+const AttachmentPopup = ({ cardId, onClose, onAttachmentAdded, anchorRect }) => {
+
   const [file, setFile] = useState(null);
   const [linkUrl, setLinkUrl] = useState('');
   const [displayText, setDisplayText] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+
+  const pos = useMemo(() => {
+    if (!anchorRect) return {};
+    return {
+      top: anchorRect.bottom + 8,
+      left: Math.min(anchorRect.left, window.innerWidth - 400),
+    };
+  }, [anchorRect]);
+
 
   const handleFileUpload = (event) => {
     const selected = event.target.files[0];
@@ -38,7 +48,7 @@ const AttachmentPopup = ({ cardId, onClose, onAttachmentAdded }) => {
   };
 
   return (
-    <PopupWrapper onMouseDown={(e) => e.stopPropagation()}i>
+    <PopupWrapper style={pos} onMouseDown={(e) => e.stopPropagation()}i>
       <PopupHeader>
         <Title>Attach</Title>
         <CloseButton onClick={onClose}><X size={18} /></CloseButton>
@@ -80,13 +90,21 @@ const AttachmentPopup = ({ cardId, onClose, onAttachmentAdded }) => {
 export default AttachmentPopup;
 
 const PopupWrapper = styled.div`
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
   width: 400px;
   background: white;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
   padding: 20px;
   font-family: 'Segoe UI', sans-serif;
+
+  z-index: 3000; /* đảm bảo nổi trên mọi popup */
 `;
+
 
 const PopupHeader = styled.div`
   display: flex;
