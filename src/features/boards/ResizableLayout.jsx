@@ -341,7 +341,6 @@ const PaneShell = styled.div`
   min-width: ${MIN_WIDTH}px;
   max-width: 100%;
   overflow: hidden;
-  border-left: ${props => props.first ? "none" : "1px solid rgba(...)"};
 
 
   &:first-child {
@@ -373,8 +372,7 @@ const Splitter = styled.div`
   justify-content: center;
   background: transparent;
 
-  &:hover ${'' /* nhẹ hiệu ứng hover */} {
-    & > div {
+  &:hover {    & > div {
       background: rgba(148, 163, 184, 0.55);
     }
   }
