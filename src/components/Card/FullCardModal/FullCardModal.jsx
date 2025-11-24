@@ -106,6 +106,15 @@ export default function FullCardModal({
     });
   }, [onCardUpdate]);
 
+  const closeAllPopups = () => {
+    setShowChecklistPopup(false);
+    setShowAttachmentPopup(false);
+    setShowAddMenu(false);
+    setShowMembersPopup(false);
+    setShowDueDatePopup(false);
+  };
+
+
   // ============= FETCH DATA =============
   const fetchAttachments = useCallback(async () => {
     try {
@@ -508,6 +517,7 @@ export default function FullCardModal({
   // ============= CLICK OUTSIDE HANDLER =============
   const handleClickOutside = useCallback((e) => {
     if (e.target === overlayRef.current) {
+      closeAllPopups();
       onClose();
     }
   }, [onClose]);
@@ -521,6 +531,7 @@ export default function FullCardModal({
   const isBoardCard = !!(card.board || card.board_id || card.list);
 
 
+  
   // ============= RENDER =============
   return (
     <S.Overlay ref={overlayRef}>
@@ -563,12 +574,13 @@ export default function FullCardModal({
           }}
 
           onClickMembers={(e) => {
+            closeAllPopups();
              // Tái sử dụng logic mở popup member
-             if (isBoardCard) {
-                const rect = e.currentTarget.getBoundingClientRect();
-                setMembersAnchor(rect);
-                setShowMembersPopup(true);
-             }
+            if (isBoardCard) {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setMembersAnchor(rect);
+              setShowMembersPopup(true);
+            }
           }}
         />
         
@@ -610,6 +622,7 @@ export default function FullCardModal({
               <S.ActionSectionBody>
                 <S.ActionButton
                   onClick={(e) => {
+                    closeAllPopups();
                     const rect = e.currentTarget.getBoundingClientRect();
                     setAddMenuAnchor(rect);
                     setShowAddMenu((prev) => !prev);
@@ -625,6 +638,7 @@ export default function FullCardModal({
                 
                 <S.ActionButton
                   onClick={(e) => {
+                    closeAllPopups();
                     const rect = e.currentTarget.getBoundingClientRect();
                     setDueDateAnchor(rect);
                     setShowDueDatePopup(true);
@@ -637,6 +651,7 @@ export default function FullCardModal({
                 
                 <S.ActionButton
                   onClick={(e) => {
+                    closeAllPopups();
                     const rect = e.currentTarget.getBoundingClientRect();
                     setChecklistAnchor(rect);        
                     setShowChecklistPopup(true);
@@ -649,6 +664,7 @@ export default function FullCardModal({
                 {isBoardCard ? (
                   <S.ActionButton
                     onClick={(e) => {
+                      closeAllPopups();
                       const rect = e.currentTarget.getBoundingClientRect();
                       setMembersAnchor(rect);
                       setShowMembersPopup(true);
