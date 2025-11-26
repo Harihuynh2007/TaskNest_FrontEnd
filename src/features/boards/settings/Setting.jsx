@@ -168,6 +168,8 @@ export default function Settings() {
   const navigate = useNavigate();
   const location = useLocation();
   const isSettings = location.pathname.startsWith('/settings'); // đổi nếu bạn dùng /me/settings
+  const isActivity = location.pathname.startsWith('/activitySettings');
+
   const [prefs, setPrefs] = useState(() => ({
     emailFrequency: 'hourly', // 'instant' | 'hourly' | 'never'
     notifyDesktop: false,
@@ -241,7 +243,15 @@ export default function Settings() {
           >
             Settings
           </NavButton>
-          <NavButton type="button" disabled aria-disabled>Activity</NavButton>
+          <NavButton 
+              type="button" 
+              $active={isActivity}
+              aria-current={isActivity ? 'page' : undefined}
+              onClick={() => navigate('/activitySettings')}
+          >
+              Activity
+          </NavButton>
+
           <NavButton type="button" disabled aria-disabled>Cards</NavButton>
         </SidebarSection>
 
@@ -249,7 +259,6 @@ export default function Settings() {
           <SectionTitle>Workspace</SectionTitle>
           <NavButton type="button" onClick={() => navigate("/boards")}>Boards</NavButton>
           <NavButton type="button" disabled aria-disabled>Members</NavButton>
-          <NavButton type="button" disabled aria-disabled>Settings</NavButton>
           <NavButton type="button" disabled aria-disabled>Upgrade workspace</NavButton>
         </SidebarSection>
       </Sidebar>

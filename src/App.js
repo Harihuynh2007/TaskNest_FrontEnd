@@ -24,6 +24,7 @@ import WorkspaceBoardsPage from './features/boards/WorkspaceBoardsPage';
 
 import Settings from './features/boards/settings/Setting';
 import ProfileAndVisibility from './features/boards/settings/profileandvisibility/ProfileAndVisibility';
+import Activity from './features/boards/settings/ActivitySetting';
 
 const LogoutRedirect = () => {
   const { user } = useContext(AuthContext);
@@ -116,6 +117,17 @@ function App() {
           }
         />
         
+        <Route
+          path="/activitySettings"
+          element={
+            <PrivateRoute>
+              <WithHeaderOnlyLayout>
+                <Activity />
+              </WithHeaderOnlyLayout>
+            </PrivateRoute>
+          }
+        />
+
         <Route
           path="/boards/*"
           element={

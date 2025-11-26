@@ -3,6 +3,7 @@ import styled, { css } from "styled-components";
 import axiosClient from "../../../../api/apiClient";
 import { useNavigate,useLocation } from "react-router-dom";
 import AvatarChangeModal from "./AvatarChangeModal";
+
 /** ===================== Design Tokens ===================== */
 const tokens = {
   radius: { sm: "8px", md: "12px", lg: "16px", full: "9999px" },
@@ -277,6 +278,7 @@ export default function ProfileAndVisibility() {
 
   const location = useLocation();
   const isSettings = location.pathname.startsWith('/settings');
+  const isActivity = location.pathname.startsWith('/activitySettings');
   const isProfile  = location.pathname.startsWith('/u/me/profile');
   // Derived initial for avatar fallback
   const avatarInitial = useMemo(() => (form.display_name?.trim()?.[0] || "U").toUpperCase(), [form.display_name]);
@@ -399,7 +401,14 @@ export default function ProfileAndVisibility() {
           >
             Settings
           </NavButton>
-          <NavButton type="button" disabled aria-disabled>Activity</NavButton>
+          <NavButton 
+              type="button" 
+              $active={isActivity}
+              aria-current={isActivity ? 'page' : undefined}
+              onClick={() => navigate('/activitySettings')}
+          >
+              Activity
+          </NavButton>
           <NavButton type="button" disabled aria-disabled>Cards</NavButton>
         </SidebarSection>
         <SidebarSection>
