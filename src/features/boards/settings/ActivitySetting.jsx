@@ -551,39 +551,63 @@ export default function Activity() {
                           </AvatarInitial>
                         )}
                       </Avatar>
+
                       <ActivityContent>
                         <ActivityText>
-                          <strong>{activity.user?.display_name || 'User'}</strong>{' '}
-                          {getActionText(activity.action)}{' '}
-                          <Link to={`/workspaces/${activity.workspace?.id}/boards/${activity.target?.id}`}>
-                            {activity.target?.name}
-                          </Link>
-                          {activity.workspace && (
-                            <> to <Link to={`/w/${activity.workspace.slug}/boards`}>{activity.workspace.name}</Link></>
-                          )}
+                            <strong>{activity.user?.display_name || "User"}</strong>{" "}
+                            {getActionText(activity.action)}{" "}
+                            {/* Card/Board target */}
+                            {activity.target?.id && (
+                                <Link to={`/b/${activity.target.id}`}>{activity.target.name}</Link>
+                            )}
+                            
+                            {activity.workspace && (
+                                <>
+                                {" "}
+                                in{" "}
+                                <Link to={`/workspaces/${activity.workspace.id}`}>
+                                    {activity.workspace.name}
+                                </Link>
+                                </>
+                            )}
                         </ActivityText>
+
                         
                         <ActivityMeta>
-                          <MetaItem>{formatTimestamp(activity.timestamp)}</MetaItem>
-                          {activity.target?.name && (
-                            <>
-                              <span>•</span>
-                              <MetaItem>
-                                on board <Link to={`/workspaces/${activity.workspace?.id}/boards/${activity.target?.id}`}>{activity.target?.name}</Link>
-                              </MetaItem>
+
+                            <MetaItem>{formatTimestamp(activity.timestamp)}</MetaItem>
+
+                            {/* Board */}
+                            {activity.target?.id && (
+                                <>
+                                <span>•</span>
+                                <MetaItem>
+                                    on board{" "}
+                                    <Link to={`/b/${activity.target.id}`}>{activity.target.name}</Link>
+                                </MetaItem>
+                                </>
+                            )}
+
+                            {/* Workspace */}
+                            {activity.workspace && (
+                                <>
+                                <span>•</span>
+                                <MetaItem>
+                                    on workspace{" "}
+                                    <Link to={`/workspaces/${activity.workspace.id}`}>
+                                    {activity.workspace.name}
+                                    </Link>
+                                    {" "}
+                                    {activity.workspace.visibility === "private" ? (
+                                    <IconPrivate />
+                                    ) : (
+                                    <IconOrganization />
+                                    )}
+                                </MetaItem>
                             </>
-                          )}
-                          {activity.workspace && (
-                            <>
-                              <span>•</span>
-                              <MetaItem>
-                                on Workspace <Link to={`/w/${activity.workspace.slug}/boards`}>{activity.workspace.name}</Link>
-                                {' '}
-                                {activity.workspace.visibility === 'private' ? <IconPrivate /> : <IconOrganization />}
-                              </MetaItem>
-                            </>
-                          )}
+                        )}
                         </ActivityMeta>
+
                       </ActivityContent>
                     </ActivityItem>
                   ))}
