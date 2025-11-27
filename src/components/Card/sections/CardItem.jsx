@@ -165,11 +165,19 @@ const LabelContainer = styled.div`
   margin-bottom: 4px;
 `;
 
+// CardItem.jsx - LabelBar update
 const LabelBar = styled.div`
   height: 8px;
-  width: 40px;
+  min-width: 40px; // Dùng min-width
+  max-width: 100%;
   background-color: ${({ color }) => color};
   border-radius: 4px;
+  transition: all 0.2s ease;
+  
+  /* Hiệu ứng khi hover vào cả cái CardWrapper thì label to ra một chút */
+  ${CardWrapper}:hover & {
+    height: 12px; // To hơn chút khi hover card
+  }
 `;
 
 const CardContent = styled.div`
