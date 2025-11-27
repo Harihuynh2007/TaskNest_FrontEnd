@@ -82,15 +82,25 @@ export default function LabelPopup({
 
   const submitCreate = (e) => {
     e.preventDefault();
+
     if (!formName.trim()) return;
-    
+
+    // DEBUG để thấy giá trị thực
+    console.log("CREATE LABEL PAYLOAD (POPUP):", {
+      name: formName.trim(),
+      color: formColor,
+      boardId: boardId,
+    });
+
     onCreateLabel({
       name: formName.trim(),
       color: formColor,
-      boardId
+      boardId: boardId,   // <-- Nhận từ props, KHÔNG tự lấy
     });
+
     setMode("list");
   };
+
 
   const submitEdit = (e) => {
     e.preventDefault();
@@ -98,8 +108,10 @@ export default function LabelPopup({
     
     onEditLabel(editingLabel.id, {
       name: formName.trim(),
-      color: formColor
+      color: formColor,
     });
+
+
     setMode("list");
   };
 

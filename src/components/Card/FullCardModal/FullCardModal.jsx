@@ -202,6 +202,7 @@ export default function FullCardModal({
       nextLabels = [...(localCard.labels || []), labelToAdd];
     }
 
+    const prevLabels = localCard.labels;
     // Optimistic UI Update
     setCardAndBubble(prev => ({ ...prev, labels: nextLabels }));
 
@@ -214,40 +215,49 @@ export default function FullCardModal({
       console.error('Failed to update labels', err);
       toast.error('Failed to update label');
       // Rollback nếu cần (ở đây tạm bỏ qua để code gọn)
+      setCardAndBubble(prev => ({ ...prev, labels: prevLabels }));
     }
   };
 
   // 2. Create Label
   const handleCreateLabel = async (data) => {
     try {
-      const res = await client.post(`/labels/`, data);
-      const newLabel = res.data || res; // Tuỳ API trả về
-      
-      // Thêm vào danh sách availableLabels
-      setAvailableLabels(prev => [...prev, newLabel]);
-      
-      // Tự động gắn label vừa tạo vào card (UX chuẩn Trello)
+      console.log("LABEL CREATE REQUEST:", data);
+
+      const res = await client.post(`labels/`, {
+        name: data.name,
+        color: data.color,
+        board_id: data.boardId,   // <-- Nhận đúng từ LabelPopup
+      });
+
+      const newLabel = res.data;
+
+      // Update UI
+      setAvailableLabels((prev) => [...prev, newLabel]);
       handleToggleLabel(newLabel.id);
-      
+
       toast.success("Label created");
     } catch (err) {
-      console.error("Create label failed", err);
+      console.log("CREATE LABEL ERROR PAYLOAD:", err.response?.data);
       toast.error("Failed to create label");
     }
   };
 
   // 3. Edit Label
-  const handleEditLabel = async (id, data) => {
+  const handleEditLabel = async (labelId, data) => {
     try {
-      await client.patch(`/labels/${id}/`, data);
+      await client.patch(`labels/${labelId}/`, data);
 
-      // Cập nhật trong danh sách available
-      setAvailableLabels(prev => prev.map(l => l.id === id ? { ...l, ...data } : l));
+      // Cập nhật UI
+      setAvailableLabels((prev) =>
+        prev.map((l) => (l.id === labelId ? { ...l, ...data } : l))
+      );
 
-      // Cập nhật visual trên card hiện tại nếu đang gắn label đó
-      setCardAndBubble(prev => ({
+      setCardAndBubble((prev) => ({
         ...prev,
-        labels: prev.labels.map(l => l.id === id ? { ...l, ...data } : l)
+        labels: prev.labels.map((l) =>
+          l.id === labelId ? { ...l, ...data } : l
+        ),
       }));
 
       toast.success("Label updated");
@@ -258,18 +268,16 @@ export default function FullCardModal({
   };
 
   // 4. Delete Label
-  const handleDeleteLabel = async (id) => {
+  const handleDeleteLabel = async (labelId) => {
     if (!window.confirm("Delete this label permanently?")) return;
     try {
-      await client.delete(`/labels/${id}/`);
+      await client.delete(`labels/${labelId}/`);
 
-      // Xóa khỏi danh sách available
-      setAvailableLabels(prev => prev.filter(l => l.id !== id));
+      setAvailableLabels((prev) => prev.filter((l) => l.id !== labelId));
 
-      // Gỡ khỏi card hiện tại
-      setCardAndBubble(prev => ({
+      setCardAndBubble((prev) => ({
         ...prev,
-        labels: prev.labels.filter(l => l.id !== id)
+        labels: prev.labels.filter((l) => l.id !== labelId),
       }));
 
       toast.success("Label deleted");
@@ -865,7 +873,11 @@ export default function FullCardModal({
           onDeleteLabel={handleDeleteLabel}
 
           onClose={() => setShowLabelPopup(false)}
-          boardId={card.board || card.board_id}
+          boardId={
+            card.board_id ||
+            card.list?.board ||
+            card.list?.board_id
+          }
         />
       )}
 
