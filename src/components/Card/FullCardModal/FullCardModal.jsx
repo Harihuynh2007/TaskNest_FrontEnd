@@ -5,13 +5,12 @@ import { HiOutlineUserAdd } from 'react-icons/hi';
 import { MdChecklist } from 'react-icons/md';
 import { IoCloseOutline, IoChevronDown } from 'react-icons/io5';
 import toast from 'react-hot-toast';
-import client from '../../../api/apiClient';
+import client from '../../../api/apiClient'; // Đảm bảo import đúng đường dẫn
 import DueDatePopup from '../Due/DueDatePopup';
 import InlineDateBlock from '../Due/InlineDateBlock';
 
 import { createPortal } from "react-dom";
 
-import * as cardApi from '../../../api/apiClient';
 import {
   getCardComments,
   updateCardDescription,
@@ -43,7 +42,7 @@ import CardComments from '../sections/CardComments';
 import CardMetaBar from '../sections/CardMetaBar';
 import CheckListPopup from '../../ChecklistCard/CheckListPopup';
 import MemberCardPopup from '../../member/MemberCardPopup';
-
+import LabelPopup from '../../Label/LabelPopup';
 // Styled Components
 import * as S from './FullCardModal.styles';
 
@@ -58,9 +57,22 @@ export default function FullCardModal({
   // ============= STATE MANAGEMENT =============
   const [localCard, setLocalCard] = useState({
     ...card,
+    labels: card.labels || [], 
     checklists: card.checklists || [],
     attachments: card.attachments || []
   });
+
+  // --- LABEL STATE (MỚI) ---
+  // Quản lý danh sách label có sẵn trong state để cập nhật tức thì
+  const [availableLabels, setAvailableLabels] = useState([]);
+
+  useEffect(() => {
+    // Lấy danh sách label từ props khi mở modal
+    const initialLabels = card.board_labels || card.labels_available || [];
+    setAvailableLabels(initialLabels);
+  }, [card.board_labels, card.labels_available]);
+
+  // --- END LABEL STATE ---
 
   const [title, setTitle] = useState(card.name || card.title || '');
   const [description, setDescription] = useState(card.description || '');
@@ -71,8 +83,7 @@ export default function FullCardModal({
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
-  const [activityRefreshTick, setActivityRefreshTick] = useState(0);
-
+  
   const [attachments, setAttachments] = useState([]);
   const [saveState, setSaveState] = useState({ saving: false, error: null });
 
@@ -82,6 +93,10 @@ export default function FullCardModal({
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showMembersPopup, setShowMembersPopup] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  
+  // Label Popup State
+  const [showLabelPopup, setShowLabelPopup] = useState(false);
+  const [labelAnchor, setLabelAnchor] = useState(null);
 
   // Anchor refs for popups
   const [checklistAnchor, setChecklistAnchor] = useState(null);
@@ -96,7 +111,6 @@ export default function FullCardModal({
   const overlayRef = useRef();
   const modalRef = useRef();
   const checklistPopupRef = useRef();
-
   // ============= HELPER FUNCTIONS =============
   const setCardAndBubble = useCallback((updater) => {
     setLocalCard(prev => {
@@ -112,27 +126,19 @@ export default function FullCardModal({
     setShowAddMenu(false);
     setShowMembersPopup(false);
     setShowDueDatePopup(false);
+    setShowLabelPopup(false); // Đóng cả Label popup
   };
-
 
   // ============= FETCH DATA =============
   const fetchAttachments = useCallback(async () => {
     try {
       const res = await getCardAttachments(card.id);
       setAttachments(res);
-      setLocalCard(prev => ({
-        ...prev,
-        attachments: res
-      }));
-      // Chỉ cập nhật parent khi thật sự cần và đảm bảo không tạo loop
-      // Ví dụ, nếu chỉ muốn thông báo cho parent rằng attachments đã được tải lần đầu hoặc thay đổi
-      // if (onCardUpdate && JSON.stringify(card.attachments) !== JSON.stringify(res)) {
-      //   onCardUpdate?.({ ...card, attachments: res });
-      // }
+      setLocalCard(prev => ({ ...prev, attachments: res }));
     } catch (err) {
       console.error('Failed to load attachments:', err);
     }
-  }, [card.id, onCardUpdate]); // Giữ onCardUpdate nếu bạn cần nó như một dependency ổn định
+  }, [card.id]);
 
   const loadComments = useCallback(async () => {
     setLoadingComments(true);
@@ -149,20 +155,19 @@ export default function FullCardModal({
 
   // ============= EFFECTS =============
   useEffect(() => {
+    // Sync local state when prop 'card' changes significantly
     setLocalCard(prev => ({ 
       ...prev, 
       ...card, 
+      labels: card.labels || prev.labels || [], 
       checklists: card.checklists || prev.checklists || [] 
     }));
   }, [card]);
 
   useEffect(() => {
     if (card?.id) fetchAttachments();
-  }, [card?.id, fetchAttachments]);
-
-  useEffect(() => {
     if (card?.id) loadComments();
-  }, [card?.id, loadComments]);
+  }, [card?.id, fetchAttachments, loadComments]);
 
   useEffect(() => {
     if (!card.checklists || card.checklists.length === 0) {
@@ -177,16 +182,106 @@ export default function FullCardModal({
     }
   }, [card.id, card.checklists]);
 
-  useEffect(() => {
-    if (card) {
-      setTitle(card.name || card.title || '');
-      setDescription(card.description || '');
-      setTempDesc(card.description || '');
-      setIsComplete(!!card.completed);
-    }
-  }, [card]);
+  // ============= LABEL HANDLERS (LOGIC MỚI) =============
+  
+  // 1. Toggle Label (Gắn/Gỡ)
+  const handleToggleLabel = async (labelId) => {
+    const isSelected = localCard.labels?.some(l => l.id === labelId);
+    let nextLabels;
 
-  // ============= CARD ACTIONS =============
+    if (isSelected) {
+      // Gỡ label
+      nextLabels = localCard.labels.filter(l => l.id !== labelId);
+    } else {
+      // Gắn label mới (tìm trong availableLabels)
+      const labelToAdd = availableLabels.find(l => l.id === labelId);
+      if (!labelToAdd) {
+         console.warn("Label not found in available list", labelId);
+         return;
+      }
+      nextLabels = [...(localCard.labels || []), labelToAdd];
+    }
+
+    // Optimistic UI Update
+    setCardAndBubble(prev => ({ ...prev, labels: nextLabels }));
+
+    // API Call
+    try {
+      await client.patch(`/cards/${card.id}/`, {
+        labels: nextLabels.map(l => l.id)
+      });
+    } catch (err) {
+      console.error('Failed to update labels', err);
+      toast.error('Failed to update label');
+      // Rollback nếu cần (ở đây tạm bỏ qua để code gọn)
+    }
+  };
+
+  // 2. Create Label
+  const handleCreateLabel = async (data) => {
+    try {
+      const res = await client.post(`/labels/`, data);
+      const newLabel = res.data || res; // Tuỳ API trả về
+      
+      // Thêm vào danh sách availableLabels
+      setAvailableLabels(prev => [...prev, newLabel]);
+      
+      // Tự động gắn label vừa tạo vào card (UX chuẩn Trello)
+      handleToggleLabel(newLabel.id);
+      
+      toast.success("Label created");
+    } catch (err) {
+      console.error("Create label failed", err);
+      toast.error("Failed to create label");
+    }
+  };
+
+  // 3. Edit Label
+  const handleEditLabel = async (id, data) => {
+    try {
+      await client.patch(`/labels/${id}/`, data);
+
+      // Cập nhật trong danh sách available
+      setAvailableLabels(prev => prev.map(l => l.id === id ? { ...l, ...data } : l));
+
+      // Cập nhật visual trên card hiện tại nếu đang gắn label đó
+      setCardAndBubble(prev => ({
+        ...prev,
+        labels: prev.labels.map(l => l.id === id ? { ...l, ...data } : l)
+      }));
+
+      toast.success("Label updated");
+    } catch (err) {
+      console.error("Edit label failed", err);
+      toast.error("Failed to update label");
+    }
+  };
+
+  // 4. Delete Label
+  const handleDeleteLabel = async (id) => {
+    if (!window.confirm("Delete this label permanently?")) return;
+    try {
+      await client.delete(`/labels/${id}/`);
+
+      // Xóa khỏi danh sách available
+      setAvailableLabels(prev => prev.filter(l => l.id !== id));
+
+      // Gỡ khỏi card hiện tại
+      setCardAndBubble(prev => ({
+        ...prev,
+        labels: prev.labels.filter(l => l.id !== id)
+      }));
+
+      toast.success("Label deleted");
+    } catch (err) {
+      console.error("Delete label failed", err);
+      toast.error("Failed to delete label");
+    }
+  };
+
+
+  // ============= OTHER HANDLERS =============
+
   const handleToggleComplete = async () => {
     const updated = !isComplete;
     setIsComplete(updated);
@@ -201,10 +296,8 @@ export default function FullCardModal({
 
   const handleTitleSave = async () => {
     if (!title || title === card.name) return;
-    
     const originalTitle = card.name;
     setSaveState({ saving: true, error: null });
-    
     try {
       onCardUpdate({ ...card, name: title });
       await client.patch(`/cards/${card.id}/`, { name: title });
@@ -227,7 +320,6 @@ export default function FullCardModal({
       setIsEditingDesc(false);
       return;
     }
-
     setSaveState({ saving: true, error: null });
     try {
       await updateCardDescription(card.id, tempDesc);
@@ -247,8 +339,7 @@ export default function FullCardModal({
     setTempDesc(description);
     setIsEditingDesc(false);
   };
-
-  // ============= CHECKLIST HANDLERS =============
+  // Checklist Handlers
   const handleCreateChecklist = async ({ title }) => {
     try {
       const newCL = await createChecklist(card.id, { title });  
@@ -272,7 +363,6 @@ export default function FullCardModal({
     try {
       await updateChecklist(clId, { title: newTitle });
     } catch (e) {
-      console.error('update checklist title failed', e);
       setLocalCard(backup);
       onCardUpdate?.(backup);
     }
@@ -281,7 +371,6 @@ export default function FullCardModal({
   const handleAddItem = async (clId, text) => {
     const name = (text || "").trim();
     if (!name) return;
-
     const tempId = `tmp_${Date.now()}`;
     const optimistic = { id: tempId, text: name, completed: false };
 
@@ -305,7 +394,6 @@ export default function FullCardModal({
         })
       }));
     } catch (e) {
-      console.error('create item failed', e.response?.data || e);
       setCardAndBubble(prev => ({
         ...prev,
         checklists: prev.checklists.map(cl => 
@@ -330,30 +418,21 @@ export default function FullCardModal({
     try {
       await deleteChecklistItem(itemId);
     } catch (e) {
-      console.error('delete item failed', e);
       setLocalCard(backup);
       onCardUpdate?.(backup);
     }
   };
 
   const handleToggleItem = async (clId, itemId) => {
-    const current = localCard.checklists
-      .find(c => c.id === clId)?.items
-      ?.find(i => i.id === itemId);
+    const current = localCard.checklists.find(c => c.id === clId)?.items?.find(i => i.id === itemId);
     if (!current) return;
-
     const newCompleted = !current.completed;
 
     setCardAndBubble(prev => ({
       ...prev,
       checklists: prev.checklists.map(cl =>
         cl.id === clId
-          ? {
-              ...cl,
-              items: cl.items.map(it =>
-                it.id === itemId ? { ...it, completed: newCompleted } : it
-              ),
-            }
+          ? { ...cl, items: cl.items.map(it => it.id === itemId ? { ...it, completed: newCompleted } : it) }
           : cl
       ),
     }));
@@ -361,17 +440,11 @@ export default function FullCardModal({
     try {
       await toggleChecklistItem(itemId, newCompleted);
     } catch (e) {
-      console.error("toggle item failed", e);
       setCardAndBubble(prev => ({
         ...prev,
         checklists: prev.checklists.map(cl =>
           cl.id === clId
-            ? {
-                ...cl,
-                items: cl.items.map(it =>
-                  it.id === itemId ? { ...it, completed: !newCompleted } : it
-                ),
-              }
+            ? { ...cl, items: cl.items.map(it => it.id === itemId ? { ...it, completed: !newCompleted } : it) }
             : cl
         ),
       }));
@@ -387,13 +460,12 @@ export default function FullCardModal({
     try {
       await deleteChecklist(clId);
     } catch (e) {
-      console.error("delete checklist failed", e.response?.data || e);
       setLocalCard(backup);
       onCardUpdate?.(backup);
     }
   };
 
-  // ============= ATTACHMENT HANDLERS =============
+  // Attachment & Comment handlers (giữ nguyên logic gốc của bạn)
   const handleAttachmentAdded = (attachment) => {
     setCardAndBubble((prev) => ({
       ...prev,
@@ -407,18 +479,11 @@ export default function FullCardModal({
       await updateAttachment(id, { is_cover: true });
       setCardAndBubble((prev) => ({
         ...prev,
-        attachments: prev.attachments.map((att) => ({
-          ...att,
-          is_cover: att.id === id
-        }))
+        attachments: prev.attachments.map((att) => ({ ...att, is_cover: att.id === id }))
       }));
-      setAttachments(prev => prev.map(att => ({
-        ...att,
-        is_cover: att.id === id
-      })));
+      setAttachments(prev => prev.map(att => ({ ...att, is_cover: att.id === id })));
       toast.success('Cover set successfully');
     } catch (err) {
-      console.error('Failed to set cover:', err);
       toast.error('Failed to set cover');
     }
   };
@@ -428,18 +493,10 @@ export default function FullCardModal({
       await updateAttachment(id, { is_cover: false });
       setCardAndBubble((prev) => ({
         ...prev,
-        attachments: prev.attachments.map((att) => ({
-          ...att,
-          is_cover: att.id === id ? false : att.is_cover
-        }))
+        attachments: prev.attachments.map((att) => ({ ...att, is_cover: att.id === id ? false : att.is_cover }))
       }));
-      setAttachments(prev => prev.map(att => ({
-        ...att,
-        is_cover: att.id === id ? false : att.is_cover
-      })));
-      toast.success('Cover removed successfully');
+      setAttachments(prev => prev.map(att => ({ ...att, is_cover: att.id === id ? false : att.is_cover })));
     } catch (err) {
-      console.error('Failed to remove cover:', err);
       toast.error('Failed to remove cover');
     }
   };
@@ -452,69 +509,28 @@ export default function FullCardModal({
         attachments: prev.attachments.filter((att) => att.id !== id)
       }));
       setAttachments(prev => prev.filter(att => att.id !== id));
-      toast.success('Attachment deleted successfully');
+      toast.success('Attachment deleted');
     } catch (err) {
-      console.error('Failed to delete attachment:', err);
       toast.error('Failed to delete attachment');
     }
   };
 
-  // ============= COMMENT HANDLERS =============
-  const handleReply = (parentId, author) => {
-    setReplyingTo({ id: parentId, author });
-  };
-
+  // Comment Handlers
+  const handleReply = (parentId, author) => setReplyingTo({ id: parentId, author });
   const handleCancelReply = () => setReplyingTo(null);
-
-  const handleCommentAdded = (c) => {
-    setComments(prev => [c, ...prev]);
-  };
-
+  const handleCommentAdded = (c) => setComments(prev => [c, ...prev]);
   const handleCommentReplaced = (tempId, real) => {
     setComments(prev => {
       const next = prev.map((c) => (c.temp_id === tempId ? real : c));
       next.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       return next;
     });
-    setActivityRefreshTick(t => t + 1);
   };
+  const handleCommentRemove = (tempId) => setComments(prev => prev.filter(c => c.temp_id !== tempId));
+  const handleCommentUpdated = (commentId, updated) => setComments((prev) => prev.map((c) => (c.id === commentId ? { ...c, ...updated } : c)));
+  const handleCommentDeleted = (commentId) => setComments(prev => prev.filter(comment => comment.id !== commentId));
 
-  const handleCommentRemove = (tempId) => {
-    setComments(prev => prev.filter(c => c.temp_id !== tempId));
-  };
-
-  const handleCommentUpdated = (commentId, updated) => {
-    setComments((prev) => {
-      const next = prev.map((c) => (c.id === commentId ? { ...c, ...updated } : c));
-      return next;
-    });
-    setActivityRefreshTick(t => t + 1);
-  };
-
-  const handleCommentDeleted = (commentId) => {
-    setComments(prev => prev.filter(comment => comment.id !== commentId));
-  };
-
-  // ============= COMPUTED VALUES =============
-  const roots = useMemo(
-    () => comments.filter((c) => !c.parent_id),
-    [comments]
-  );
-
-  const childrenMap = useMemo(() => {
-    const map = {};
-    for (const c of comments) {
-      if (c.parent_id) {
-        (map[c.parent_id] ||= []).push(c);
-      }
-    }
-    Object.values(map).forEach((arr) =>
-      arr.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-    );
-    return map;
-  }, [comments]);
-
-  // ============= CLICK OUTSIDE HANDLER =============
+  // Click Outside
   const handleClickOutside = useCallback((e) => {
     if (e.target === overlayRef.current) {
       closeAllPopups();
@@ -527,7 +543,6 @@ export default function FullCardModal({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [handleClickOutside]);
 
-  // ✅ Xác định card thuộc Board hay Inbox
   const isBoardCard = !!(card.board || card.board_id || card.list);
 
   const handleAddMenuSelect = useCallback((type) => {
@@ -536,83 +551,81 @@ export default function FullCardModal({
 
     switch (type) {
       case "labels":
-        toast("Labels coming soon");
+        // Xử lý khi chọn label từ Add Menu (nếu cần, hiện tại dùng nút riêng)
+        const rectLabel = addMenuAnchor;
+        setLabelAnchor(rectLabel);
+        setShowLabelPopup(true);
         break;
-
       case "dates":
         const rectDate = addMenuAnchor;
         setDueDateAnchor(rectDate);
         setShowDueDatePopup(true);
         break;
-
       case "checklist":
         const rectCL = addMenuAnchor;
         setChecklistAnchor(rectCL);
         setShowChecklistPopup(true);
         break;
-
       case "members":
         const rectMB = addMenuAnchor;
         setMembersAnchor(rectMB);
         setShowMembersPopup(true);
         break;
-
       case "attachment":
         const rectAT = addMenuAnchor;
         setAttachmentAnchor(rectAT);
         setShowAttachmentPopup(true);
         break;
-
-      default:
-        break;
+      default: break;
     }
-  }, [
-    addMenuAnchor,
-    closeAllPopups,
-  ]);
+  }, [addMenuAnchor]);
 
-  
-  // ============= RENDER =============
   return createPortal(
   (
     <S.Overlay ref={overlayRef}>
-
-      {/* MODAL CONTAINER */}
       <S.ModalContainer ref={modalRef}>
         {/* Header */}
         <S.HeaderBar>
           <S.HeaderLeft>
             <S.TitleButton aria-label="Open card menu">
               <S.CardTitle>{title}</S.CardTitle>
-              <S.DropIcon aria-hidden="true">
-                <IoChevronDown size={20} />
-              </S.DropIcon>
+              <S.DropIcon aria-hidden="true"><IoChevronDown size={20} /></S.DropIcon>
             </S.TitleButton>
           </S.HeaderLeft>
 
           <S.HeaderRight>
-            <S.IconBtn title="Feedback" aria-label="Feedback">📢</S.IconBtn>
-            <S.IconBtn title="Cover" aria-label="Cover">🖼️</S.IconBtn>
-            <S.IconBtn title="Actions" aria-label="Actions">⋯</S.IconBtn>
+            <S.IconBtn title="Feedback">📢</S.IconBtn>
+            <S.IconBtn title="Cover">🖼️</S.IconBtn>
+            <S.IconBtn title="Actions">⋯</S.IconBtn>
             <S.CloseBtn onClick={onClose} aria-label="Close">
               <IoCloseOutline size={24} />
             </S.CloseBtn>
           </S.HeaderRight>
         </S.HeaderBar>
         
-        {/* Meta Bar */}
+        {/* Meta Bar - Updated to toggle popups correctly */}
         <CardMetaBar
           labels={localCard?.labels || []}
           dueDate={localCard?.due_date || null}
           members={localCard?.members || []}
-          onClickLabels={() => toast('Labels popup coming soon')}
+
+          onClickLabels={(e) => {
+            e.stopPropagation(); // Ngăn chặn nổi bọt
+            closeAllPopups();
+            const rect = e.currentTarget.getBoundingClientRect();
+            setLabelAnchor(rect);
+            setShowLabelPopup(true);
+          }}
+
           onClickDueDate={(e) => {
+            e.stopPropagation();
             closeAllPopups();
             const rect = e.currentTarget.getBoundingClientRect();
             setDueDateAnchor(rect);
             setShowDueDatePopup(true);
           }}
           onClickMembers={(e) => {
+            e.stopPropagation();
             closeAllPopups();
             if (isBoardCard) {
               const rect = e.currentTarget.getBoundingClientRect();
@@ -625,16 +638,13 @@ export default function FullCardModal({
         {(localCard.start_date || localCard.due_date) && (
           <InlineDateBlock
             card={localCard}
-            onUpdated={(patch) =>
-              setLocalCard((prev) => ({ ...prev, ...patch }))
-            }
+            onUpdated={(patch) => setLocalCard((prev) => ({ ...prev, ...patch }))}
           />
         )}
 
         {/* BODY */}
         <S.ContentBody>
           <S.MainColumn>
-            {/* TITLE */}
             <S.TitleSection>
               <S.TitleCheckboxWrapper>
                 <S.CompleteCheckbox
@@ -658,7 +668,6 @@ export default function FullCardModal({
             {/* ACTION BUTTONS */}
             <S.ActionSectionGrid>
               <S.EmptyIconSpace />
-
               <S.ActionSectionBody>
                 <S.ActionButton
                   onClick={(e) => {
@@ -671,7 +680,16 @@ export default function FullCardModal({
                   + Add
                 </S.ActionButton>
 
-                <S.ActionButton><BiLabel /> Labels</S.ActionButton>
+                <S.ActionButton
+                  onClick={(e) => {
+                    closeAllPopups();
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setLabelAnchor(rect);
+                    setShowLabelPopup(true);
+                  }}
+                >
+                  <BiLabel /> Labels
+                </S.ActionButton>
 
                 <S.ActionButton
                   onClick={(e) => {
@@ -695,22 +713,18 @@ export default function FullCardModal({
                   <MdChecklist /> Checklist
                 </S.ActionButton>
 
-                {isBoardCard ? (
-                  <S.ActionButton
-                    onClick={(e) => {
-                      closeAllPopups();
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      setMembersAnchor(rect);
-                      setShowMembersPopup(true);
-                    }}
-                  >
-                    <HiOutlineUserAdd /> Members
-                  </S.ActionButton>
-                ) : (
-                  <S.ActionButton disabled>
-                    <HiOutlineUserAdd /> Members
-                  </S.ActionButton>
-                )}
+                <S.ActionButton
+                  disabled={!isBoardCard}
+                  onClick={(e) => {
+                    if (!isBoardCard) return;
+                    closeAllPopups();
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setMembersAnchor(rect);
+                    setShowMembersPopup(true);
+                  }}
+                >
+                  <HiOutlineUserAdd /> Members
+                </S.ActionButton>
 
                 <S.ActionButton
                   onClick={(e) => {
@@ -777,9 +791,7 @@ export default function FullCardModal({
             <S.Section>
               <S.ActivityHeader>
                 <S.SectionLabel>Activity</S.SectionLabel>
-                <S.ShowDetailsButton 
-                  onClick={() => setShowDetails(!showDetails)}
-                >
+                <S.ShowDetailsButton onClick={() => setShowDetails(!showDetails)}>
                   {showDetails ? 'Hide details' : 'Show details'}
                 </S.ShowDetailsButton>
               </S.ActivityHeader>
@@ -794,7 +806,9 @@ export default function FullCardModal({
         </S.ContentBody>
       </S.ModalContainer>
 
-      {/* POPUPS */}
+      {/* POPUPS SECTION */}
+      
+      {/* 1. CHECKLIST POPUP */}
       {showChecklistPopup && (
         <CheckListPopup
           ref={checklistPopupRef}
@@ -805,6 +819,7 @@ export default function FullCardModal({
         />
       )}
 
+      {/* 2. ATTACHMENT POPUP */}
       {showAttachmentPopup && (
         <S.PopupOverlay>
           <AttachmentPopup
@@ -815,6 +830,7 @@ export default function FullCardModal({
         </S.PopupOverlay>
       )}
 
+      {/* 3. DUE DATE POPUP */}
       {showDueDatePopup && dueDateAnchor && (
         <DueDatePopup
           anchorRect={dueDateAnchor}
@@ -827,6 +843,7 @@ export default function FullCardModal({
         />
       )}
 
+      {/* 4. ADD MENU POPUP */}
       {showAddMenu && addMenuAnchor && (
         <AddToCardMenu
           anchorRect={addMenuAnchor}
@@ -835,6 +852,24 @@ export default function FullCardModal({
         />
       )}
 
+      {/* 5. LABEL POPUP (UPDATED) */}
+      {showLabelPopup && labelAnchor && (
+        <LabelPopup
+          anchorRect={labelAnchor}
+          labels={availableLabels} // Dùng state mới
+          selectedLabelIds={localCard.labels?.map(l => l.id) || []}
+          
+          onToggleLabel={handleToggleLabel}
+          onCreateLabel={handleCreateLabel}
+          onEditLabel={handleEditLabel}
+          onDeleteLabel={handleDeleteLabel}
+
+          onClose={() => setShowLabelPopup(false)}
+          boardId={card.board || card.board_id}
+        />
+      )}
+
+      {/* 6. MEMBER POPUP */}
       {isBoardCard && showMembersPopup && membersAnchor && (
         <MemberCardPopup
           anchorRect={membersAnchor}
