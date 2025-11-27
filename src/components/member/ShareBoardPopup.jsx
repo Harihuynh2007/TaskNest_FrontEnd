@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import { FaTimes, FaSpinner } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import FocusLock from 'react-focus-lock';
+import validator from 'validator';
 
 import {
   addMemberToBoard,
@@ -53,7 +54,9 @@ import {
   ErrorMessage,
 } from './ShareBoardPopup.styles';
 
-const isValidEmail = (s) => /\S+@\S+\.\S+/.test(String(s || '').trim());
+// ✅ Nên dùng RFC 5322 compliant hoặc validator library
+
+const isValidEmail = (s) => validator.isEmail(String(s || '').trim());
 
 const useClickOutside = (ref, callback) => {
   useEffect(() => {
