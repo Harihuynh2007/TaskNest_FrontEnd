@@ -38,7 +38,7 @@ const AttachmentPopup = ({ cardId, onClose, onAttachmentAdded }) => {
   };
 
   return (
-    <PopupWrapper onMouseDown={(e) => e.stopPropagation()}i>
+    <PopupWrapper onMouseDown={(e) => e.stopPropagation()}>
       <PopupHeader>
         <Title>Attach</Title>
         <CloseButton onClick={onClose}><X size={18} /></CloseButton>
