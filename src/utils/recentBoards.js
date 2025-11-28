@@ -29,12 +29,15 @@ export function getRecentBoards(userId) {
     const seen = new Set();
     const unique = [];
     
-    for (const b of arr.sort((a, b) => b.viewed_at - a.viewed_at)) {
-      if (seen.has(b.id)) continue;
-      seen.add(b.id);
-      unique.push(b);
+    const sorted = [...arr].sort(
+      (a, b) => Number(b.viewed_at || 0) - Number(a.viewed_at || 0)
+    );
+
+    for (const item of sorted) {
+      if (seen.has(item.id)) continue;
+      seen.add(item.id);
+      unique.push(item);
     }
-    
     return unique.slice(0, MAX);
   } catch (err) {
     console.error('Failed to get recent boards:', err);
