@@ -114,7 +114,8 @@ export function clearRecentBoards(userId) {
  */
 export function getRecentBoardsByWorkspace(userId, workspaceId) {
   if (!workspaceId) return getRecentBoards(userId);
-  
+
+  const target = String(workspaceId);
   const allRecent = getRecentBoards(userId);
-  return allRecent.filter(b => b.workspaceId === workspaceId);
+  return allRecent.filter(b => String(b.workspaceId) === target);
 }
