@@ -1,0 +1,177 @@
+/* tokens.css - Design System Tokens */
+/* Single Source of Truth for all design values */
+
+:root {
+  /* ===== Layout ===== */
+  --header-height: 56px;
+  --sidebar-width: 260px;
+  --max-content-width: 1440px;
+
+  /* ===== Color Palette - Dark Theme (Default) ===== */
+  
+  /* Header */
+  --header-bg: #121725;
+  --header-bg-elevated: #171c26;
+  --header-border: #2a3040;
+  --header-text: #e1e3e6;
+  --header-text-muted: #8a93a2;
+  --header-hover: #1c2232;
+  --header-active: #2a3144;
+
+  /* Brand Colors */
+  --brand-primary: #58aff6;
+  --brand-primary-hover: #3a7bd5;
+  --brand-gradient: linear-gradient(135deg, #58aff6 0%, #3a7bd5 100%);
+
+  /* Surface Levels (Z-axis depth) */
+  --surface-base: #121725;        /* App background */
+  --surface-raised: #171c26;       /* Card/Panel background */
+  --surface-overlay: #222834;      /* Modal/Dropdown background */
+  --surface-hover: #2c3341;        /* Hover state */
+
+  /* Borders */
+  --border-subtle: #2a3040;
+  --border-default: #3a414f;
+  --border-strong: #4a5260;
+
+  /* Text */
+  --text-primary: #e1e3e6;
+  --text-secondary: #8a93a2;
+  --text-tertiary: #6b7280;
+  --text-disabled: #4b5563;
+  --text-inverse: #1b2430;
+
+  /* Search */
+  --search-bg: #1a2030;
+  --search-border: #2c3341;
+  --search-placeholder: #9aa3b2;
+  --search-focus-ring: rgba(88, 175, 246, 0.35);
+
+  /* Interactive States */
+  --state-hover: rgba(255, 255, 255, 0.08);
+  --state-active: rgba(255, 255, 255, 0.12);
+  --state-focus: rgba(88, 175, 246, 0.5);
+  --state-disabled: rgba(255, 255, 255, 0.05);
+
+  /* Semantic Colors */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  --shadow-dropdown: 0 8px 20px rgba(0, 0, 0, 0.3);
+
+  /* Transitions */
+  --transition-fast: 0.1s ease;
+  --transition-base: 0.15s ease;
+  --transition-slow: 0.3s ease;
+
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  /* Spacing Scale (8px base) */
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-5: 1.25rem;  /* 20px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+  --space-10: 2.5rem;  /* 40px */
+  --space-12: 3rem;    /* 48px */
+
+  /* Z-index Scale */
+  --z-base: 1;
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  --z-toast: 9999;
+}
+
+/* ===== Light Theme ===== */
+[data-theme="light"] {
+  /* Header */
+  --header-bg: #ffffff;
+  --header-bg-elevated: #f7f8fb;
+  --header-border: #e6e8ee;
+  --header-text: #1b2430;
+  --header-text-muted: #6b7280;
+  --header-hover: #eef2f7;
+  --header-active: #e6edf7;
+
+  /* Brand - same in light mode */
+  --brand-primary: #58aff6;
+  --brand-primary-hover: #3a7bd5;
+
+  /* Surface Levels */
+  --surface-base: #f7f8fb;
+  --surface-raised: #ffffff;
+  --surface-overlay: #ffffff;
+  --surface-hover: #f3f4f6;
+
+  /* Borders */
+  --border-subtle: #e6e8ee;
+  --border-default: #d1d5db;
+  --border-strong: #9ca3af;
+
+  /* Text */
+  --text-primary: #1b2430;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --text-disabled: #d1d5db;
+  --text-inverse: #ffffff;
+
+  /* Search */
+  --search-bg: #f7f8fb;
+  --search-border: #e6e8ee;
+  --search-placeholder: #8b93a4;
+
+  /* Interactive States */
+  --state-hover: rgba(0, 0, 0, 0.04);
+  --state-active: rgba(0, 0, 0, 0.08);
+  --state-focus: rgba(88, 175, 246, 0.5);
+  --state-disabled: rgba(0, 0, 0, 0.05);
+
+  /* Shadows - lighter in light mode */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  --shadow-dropdown: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== Legacy Token Aliases (for backward compatibility) ===== */
+/* These will be deprecated - use tokens above instead */
+:root {
+  /* Map old token names to new ones */
+  --tn-dark-surface: var(--surface-overlay);
+  --tn-dark-bg: var(--surface-raised);
+  --tn-dark-stroke: var(--border-subtle);
+  --tn-dark-shadow: var(--shadow-dropdown);
+  --tn-dark-text: var(--text-primary);
+  --tn-dark-text-subtle: var(--text-secondary);
+  --tn-dark-hover: var(--state-hover);
+  
+  --tn-hover: var(--state-hover);
+  --tn-focus: var(--state-focus);
+  --tn-stroke: var(--border-subtle);
+  --tn-shadow: var(--shadow-lg);
+  --tn-text: var(--text-primary);
+  
+  --create-btn-bg: var(--brand-gradient);
+  --create-btn-shadow: var(--shadow-md);
+  --create-btn-shadow-hover: var(--shadow-lg);
+}
