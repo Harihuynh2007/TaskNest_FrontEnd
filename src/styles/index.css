@@ -1,183 +1,143 @@
-/* index.css - Unified Theme for TaskNest */
+/* index.css - Entry Point */
+/* Import order matters: tokens → base → components → overrides */
 
-/* === Global Reset === */
-html, body, #root {
-  margin: 0;
-  padding: 0;
-  font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Helvetica Neue', sans-serif;
-  background: var(--surface-1, #121725);
-  color: var(--text-primary, #e1e3e6);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+@import './tokens.css';
+@import './base.css';
+@import './components.css';
 
-/* === Global Links === */
-a {
-  color: var(--brand-primary, #58aff6);
-  text-decoration: none;
-  transition: color 0.15s ease;
-}
-a:hover {
-  color: #06b6d4;
+/* ===== Bootstrap Overrides ===== */
+/* Only essential overrides, rest handled by components.css */
+
+.btn {
+  font-weight: 600;
+  transition: all var(--transition-base);
 }
 
-/* === Navbar === */
-.navbar {
-  background-color: var(--header-bg);
-  border-bottom: 1px solid var(--header-border);
-  height: var(--header-height);
-  backdrop-filter: saturate(120%) blur(8px);
+.btn:focus,
+.btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--state-focus);
 }
-.navbar .form-inline .form-control {
-  border-radius: 8px;
-  padding: 6px 12px;
-  border: 1px solid var(--search-border);
-  background: var(--search-bg);
-  color: var(--header-text);
-}
-.navbar .btn-primary {
+
+.btn-primary {
   background: var(--brand-gradient);
   border: none;
-  color: #fff;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-  transition: transform 0.1s ease, box-shadow 0.2s ease;
+  color: white;
 }
-.navbar .btn-primary:hover {
+
+.btn-primary:hover {
   filter: brightness(1.05);
-  box-shadow: 0 3px 10px rgba(59, 130, 246, 0.4);
-}
-.navbar .btn-primary:active {
-  transform: translateY(1px) scale(0.98);
 }
 
-/* === Sidebar === */
-.sidebar-link {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  font-size: 14px;
-  color: var(--text-secondary);
-  border-radius: 8px;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-.sidebar-link:hover,
-.sidebar-link.active {
-  background: var(--brand-gradient);
-  color: #fff;
+.form-control {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
 }
 
-/* === Create Dropdown === */
-.create-dropdown {
-  position: absolute;
-  top: 40px;
-  left: 0;
-  width: 320px;
-  background: var(--tn-dark-surface, #171c26);
-  border: 1px solid var(--tn-dark-stroke, #2a3040);
-  box-shadow: var(--tn-dark-shadow, 0 8px 20px rgba(0, 0, 0, 0.3));
-  border-radius: 12px;
-  padding: 6px 0;
-  backdrop-filter: saturate(180%) blur(12px);
-  z-index: 1000;
-}
-.create-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 12px 16px;
-  cursor: pointer;
-  border-left: 3px solid transparent;
-  color: var(--tn-dark-text, #e1e3e6);
-  transition: background 0.2s ease, border-color 0.2s ease;
-}
-.create-item:hover {
-  background: var(--tn-dark-hover, rgba(255, 255, 255, 0.05));
-  border-left: 3px solid var(--brand-primary, #3b82f6);
-}
-.create-item .icon {
-  margin-top: 2px;
-  color: var(--tn-dark-text-subtle, #9aa3b2);
-  min-width: 18px;
-}
-.create-item .desc {
-  font-size: 13px;
-  color: var(--tn-dark-text-subtle, #9aa3b2);
-  margin-top: 2px;
+.form-control:focus {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 2px rgba(88, 175, 246, 0.25);
+  background: var(--surface-raised);
+  color: var(--text-primary);
 }
 
-/* === Dropdown Unification (Create, Apps, User) === */
-.dropdown-menu {
-  background: var(--tn-dark-surface);
-  border: 1px solid var(--tn-dark-stroke);
-  box-shadow: var(--tn-dark-shadow);
-  backdrop-filter: saturate(180%) blur(12px);
-}
-.dropdown-item {
-  color: var(--tn-dark-text);
-}
-.dropdown-item:hover {
-  background: var(--tn-dark-hover);
+.form-control::placeholder {
+  color: var(--text-tertiary);
 }
 
-/* === Buttons & Icons === */
-.tn-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 36px;
-  width: 36px;
-  border-radius: 9px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--header-muted);
-  transition: 0.15s ease;
-}
-.tn-icon-btn:hover {
-  background: var(--tn-hover, rgba(255, 255, 255, 0.08));
-  color: var(--header-text);
-}
-.tn-icon-btn:focus-visible {
-  outline: 0;
-  box-shadow: 0 0 0 2px var(--tn-focus, rgba(59, 130, 246, 0.5));
-}
-.tn-icon-btn:active {
-  transform: translateY(1px) scale(0.98);
+.modal-content {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  color: var(--text-primary);
 }
 
-/* === Feedback & Popup Surfaces === */
-[data-testid="feedback-popup"], .tn-feedback {
-  background: var(--tn-dark-bg, #171c26);
-  border: 1px solid var(--tn-dark-stroke);
-  box-shadow: var(--tn-dark-shadow);
-  color: var(--tn-dark-text);
-  border-radius: 10px;
-  backdrop-filter: blur(12px);
+.modal-header {
+  border-bottom-color: var(--border-subtle);
 }
 
-/* === Draggable Ghost (DND) === */
-.react-beautiful-dnd-draggable--dragging {
-  opacity: 0.7;
-  transform: rotate(-1.5deg) scale(1.03);
-  border-radius: 8px;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
-  z-index: 10000;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+.modal-footer {
+  border-top-color: var(--border-subtle);
 }
 
-/* === Responsive Adjustments === */
-@media (max-width: 768px) {
-  .create-dropdown {
-    width: 90vw;
-    left: 5vw;
-  }
-  .sidebar-link {
-    font-size: 15px;
-    padding: 10px 14px;
-  }
-  .tn-icon-btn {
-    height: 40px;
-    width: 40px;
-  }
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
 }
+
+/* ===== Toast Notifications ===== */
+.Toastify__toast {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-dropdown);
+  border: 1px solid var(--border-subtle);
+}
+
+.Toastify__toast--success {
+  background: var(--color-success);
+  color: white;
+  border-color: transparent;
+}
+
+.Toastify__toast--error {
+  background: var(--color-error);
+  color: white;
+  border-color: transparent;
+}
+
+.Toastify__toast--warning {
+  background: var(--color-warning);
+  color: white;
+  border-color: transparent;
+}
+
+.Toastify__toast--info {
+  background: var(--brand-primary);
+  color: white;
+  border-color: transparent;
+}
+
+.Toastify__progress-bar {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+/* ===== Loading States ===== */
+.spinner-border {
+  border-color: var(--surface-hover);
+  border-right-color: var(--brand-primary);
+}
+
+/* ===== Utility Classes ===== */
+.bg-surface-base {
+  background-color: var(--surface-base);
+}
+
+.bg-surface-raised {
+  background-color: var(--surface-raised);
+}
+
+.bg-surface-overlay {
+  background-color: var(--surface-overlay);
+}
+
+.border-subtle {
+  border-color: var(--border-subtle) !important;
+}
+
+.border-default {
+  border-color: var(--border-default) !important;
+}
+
+.text-primary {
+  color: var(--text-primary) !important;
+}
+
+.text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+.text-tertiary {
+  color: var(--text-tertiary) !important;
+}
+
