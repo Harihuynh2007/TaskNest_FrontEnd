@@ -42,6 +42,7 @@ export const boards = {
   closed:            () => '/boards/closed/',
   lists:             (boardId) => `/boards/${boardId}/lists/`,
   labels:            (boardId) => `/boards/${boardId}/labels/`,
+  labelDetail:       (boardId, labelId) => `/boards/${boardId}/labels/${labelId}/`,
   members:           (boardId) => `/boards/${boardId}/members/`,
   invitations:       (boardId) => `/boards/${boardId}/invitations/`,
   shareLink:         (boardId) => `/boards/${boardId}/share-link/`,

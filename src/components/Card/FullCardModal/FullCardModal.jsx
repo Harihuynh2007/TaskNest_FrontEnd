@@ -15,6 +15,14 @@ import {
   getCardComments,
   updateCardDescription,
 } from '../../../api/cardApi';
+
+import {
+  fetchBoardLabels,
+  createBoardLabel,
+  updateBoardLabel,    
+  deleteBoardLabel,  
+} from '../../../api/boardApi'
+
 import {
    getCardAttachments,
    updateAttachment,
@@ -169,6 +177,22 @@ export default function FullCardModal({
     if (card?.id) loadComments();
   }, [card?.id, fetchAttachments, loadComments]);
 
+  // FullCardModal.jsx - Line ~110
+  useEffect(() => {
+    const loadLabels = async () => {
+      try {
+        const boardId = card.board_id || card.list?.board_id;
+        if (!boardId) return;
+        
+        const { data } = await fetchBoardLabels(boardId); // ✅ DÙNG API CÓ SẴN
+        setAvailableLabels(data);
+      } catch (err) {
+        console.error('Failed to load labels:', err);
+      }
+    };
+    loadLabels();
+  }, [card.board_id, card.list?.board_id]);
+
   useEffect(() => {
     if (!card.checklists || card.checklists.length === 0) {
       (async () => {
@@ -222,42 +246,50 @@ export default function FullCardModal({
   // 2. Create Label
   const handleCreateLabel = async (data) => {
     try {
-      console.log("LABEL CREATE REQUEST:", data);
+      const boardId = data.boardId;
+      if (!boardId) {
+        toast.error("Board ID missing");
+        return;
+      }
 
-      const res = await client.post(`labels/`, {
+      // ✅ DÙNG API ĐÚNG
+      const { data: newLabel } = await createBoardLabel(boardId, {
         name: data.name,
         color: data.color,
-        board_id: data.boardId,   // <-- Nhận đúng từ LabelPopup
       });
 
-      const newLabel = res.data;
-
-      // Update UI
       setAvailableLabels((prev) => [...prev, newLabel]);
       handleToggleLabel(newLabel.id);
-
       toast.success("Label created");
     } catch (err) {
-      console.log("CREATE LABEL ERROR PAYLOAD:", err.response?.data);
-      toast.error("Failed to create label");
+      console.error("CREATE LABEL ERROR:", err.response?.data);
+      toast.error(err.response?.data?.name?.[0] || "Failed to create label");
     }
   };
 
   // 3. Edit Label
   const handleEditLabel = async (labelId, data) => {
     try {
-      await client.patch(`labels/${labelId}/`, data);
+      const boardId = 
+        card.board_id || 
+        card.list?.board_id || 
+        card.list?.board?.id;
+      
+      if (!boardId) {
+        toast.error("Board ID missing");
+        return;
+      }
 
-      // Cập nhật UI
+      // ✅ DÙNG API MỚI
+      const { data: updated } = await updateBoardLabel(boardId, labelId, data);
+
       setAvailableLabels((prev) =>
-        prev.map((l) => (l.id === labelId ? { ...l, ...data } : l))
+        prev.map((l) => (l.id === labelId ? updated : l))
       );
 
       setCardAndBubble((prev) => ({
         ...prev,
-        labels: prev.labels.map((l) =>
-          l.id === labelId ? { ...l, ...data } : l
-        ),
+        labels: prev.labels.map((l) => (l.id === labelId ? updated : l)),
       }));
 
       toast.success("Label updated");
@@ -270,8 +302,19 @@ export default function FullCardModal({
   // 4. Delete Label
   const handleDeleteLabel = async (labelId) => {
     if (!window.confirm("Delete this label permanently?")) return;
+    
     try {
-      await client.delete(`labels/${labelId}/`);
+      const boardId = 
+        card.board_id || 
+        card.list?.board_id;
+      
+      if (!boardId) {
+        toast.error("Board ID missing");
+        return;
+      }
+
+      // ✅ DÙNG API MỚI
+      await deleteBoardLabel(boardId, labelId);
 
       setAvailableLabels((prev) => prev.filter((l) => l.id !== labelId));
 
