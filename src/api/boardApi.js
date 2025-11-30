@@ -62,6 +62,12 @@ export const fetchBoardLabels = (boardId) =>
 export const createBoardLabel = (boardId, labelData) =>
   api.post(boards.labels(boardId), labelData);
 
+export const updateBoardLabel = (boardId, labelId, data) =>
+  api.patch(boards.labelDetail(boardId, labelId), data);
+
+export const deleteBoardLabel = (boardId, labelId) =>
+  api.delete(boards.labelDetail(boardId, labelId));
+
 /**
  * Board Share Link Management APIs
  */
