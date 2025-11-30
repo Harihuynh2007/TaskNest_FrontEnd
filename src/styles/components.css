@@ -91,7 +91,7 @@
 @supports (backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px)) {
   .dropdown-menu,
   .custom-dropdown-menu {
-    background: rgba(34, 40, 52, 0.9);
+    background: var(--surface-backdrop-overlay);
     backdrop-filter: saturate(180%) blur(12px);
     -webkit-backdrop-filter: saturate(180%) blur(12px);
   }

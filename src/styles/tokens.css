@@ -115,6 +115,7 @@
   /* Brand - same in light mode */
   --brand-primary: #58aff6;
   --brand-primary-hover: #3a7bd5;
+  --brand-gradient: linear-gradient(135deg, #58aff6 0%, #3a7bd5 100%);
 
   /* Surface Levels */
   --surface-base: #f7f8fb;
@@ -138,6 +139,7 @@
   --search-bg: #f7f8fb;
   --search-border: #e6e8ee;
   --search-placeholder: #8b93a4;
+  --search-focus-ring: rgba(88, 175, 246, 0.35);
 
   /* Interactive States */
   --state-hover: rgba(0, 0, 0, 0.04);
@@ -152,7 +154,6 @@
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   --shadow-dropdown: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
-
 /* ===== Legacy Token Aliases (for backward compatibility) ===== */
 /* These will be deprecated - use tokens above instead */
 :root {

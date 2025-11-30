@@ -37,7 +37,7 @@
 
 .form-control:focus {
   border-color: var(--brand-primary);
-  box-shadow: 0 0 0 2px rgba(88, 175, 246, 0.25);
+  box-shadow: 0 0 0 2px var(--state-focus-glow);
   background: var(--surface-raised);
   color: var(--text-primary);
 }
@@ -62,7 +62,7 @@
 }
 
 .modal-backdrop {
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--backdrop-color);
 }
 
 /* ===== Toast Notifications ===== */
