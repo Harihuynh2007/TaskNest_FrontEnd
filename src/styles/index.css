@@ -1,13 +1,18 @@
-/* index.css - Entry Point */
-/* Import order matters: tokens → base → components → overrides */
+/* index.css - Main Entry Point & Layouts */
+/* Structure: Imports -> Overrides -> App Layout -> Utilities */
 
+/* ========================================
+   1. CORE IMPORTS
+======================================== */
 @import './tokens.css';
 @import './base.css';
 @import './components.css';
 
-/* ===== Bootstrap Overrides ===== */
-/* Only essential overrides, rest handled by components.css */
+/* ========================================
+   2. LIBRARY OVERRIDES (Bootstrap & Third-party)
+======================================== */
 
+/* Button Overrides */
 .btn {
   font-weight: 600;
   transition: all var(--transition-base);
@@ -28,6 +33,7 @@
   filter: brightness(1.05);
 }
 
+/* Form Control Overrides */
 .form-control {
   background: var(--surface-raised);
   border: 1px solid var(--border-subtle);
@@ -37,7 +43,7 @@
 
 .form-control:focus {
   border-color: var(--brand-primary);
-  box-shadow: 0 0 0 2px var(--state-focus-glow);
+  box-shadow: 0 0 0 2px rgba(88, 175, 246, 0.25);
   background: var(--surface-raised);
   color: var(--text-primary);
 }
@@ -46,6 +52,7 @@
   color: var(--text-tertiary);
 }
 
+/* Modal Overrides */
 .modal-content {
   background: var(--surface-raised);
   border: 1px solid var(--border-default);
@@ -62,10 +69,10 @@
 }
 
 .modal-backdrop {
-  background-color: var(--backdrop-color);
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
-/* ===== Toast Notifications ===== */
+/* Toast Notifications */
 .Toastify__toast {
   background: var(--surface-raised);
   color: var(--text-primary);
@@ -102,13 +109,236 @@
   background: rgba(255, 255, 255, 0.7);
 }
 
-/* ===== Loading States ===== */
+/* Loading States */
 .spinner-border {
   border-color: var(--surface-hover);
   border-right-color: var(--brand-primary);
 }
 
-/* ===== Utility Classes ===== */
+/* ========================================
+   3. APP SPECIFIC LAYOUTS (Merged from App.css)
+======================================== */
+
+/* App Container */
+.App {
+  text-align: center;
+  min-height: 100vh;
+}
+
+/* Page Container */
+.tn-page {
+  padding: var(--space-4);
+  color: var(--text-primary);
+}
+
+/* Sidebar Specifics */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  font-size: 14px;
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-base);
+  text-decoration: none;
+}
+
+.sidebar-link:hover {
+  background: var(--state-hover);
+  color: var(--text-primary);
+}
+
+.sidebar-link.active {
+  background: var(--brand-gradient);
+  color: white;
+}
+
+.sidebar-link .icon {
+  margin-right: var(--space-2);
+}
+
+/* Navbar Specific Overrides */
+.navbar {
+  background-color: var(--header-bg);
+  border-bottom: 1px solid var(--header-border);
+  height: var(--header-height);
+  min-height: var(--header-height);
+}
+
+/* Apply backdrop-filter only if supported */
+@supports (backdrop-filter: blur(8px)) or (-webkit-backdrop-filter: blur(8px)) {
+  .navbar {
+    background-color: rgba(18, 23, 37, 0.95) !important;
+    backdrop-filter: saturate(120%) blur(8px);
+    -webkit-backdrop-filter: saturate(120%) blur(8px);
+  }
+}
+
+.navbar .form-inline .form-control {
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--search-border);
+  background: var(--search-bg);
+  color: var(--header-text);
+}
+
+/* Layout Utilities */
+.tn-header-shadow {
+  position: sticky;
+  top: 0;
+  height: 0;
+  z-index: var(--z-sticky);
+  pointer-events: none;
+}
+
+.tn-header-shadow::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 16px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.28), transparent);
+  z-index: -1;
+}
+
+/* ========================================
+   4. COMPONENTS - ERROR & STATES
+======================================== */
+
+/* Error Boundary */
+.error-boundary {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-base);
+  color: var(--text-primary);
+  padding: var(--space-5);
+  text-align: center;
+}
+
+.error-boundary h1 {
+  font-size: 3rem;
+  margin-bottom: var(--space-4);
+}
+
+.error-boundary p {
+  color: var(--text-secondary);
+  margin-bottom: var(--space-6);
+}
+
+/* Loading Container */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-10);
+  text-align: center;
+}
+
+.empty-state-icon {
+  font-size: 4rem;
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-4);
+}
+
+.empty-state-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.empty-state-description {
+  color: var(--text-secondary);
+  max-width: 400px;
+  margin-bottom: var(--space-4);
+}
+
+/* ========================================
+   5. COMPONENTS - CARDS
+======================================== */
+
+.tn-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  transition: all var(--transition-base);
+}
+
+.tn-card:hover {
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-md);
+}
+
+.tn-card-header {
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.tn-card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.tn-card-body {
+  color: var(--text-secondary);
+}
+
+/* ========================================
+   6. COMPONENTS - BADGES
+======================================== */
+
+.tn-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.tn-badge-primary {
+  background: var(--brand-primary);
+  color: white;
+}
+
+.tn-badge-success {
+  background: var(--color-success);
+  color: white;
+}
+
+.tn-badge-warning {
+  background: var(--color-warning);
+  color: white;
+}
+
+.tn-badge-error {
+  background: var(--color-error);
+  color: white;
+}
+
+/* ========================================
+   7. UTILITY CLASSES
+======================================== */
+
+/* Background Utilities */
 .bg-surface-base {
   background-color: var(--surface-base);
 }
@@ -121,6 +351,7 @@
   background-color: var(--surface-overlay);
 }
 
+/* Border Utilities */
 .border-subtle {
   border-color: var(--border-subtle) !important;
 }
@@ -129,6 +360,7 @@
   border-color: var(--border-default) !important;
 }
 
+/* Text Utilities */
 .text-primary {
   color: var(--text-primary) !important;
 }
@@ -141,3 +373,31 @@
   color: var(--text-tertiary) !important;
 }
 
+/* ========================================
+   8. RESPONSIVE UTILITIES
+======================================== */
+
+@media (max-width: 768px) {
+  .tn-page {
+    padding: var(--space-3);
+  }
+
+  .sidebar-link {
+    font-size: 15px;
+    padding: var(--space-3);
+  }
+}
+
+@media (max-width: 576px) {
+  .tn-page {
+    padding: var(--space-2);
+  }
+
+  .empty-state {
+    padding: var(--space-6);
+  }
+
+  .empty-state-icon {
+    font-size: 3rem;
+  }
+}

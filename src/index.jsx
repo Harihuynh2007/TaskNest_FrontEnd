@@ -7,9 +7,9 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import App from './App';
 import api from './api/apiClient';
 
+// CSS Imports - Single entry point
 import 'bootstrap/dist/css/bootstrap.min.css';
-import './styles/index.css';
-
+import './styles/index.css'; // Contains all custom styles (tokens, base, components, app-specific)
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider, WorkspaceProvider, ModalProvider } from './contexts';
@@ -117,11 +117,9 @@ if (token) {
 }
 
 // Google OAuth Client ID (should be in .env)
-const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || 
+  "230570345332-if0223t4bdf57r4g01p0prc359pcd093.apps.googleusercontent.com";
 
-if (!GOOGLE_CLIENT_ID) {
-  throw new Error('Missing REACT_APP_GOOGLE_CLIENT_ID environment variable. Please set it in your .env file.');
-}
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
 root.render(
