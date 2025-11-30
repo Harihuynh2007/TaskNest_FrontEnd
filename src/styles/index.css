@@ -43,7 +43,7 @@
 
 .form-control:focus {
   border-color: var(--brand-primary);
-  box-shadow: 0 0 0 2px rgba(88, 175, 246, 0.25);
+  box-shadow: 0 0 0 2px var(--form-focus-shadow-color);
   background: var(--surface-raised);
   color: var(--text-primary);
 }

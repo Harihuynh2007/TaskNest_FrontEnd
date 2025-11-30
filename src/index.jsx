@@ -117,9 +117,11 @@ if (token) {
 }
 
 // Google OAuth Client ID (should be in .env)
-const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || 
-  "230570345332-if0223t4bdf57r4g01p0prc359pcd093.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
+if (!GOOGLE_CLIENT_ID) {
+  throw new Error('REACT_APP_GOOGLE_CLIENT_ID environment variable is required');
+}
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
 root.render(
