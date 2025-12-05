@@ -546,7 +546,9 @@ export const Textarea = styled.textarea`
   border-radius: 10px;
   border: 2px solid rgba(148, 163, 184, 0.3);
   background: rgba(0, 0, 0, 0.15);
-  color: #e8eef7;
+
+  color: #000000;  
+  
   resize: vertical;
   font-family: inherit;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
