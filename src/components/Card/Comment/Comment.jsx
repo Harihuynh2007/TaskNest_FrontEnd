@@ -5,6 +5,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { updateComment, deleteComment } from '../../../api/cardApi';
 import toast from 'react-hot-toast';
+import ReactMarkdown from 'react-markdown';
 
 function Comment({
   comment,
@@ -185,7 +186,7 @@ function Comment({
           ) : (
             <>
               <CommentText>
-                {comment.content || <EmptyComment>(Bình luận trống)</EmptyComment>}
+                <ReactMarkdown>{comment.content}</ReactMarkdown>
               </CommentText>
 
               <CommentActions $visible={showActions || isLoading}>
@@ -363,10 +364,7 @@ const CommentText = styled.div`
   margin-bottom: 4px;
 `;
 
-const EmptyComment = styled.span`
-  color: #8c9bab;
-  font-style: italic;
-`;
+
 
 const CommentActions = styled.div`
   display: flex;
@@ -383,7 +381,8 @@ const ActionButton = styled.button`
   color: #5e6c84;
   font-size: 12px;
   line-height: 16px;
-  padding: 4px 8px;
+  padding: 2px 4px;
+
   cursor: pointer;
   border-radius: 3px;
   transition: all 0.15s ease;
