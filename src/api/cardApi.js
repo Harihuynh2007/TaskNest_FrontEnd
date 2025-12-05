@@ -160,3 +160,14 @@ export async function removeCardMember(cardId, membershipId) {
 
 export const fetchPlannerData = (boardId) =>
   api.get(`/boards/${boardId}/planner/`);
+
+/**
+ * Cập nhật danh sách nhãn cho Card
+ * @param {string} cardId - ID của Card
+ * @param {Array<string|number>} labelIds - Mảng chứa ID của các Label muốn gán (Ví dụ: [1, 5, 9])
+ */
+export const updateCardLabels = (cardId, labelIds) => {
+  return api.patch(cards.detail(cardId), {
+    labels: labelIds // Backend Django thường mong đợi một list ID khi patch ManyToMany
+  });
+};
