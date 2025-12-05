@@ -32,7 +32,7 @@ export default function CardComments({
 
   return (
     <Section>
-      <SectionLabel>Add a comment</SectionLabel>
+      <SectionLabel>Comments ({comments.length})</SectionLabel>
 
       <CommentInput
         cardId={cardId}
