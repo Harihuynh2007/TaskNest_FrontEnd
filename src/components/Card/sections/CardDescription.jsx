@@ -116,9 +116,11 @@ const Textarea = styled.textarea`
   border: 1px solid #dfe1e6;
   resize: vertical;
   font-family: inherit;
+  color: #172b4d; 
 
   &:focus { outline: none; border-color: #28a745; }
 `;
+
 
 const ButtonRow = styled.div`
   display: flex; gap: 8px;
