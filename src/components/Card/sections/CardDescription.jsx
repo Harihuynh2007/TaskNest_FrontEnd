@@ -72,7 +72,7 @@ const DescriptionContent = styled.div`
 const SectionHeading = styled.h3`
   font-size: 14px;
   font-weight: 600;
-  color: #172b4d;
+  color: #ffffff;
   margin: 0;
   min-height: 32px;
   display: flex;

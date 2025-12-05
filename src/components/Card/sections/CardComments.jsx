@@ -91,7 +91,7 @@ const Section = styled.div`
 const SectionLabel = styled.h4`
   font-size: 14px;
   font-weight: 600;
-  color: #172b4d;
+  color: #ffffff;
   margin: 0 0 8px 0;
 `;
 const CommentList = styled.div`
