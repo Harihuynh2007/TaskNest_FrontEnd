@@ -226,12 +226,19 @@ export default function BoardDetailPage() {
       console.error('❌ Failed to delete list:', err);
       // TODO: Rollback state nếu API thất bại
     }
+
+    const normalized = cardsToMove.map(c => ({
+      ...c,
+      list: null,
+      completed: false, // hoặc giữ nguyên, tùy business rule
+    }));
+    setCards(prevCards => [...prevCards, ...normalized]);
   };
+
 
   const handleCloseBoardRequest = () => {
         setShowCloseConfirm(true);
     };
-
 
   useEffect(() => {
     async function loadBoard() {
