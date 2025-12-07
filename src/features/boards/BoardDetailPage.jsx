@@ -213,8 +213,13 @@ export default function BoardDetailPage() {
     // B1: Optimistic UI
     // Xóa cột khỏi `lists` state
     setLists(prevLists => prevLists.filter(list => list.id !== listIdToDelete));
-    // Thêm các thẻ của cột đó vào `cards` (Inbox) state
-    setCards(prevCards => [...prevCards, ...cardsToMove]);
+    // Chuẩn hóa các thẻ trước khi thêm vào Inbox
+    const normalized = cardsToMove.map(c => ({
+      ...c,
+      list: null,
+      completed: false, // hoặc giữ nguyên, tùy business rule
+    }));
+    setCards(prevCards => [...prevCards, ...normalized]);
 
     // B2: Đóng modal
     setListToDelete(null);
@@ -226,13 +231,6 @@ export default function BoardDetailPage() {
       console.error('❌ Failed to delete list:', err);
       // TODO: Rollback state nếu API thất bại
     }
-
-    const normalized = cardsToMove.map(c => ({
-      ...c,
-      list: null,
-      completed: false, // hoặc giữ nguyên, tùy business rule
-    }));
-    setCards(prevCards => [...prevCards, ...normalized]);
   };
 
 
@@ -636,7 +634,7 @@ export default function BoardDetailPage() {
     description: card.description || '',
     due_date: card.due_date || null,
     completed: card.completed ?? false,
-    list: card.list || null,
+    list: card.list ?? null,
     visibility: card.visibility || 'private',
     status: card.status || 'doing',
     position: card.position ?? 0,
@@ -677,7 +675,7 @@ export default function BoardDetailPage() {
             All ${listToDelete.cards.length} cards in this list will be moved to your Inbox.`
           }
           confirmText="Delete and Move Cards"
-          confirmVariant="danger" // Vẫn dùng màu đỏ vì đây là hành động lớn
+          confirmVariant="danger" // Still use red color because this is a major action
       />
 
 
@@ -697,7 +695,7 @@ export default function BoardDetailPage() {
           onClose={() => setSelectedCard(null)}
           onCardUpdate={updateCardInState} // Giả sử bạn đã có hàm trung tâm này
           
-          // 4. TRUYỀN BIẾN currentUser VÀO ĐÂY
+          // 4. Pass currentUser prop here
           currentUser={currentUser} 
         />
       )}
