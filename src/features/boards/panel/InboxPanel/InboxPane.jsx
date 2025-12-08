@@ -427,7 +427,7 @@ export default function InboxPane({
                 default:
                   break;
               }
-              setShowMenu(false);
+              
             }}
           />
         )}
@@ -582,7 +582,7 @@ const DraggableCardWrapper = styled.div`
   transition: transform 0.2s ease;
 
   ${({ $isDragging }) => $isDragging && `
-    width: 272px;
+    width: min(272px, 100%);
     margin: 0 auto;
     cursor: grabbing;
     box-shadow: 0 6px 16px rgba(0,0,0,0.25);
