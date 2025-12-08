@@ -347,9 +347,12 @@ export default function BoardPane({
           card={editPopup.card}
           listId={editPopup.listId}
           boardId={boardId}
+          
           updateCardLabels={async (cardId, newLabels) => {
             try {
-              const updatedCard = await updateCard(cardId, { labels: newLabels });
+              const res = await updateCard(cardId, { labels: newLabels });
+              const updatedCard = res?.data ?? res;  // ⭐ LẤY CARD OBJECT, KHÔNG LẤY RESPONSE
+
               setLists(prevLists =>
                 prevLists.map(list => ({
                   ...list,
@@ -363,6 +366,7 @@ export default function BoardPane({
               toast.error("Could not update labels.");
             }
           }}
+
           onCardDeleted={handleCardDeleted}
         />
       )}
