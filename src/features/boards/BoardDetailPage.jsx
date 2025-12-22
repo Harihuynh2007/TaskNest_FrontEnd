@@ -376,6 +376,11 @@ export default function BoardDetailPage() {
           // Reorder trong Inbox
           const newCards = [...cards];
           [movedCard] = newCards.splice(source.index, 1);
+
+          if (!movedCard || movedCard.id == null) {
+            console.warn('DragEnd: movedCard invalid', { movedCard, source, destination });
+            return;
+          } 
           newCards.splice(destination.index, 0, ensureCardStructure(movedCard));
           setCards(newCards);
 
@@ -436,12 +441,19 @@ export default function BoardDetailPage() {
           });
 
           // Cập nhật position cho tất cả thẻ trong danh sách đích
+
+          const badIndex = newCards.findIndex(c => !c || c.id == null);
+          if (badIndex !== -1) {
+            console.log('Inbox cards corrupted at index:', badIndex, newCards);
+          }
+          
+          const safeInboxCards = newCards.filter(c => c && c.id != null);
+
           await Promise.all(
-            newDestCards.map((card, index) =>
-              updateCard(card.id, { list: destListId, position: index })
+            safeInboxCards.map((card, index) =>
+              updateCard(card.id, { list: null, position: index })
             )
           );
-
           // Cập nhật position cho tất cả thẻ còn lại trong Inbox
           await Promise.all(
             newCards.map((card, index) =>

@@ -144,17 +144,17 @@ export const getCardActivity = async (cardId, params = {}) => {
 
 // ----- Card members -----
 export async function fetchCardMembers(cardId) {
-  const res = await api.get(`/cards/${cardId}/memberships/`);
+  const res = await api.get(`/cards/${cardId}/assignees/`);
   return res.data;
 }
 
 export async function addCardMember(cardId, userId) {
-  const res = await api.post(`/cards/${cardId}/memberships/`, { user_id: userId });
+  const res = await api.post(`/cards/${cardId}/assignees/add/`, { user_id: userId });
   return res.data; 
 }
 
-export async function removeCardMember(cardId, membershipId) {
-  const res = await api.delete(`/cards/${cardId}/memberships/${membershipId}/`);
+export async function removeCardMember(cardId, assigneeId) {
+  const res = await api.delete(`/cards/${cardId}/assignees/${assigneeId}/`);
   return res.data;
 }
 

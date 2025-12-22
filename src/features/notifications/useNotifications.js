@@ -1,56 +1,148 @@
 // src/features/notifications/useNotifications.js
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { fetchNotifications, markAsRead, markAllAsRead, getUnreadCount } from "../../api/notificationApi";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import useNotifSocket from "./useNotifSocket";
+import {
+  fetchNotifications,
+  fetchUnreadCount,
+  markAllRead,
+  markNotificationRead,
+} from "../../api/notificationApi";
 
-export default function useNotifications() {
-  const [tab, setTab] = useState("all");          // all | unread | mentions
+function isUnreadCountMsg(msg) {
+  return msg && typeof msg === "object" && msg.type === "unread_count" && typeof msg.count === "number";
+}
+function isWsAck(msg) {
+  return msg && typeof msg === "object" && (msg.type === "mark_read_success" || msg.type === "mark_all_read_success");
+}
+function looksLikeNotification(msg) {
+  // NotificationSerializer object: {id, created_at, is_read, ...} (backend bắn thẳng object)
+  return msg && typeof msg === "object" && msg.id != null && "created_at" in msg && "is_read" in msg;
+}
+
+function upsertFirst(prev, item) {
+  const idx = prev.findIndex((x) => x.id === item.id);
+  if (idx === -1) return [item, ...prev];
+  const copy = prev.slice();
+  const merged = { ...copy[idx], ...item };
+  copy.splice(idx, 1);
+  return [merged, ...copy];
+}
+
+export default function useNotifications({ enabled = true, pageSize = 50 } = {}) {
+  const [tab, setTab] = useState("all");
   const [onlyUnread, setOnlyUnread] = useState(false);
+
   const [items, setItems] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
 
-  const load = useCallback(async () => {
-    setLoading(true); setErr(null);
+  const itemsRef = useRef(items);
+  useEffect(() => { itemsRef.current = items; }, [items]);
+
+  const reload = useCallback(async () => {
+    setLoading(true);
+    setErr(null);
     try {
-      const params = {
-        is_read: tab === "unread" || onlyUnread ? false : undefined,
-        mentions: tab === "mentions" ? true : undefined,
-      };
-      const [listRes, unreadRes] = await Promise.all([
-        fetchNotifications(params),
-        getUnreadCount(),
+      const [list, count] = await Promise.all([
+        fetchNotifications({ page_size: pageSize }),
+        fetchUnreadCount(),
       ]);
-      const data = listRes?.data?.results || listRes?.data || [];
-      setItems(data);
-      setUnreadCount(unreadRes?.data?.count ?? 0);
+      setItems(list);
+      setUnreadCount(count);
     } catch (e) {
       setErr(e);
     } finally {
       setLoading(false);
     }
-  }, [tab, onlyUnread]);
+  }, [pageSize]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    if (!enabled) return;
+    reload();
+  }, [enabled, reload]);
 
-  const markItemAsRead = useCallback(async (id) => {
-    setItems(prev => prev.map(it => it.id === id ? { ...it, is_read: true } : it));
-    setUnreadCount(c => Math.max(0, c - 1));
-    try { await markAsRead(id); } catch { load(); }
-  }, [load]);
+  const onWsMessage = useCallback((msg) => {
+    // 1) protocol: unread_count
+    if (isUnreadCountMsg(msg)) {
+      setUnreadCount(msg.count);
+      return;
+    }
+
+    // 2) protocol: ack mark read/all
+    if (isWsAck(msg)) {
+      if (msg.type === "mark_all_read_success") {
+        setItems((prev) => prev.map((n) => ({ ...n, is_read: true })));
+        setUnreadCount(0);
+      } else if (msg.type === "mark_read_success") {
+        const ids = new Set(msg.ids || []);
+        setItems((prev) => prev.map((n) => (ids.has(n.id) ? { ...n, is_read: true } : n)));
+        setUnreadCount((c) => Math.max(0, c - (msg.ids?.length || 0)));
+      }
+      return;
+    }
+
+    // 3) notification payload
+    if (looksLikeNotification(msg)) {
+      setItems((prev) => upsertFirst(prev, msg));
+      if (msg.is_read === false) setUnreadCount((c) => c + 1); // best-effort
+      return;
+    }
+
+    // ignore unknown
+  }, []);
+
+  const { isConnected, sendJSON } = useNotifSocket({
+    enabled,
+    onMessage: onWsMessage,
+  });
+
+  // reconnect xong -> refetch để bù “missed” lúc rớt mạng
+  useEffect(() => {
+    if (!enabled) return;
+    if (isConnected) reload();
+  }, [enabled, isConnected, reload]);
+
+  const markItemAsRead = useCallback(async (itemOrId) => {
+    const id = typeof itemOrId === "object" ? itemOrId?.id : itemOrId;
+    if (!id) return;
+
+    // optimistic
+    setItems((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
+    setUnreadCount((c) => Math.max(0, c - 1));
+
+    // WS first, REST fallback
+    const ok = isConnected && sendJSON({ type: "mark_read", ids: [id] });
+    if (ok) return;
+
+    try {
+      await markNotificationRead(id);
+    } catch {
+      reload();
+    }
+  }, [isConnected, sendJSON, reload]);
 
   const markAll = useCallback(async () => {
-    setItems(prev => prev.map(it => ({ ...it, is_read: true })));
+    // optimistic
+    setItems((prev) => prev.map((n) => ({ ...n, is_read: true })));
     setUnreadCount(0);
-    try { await markAllAsRead(); } catch { load(); }
-  }, [load]);
 
-  return {
-    // state
-    tab, setTab, onlyUnread, setOnlyUnread, items, unreadCount, loading, err,
-    // actions
-    reload: load, markItemAsRead, markAll,
-    // derived
-    effectiveFilter: useMemo(() => ({ tab, onlyUnread }), [tab, onlyUnread]),
-  };
+    const ok = isConnected && sendJSON({ type: "mark_all_read" });
+    if (ok) return;
+
+    try {
+      await markAllRead();
+    } catch {
+      reload();
+    }
+  }, [isConnected, sendJSON, reload]);
+
+  return useMemo(() => ({
+    tab, setTab,
+    onlyUnread, setOnlyUnread,
+    items, unreadCount, loading, err,
+    reload,
+    markItemAsRead,
+    markAll,
+  }), [tab, onlyUnread, items, unreadCount, loading, err, reload, markItemAsRead, markAll]);
 }

@@ -1,3 +1,4 @@
+// src/api/wsClient.js
 const inferWsOrigin = () => {
   if (process.env.REACT_APP_WS_ORIGIN) return process.env.REACT_APP_WS_ORIGIN.replace(/\/+$/, '');
   if (typeof window !== 'undefined' && window.location) {
@@ -8,56 +9,61 @@ const inferWsOrigin = () => {
   return 'ws://127.0.0.1:8000';
 };
 
-const WS_ORIGIN = inferWsOrigin();
+export const WS_ORIGIN = inferWsOrigin();
 
 // ---------- Reconnecting WS wrapper ----------
 class ReconnectingWS {
-  constructor(urlBuilder, { onMessage, onOpen, onClose, onError } = {}) {
-    this.urlBuilder = urlBuilder;      // () => string
+  constructor(urlBuilder, { onMessage, onOpen, onClose, onError, shouldReconnect } = {}) {
+    this.urlBuilder = urlBuilder;
     this.ws = null;
     this.isClosing = false;
-    this.backoff = 500;                // ms, tăng dần
-    this.maxBackoff = 8000;            // ms
-    this.queue = [];                   // hàng đợi khi WS chưa open
+    this.backoff = 500;
+    this.maxBackoff = 8000;
+    this.queue = [];
     this.listeners = { message: onMessage, open: onOpen, close: onClose, error: onError };
+
+    // default: không reconnect khi unauthorized/forbidden
+    this.shouldReconnect = shouldReconnect || ((ev) => ev?.code !== 4401 && ev?.code !== 4403);
+
     this._connect();
   }
 
   _connect() {
     try {
       this.ws = new WebSocket(this.urlBuilder());
+
       this.ws.onopen = (ev) => {
         this.backoff = 500;
         if (this.listeners.open) this.listeners.open(ev);
-        // flush queue
-        while (this.queue.length) {
-          this._safeSend(this.queue.shift());
-        }
+        while (this.queue.length) this._safeSend(this.queue.shift());
       };
+
       this.ws.onmessage = (ev) => {
-        if (this.listeners.message) {
-          try {
-            const data = JSON.parse(ev.data);
-            this.listeners.message(data);
-          } catch {
-            this.listeners.message(ev.data);
-          }
+        if (!this.listeners.message) return;
+        try {
+          const data = JSON.parse(ev.data);
+          this.listeners.message(data);
+        } catch {
+          this.listeners.message(ev.data);
         }
       };
+
       this.ws.onerror = (ev) => {
         if (this.listeners.error) this.listeners.error(ev);
       };
+
       this.ws.onclose = (ev) => {
         if (this.listeners.close) this.listeners.close(ev);
+
         if (!this.isClosing) {
-          // reconnect
+          if (!this.shouldReconnect(ev)) return; // ✅ stop reconnect on 4401/4403
+
           const wait = this.backoff;
           this.backoff = Math.min(this.backoff * 2, this.maxBackoff);
           setTimeout(() => this._connect(), wait);
         }
       };
-    } catch (e) {
-      // schedule reconnect
+    } catch {
       const wait = this.backoff;
       this.backoff = Math.min(this.backoff * 2, this.maxBackoff);
       setTimeout(() => this._connect(), wait);
@@ -98,13 +104,7 @@ const state = {
   notifySocket: null,
 };
 
-/**
- * Kết nối socket Board: /ws/boards/:boardId/?token=...
- * @param {number|string} boardId
- * @param {string} token - JWT (không cần 'Bearer ')
- * @param {(msg:any)=>void} onMessage
- */
-export function connectBoardSocket(boardId, token, onMessage) {
+export function connectBoardSocket(boardId, token, onMessage, opts = {}) {
   state.boardId = boardId;
   state.token = token;
 
@@ -114,31 +114,32 @@ export function connectBoardSocket(boardId, token, onMessage) {
 
   state.boardSocket = new ReconnectingWS(buildUrl, {
     onMessage,
-    onOpen: () => { /* console.log('[WS] board open', boardId); */ },
-    onClose: () => { /* console.log('[WS] board closed'); */ },
-    onError: () => { /* console.log('[WS] board error'); */ },
+    onOpen: opts.onOpen,
+    onClose: opts.onClose,
+    onError: opts.onError,
   });
 
   return state.boardSocket;
 }
 
-/**
- * Kết nối socket Notifications: /ws/notifications/?token=...
- * @param {string} token
- * @param {(msg:any)=>void} onMessage
- */
-export function connectNotificationSocket(token, onMessage) {
+export function connectNotificationSocket(token, onMessage, opts = {}) {
   if (state.notifySocket) state.notifySocket.close();
 
   const buildUrl = () => `${WS_ORIGIN}/ws/notifications/?token=${encodeURIComponent(token || '')}`;
 
   state.notifySocket = new ReconnectingWS(buildUrl, {
     onMessage,
-    onOpen: () => { /* console.log('[WS] notify open'); */ },
-    onClose: () => { /* console.log('[WS] notify closed'); */ },
+    onOpen: opts.onOpen,
+    onClose: opts.onClose,
+    onError: opts.onError,
   });
 
   return state.notifySocket;
+}
+
+export function closeNotificationSocket() {
+  if (state.notifySocket) state.notifySocket.close();
+  state.notifySocket = null;
 }
 
 export function closeBoardSocket() {
@@ -153,11 +154,6 @@ export function closeAllSockets() {
   state.notifySocket = null;
 }
 
-/**
- * Tiện ích phát sự kiện từ FE → BE (nếu BE có handle receive)
- * Giữ API tương thích với code cũ: ws.emit(eventName, payload)
- * Ví dụ: ws.emit('card_update', { id, list, pos })
- */
 export const ws = {
   emit(event, payload) {
     if (!state.boardSocket) return;

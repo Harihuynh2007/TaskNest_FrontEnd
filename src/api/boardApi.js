@@ -59,8 +59,8 @@ export const removeMember = (boardId, userId) =>
 export const fetchBoardLabels = (boardId) =>
   api.get(boards.labels(boardId));
 
-export const createBoardLabel = (boardId, labelData) =>
-  api.post(boards.labels(boardId), labelData);
+export const createBoardLabel = (board_id, labelData) =>
+  api.post(boards.labels(board_id), labelData);
 
 export const updateBoardLabel = (boardId, labelId, data) =>
   api.patch(boards.labelDetail(boardId, labelId), data);

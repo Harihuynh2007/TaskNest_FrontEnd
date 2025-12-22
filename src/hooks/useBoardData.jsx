@@ -16,6 +16,7 @@ export default function useBoardData(workspaceId, boardId) {
   const [lists, setLists] = useState([]); // [{ id, name, cards: [] }]
   const [cards, setCards] = useState([]); // Inbox cards
   const socketRef = useRef(null);
+  const loadSeqRef = useRef(0);
   const isMounted = useRef(false);
 
   /** =============== LOAD BOARD INFO =============== */
@@ -38,26 +39,58 @@ export default function useBoardData(workspaceId, boardId) {
    *    inbox: [...]
    * }
    */
-  const loadListsAndCards = useCallback(async () => {
-    if (!boardId) return;
+const loadListsAndCards = useCallback(async () => {
+  if (!boardId) return;
 
-    try {
-      const res = await cardApi.fetchPlannerData(boardId);
-      const { lists = [], inbox = [] } = res.data || {};
+  // Chống race: chỉ response mới nhất được quyền setState
+  const seq = ++loadSeqRef.current;
 
-      // Chuẩn hoá list
-      const formattedLists = lists.map(lst => ({
-        ...lst,
-        cards: lst.cards || []
-      }));
+  const normalizeCards = (arr, label = 'cards') => {
+    const raw = Array.isArray(arr) ? arr : [];
 
-      setLists(formattedLists);
-      setCards(inbox);
+    // lọc rác: null/undefined/không phải object/thiếu id
+    const cleaned = raw.filter((c) => c && typeof c === 'object' && c.id != null);
 
-    } catch (err) {
-      console.error('❌ Failed to load planner data:', err);
+    // debug nhẹ nếu API trả bẩn
+    if (cleaned.length !== raw.length) {
+      console.warn(`⚠️ ${label} contains invalid items:`, {
+        rawLen: raw.length,
+        cleanedLen: cleaned.length,
+        invalidCount: raw.length - cleaned.length,
+      });
     }
-  }, [boardId]);
+
+    // sort theo position (nếu có)
+    cleaned.sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+    return cleaned;
+  };
+
+  try {
+    const res = await cardApi.fetchPlannerData(boardId);
+    if (seq !== loadSeqRef.current) return; // response cũ -> bỏ
+
+    const data = res?.data || {};
+    const rawLists = Array.isArray(data.lists) ? data.lists : [];
+    const rawInbox = data.inbox;
+
+    // Chuẩn hoá lists + cards trong từng list
+    const formattedLists = rawLists
+      .filter((lst) => lst && typeof lst === 'object' && lst.id != null)
+      .map((lst) => ({
+        ...lst,
+        cards: normalizeCards(lst.cards, `list:${lst.id}.cards`),
+      }))
+      .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+
+    const inboxCards = normalizeCards(rawInbox, 'inbox');
+
+    setLists(formattedLists);
+    setCards(inboxCards);
+  } catch (err) {
+    if (seq !== loadSeqRef.current) return;
+    console.error('❌ Failed to load planner data:', err);
+  }
+}, [boardId]);
 
   /** =============== REFRESH (WS & Planner Panel) =============== */
   const refresh = useCallback(async () => {
@@ -70,7 +103,9 @@ export default function useBoardData(workspaceId, boardId) {
 
     // Update inbox cards
     setCards(prev =>
-      prev.map(c => (c.id === updatedCard.id ? { ...c, ...updatedCard } : c))
+      (Array.isArray(prev) ? prev : []).map(c =>
+        c && c.id === updatedCard.id ? { ...c, ...updatedCard } : c
+      )
     );
 
     // Update card trong list
@@ -98,7 +133,7 @@ export default function useBoardData(workspaceId, boardId) {
   const createInboxCard = useCallback(async (payload) => {
     try {
       const res = await cardApi.createInboxCard(payload);
-      setCards(prev => [...prev, res.data]);
+      setCards(prev => [...(Array.isArray(prev) ? prev : []), res.data].filter(c => c && c.id != null));
       return res.data;
     } catch (err) {
       console.error('❌ Failed to create inbox card:', err);
