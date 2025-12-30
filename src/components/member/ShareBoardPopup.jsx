@@ -392,9 +392,9 @@ export default function ShareBoardPopup({ boardId, onClose, boardOwnerId }) {
                       }
                       disabled={state.loading.memberAction}
                     >
-                      <option value={ROLES.ADMIN}>Admin</option>
-                      <option value={ROLES.EDITOR}>Member</option>
-                      <option value={ROLES.VIEWER}>Observer</option>
+                      <option value={ROLES.ADMIN}>Manager</option>
+                      <option value={ROLES.EDITOR}>Reviewer</option>
+                      <option value={ROLES.VIEWER}>Member</option>
                     </MemberRoleSelect>
 
                     <PrimaryButton

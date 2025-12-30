@@ -61,7 +61,7 @@ export default function BoardDetailPage() {
   const numericBoardId = parseInt(boardId);
   const [background, setBackground] = useState('#e4f0f6');
   const [loading, setLoading] = useState(true);
-  const [activeTabs, setActiveTabs] = useState(['inbox']);
+  const [activeTabs, setActiveTabs] = useState(['board']);
   
   const [inputValue, setInputValue] = useState('');
   const [showInput, setShowInput] = useState(false);
@@ -120,7 +120,7 @@ export default function BoardDetailPage() {
       }
 
       // 3. Fallback mặc định
-      setActiveTabs(['inbox']);
+      setActiveTabs(['board']);
     } catch (err) {
       console.error('Failed to restore layout tabs', err);
       setActiveTabs(['inbox']);

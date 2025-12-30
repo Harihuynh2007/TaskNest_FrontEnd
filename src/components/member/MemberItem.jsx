@@ -111,9 +111,9 @@ export default React.memo(function MemberItem({
                 >
                   <RoleDropdownMenu>
                     {Object.entries({
-                      [ROLES.ADMIN]: 'Admin',
-                      [ROLES.EDITOR]: 'Member',
-                      [ROLES.VIEWER]: 'Observer',
+                      [ROLES.ADMIN]: 'Manager',
+                      [ROLES.EDITOR]: 'Reviewer',
+                      [ROLES.VIEWER]: 'Member',
                     }).map(([role, label]) => (
                       <RoleDropdownItem
                         key={role}

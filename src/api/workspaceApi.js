@@ -210,11 +210,11 @@ export const isWorkspaceAdmin = (members, userId) => {
 export const isWorkspaceOwner = (workspace, userId) => {
   if (!workspace || userId == null) return false;
   
-  // Ưu tiên check is_owner từ API (đã tính sẵn ở backend)
-  if (workspace.is_owner === true) return true;
+  // // Ưu tiên check is_owner từ API (đã tính sẵn ở backend)
+  // if (workspace.is_owner === true) return true;
   
-  // Fallback: check effective_role
-  if (workspace.effective_role === 'owner') return true;
+  // // Fallback: check effective_role
+  // if (workspace.effective_role === 'owner') return true;
   
   // Fallback: so sánh owner_id
   if (workspace.owner_id && String(workspace.owner_id) === String(userId)) {

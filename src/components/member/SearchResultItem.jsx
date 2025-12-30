@@ -24,9 +24,9 @@ export default React.memo(function SearchResultItem({ user, onSelect, selectedRo
   }, [user, selectedRole, onSelect]);
 
   const roleLabelMap = {
-    [ROLES.ADMIN]: 'Admin',
-    [ROLES.EDITOR]: 'Member',
-    [ROLES.VIEWER]: 'Observer',
+    [ROLES.ADMIN]: 'Manager',
+    [ROLES.EDITOR]: 'Reviewer',
+    [ROLES.VIEWER]: 'Member',
   };
 
   return (
